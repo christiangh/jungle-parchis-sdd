@@ -257,7 +257,7 @@ Comandos: `pnpm test:once`, `pnpm check`.
 
 ## PARTE-05: Invariantes con tests de propiedades
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
