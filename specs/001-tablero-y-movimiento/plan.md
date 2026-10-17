@@ -87,7 +87,7 @@ Nuevo módulo `moves.ts` con `legalMoves(state)`, que lee el turno y la tirada p
 
 - [x] 1. `test-utils.ts`, tests de salida de casa en `moves.spec.ts` (HU-02 c1 a c3, R-020, R-021, RF-013 en la salida) y esqueleto de `moves.ts` que devuelve `[]`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
 - [x] 2. Implementar la salida de casa en `legalMoves`.
-- [ ] 3. Tests de avance y consulta (HU-02 c4, RF-008, HU-03, HU-06, R-008, R-013, R-040, R-041, RF-012, RF-013, no mutación). Ejecutar y comprobar que fallan en sus aserciones.
+- [x] 3. Tests de avance y consulta (HU-02 c4, RF-008, HU-03, HU-06, R-008, R-013, R-040, R-041, RF-012, RF-013, no mutación). Ejecutar y comprobar que fallan en sus aserciones.
 - [ ] 4. Implementar el avance y la ocupación, exportar en `index.ts` y pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
@@ -111,7 +111,7 @@ Nuevo módulo `moves.ts` con `legalMoves(state)`, que lee el turno y la tirada p
 | RF-005 | 3, 4 | Tests de HU-06 y «HU-06: sin tirada pendiente no hay movimientos legales» |
 | RF-009 | 3, 4 | Tests de HU-03 c1 a c3 y «R-040: avanza siempre hacia delante el número exacto de casillas» |
 | RF-010 | 3, 4 | Tests de HU-03 c2 y c3 |
-| RF-011 | 3, 4 | Tests de HU-03 c4; la casilla del pasillo de otro color no cuenta |
+| RF-011 | 3, 4 | Tests de HU-03 c4 y «R-041: las fichas del pasillo de otro color no ocupan el propio» |
 | RF-012 | 3, 4 | «RF-012 (provisional): atraviesa una casilla con 2 fichas» |
 | RF-013 | 3, 4 | «RF-013 (provisional): termina junto a una sola ficha rival fuera de un seguro» |
 | Caso límite: única ficha bloqueada, resto en casa sin 5 → sin movimientos | 3, 4 | «R-041: sin movimientos si la única ficha en juego tiene el destino lleno» |
