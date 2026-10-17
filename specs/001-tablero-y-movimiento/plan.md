@@ -205,7 +205,7 @@ Las acciones sobre una partida terminada se rechazan antes que cualquier otra co
 
 - [x] 1. Tests de la acción de tirar en `actions.spec.ts` (HU-05 c2, c4 y c5 al tirar, R-002, R-011, R-012, RF-016, RF-017, caso límite del único movimiento legal) y esqueleto de `actions.ts` con tipos y un `applyAction` que siempre rechaza con `game-over`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
 - [x] 2. Implementar la tirada: validaciones, tirada perdida, tirada pendiente y paso de turno.
-- [ ] 3. Tests de la acción de mover, del fin de partida y transversales (HU-05 c1, c3, c4 y c5 al mover, HU-07, R-013, R-090, RF-018 a RF-023, casos límite del 6 y de azul y verde, CE-03 y CE-04), con `seededRolls` y `playRandomGame` en `test-utils.ts`. Ejecutar y comprobar que fallan en sus aserciones.
+- [x] 3. Tests de la acción de mover, del fin de partida y transversales (HU-05 c1, c3, c4 y c5 al mover, HU-07, R-013, R-090, RF-018 a RF-023, casos límite del 6 y de azul y verde, CE-03 y CE-04), con `seededRolls` y `playRandomGame` en `test-utils.ts`. Ejecutar y comprobar que fallan en sus aserciones.
 - [ ] 4. Implementar el movimiento, los eventos de salida, avance y meta, el fin de partida y el rechazo tras terminar; exportar en `index.ts` y pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
