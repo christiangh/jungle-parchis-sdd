@@ -70,7 +70,7 @@ Comandos: `pnpm test:once`, `pnpm check`.
 
 ## PARTE-02: Salida y avance
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
