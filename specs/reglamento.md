@@ -20,7 +20,7 @@ Cada apartado usa su propia decena de identificadores (salida en R-02x, el seis 
 
 ## 2. Turnos
 
-- **R-010 · Orden.** Empieza el jugador que saque el número más alto en una tirada inicial; si hay empate, repiten los empatados. Después se juega en el sentido de las agujas del reloj.
+- **R-010 · Orden.** Empieza el jugador que saque el número más alto en una tirada inicial; si hay empate, repiten los empatados. Después se juega en el orden en que aparecen las casillas de salida al recorrer el tablero desde la casilla 1, que marca su comienzo: amarillo, azul, rojo y verde. Los colores que no participan se saltan.
 - **R-011 · Turno.** En su turno, el jugador tira el dado y mueve una ficha según el resultado.
 - **R-012 · Movimiento obligatorio.** Si hay al menos un movimiento legal, el jugador debe hacer uno. Si no hay ninguno, pierde la tirada.
 - **R-013 · Una ficha por tirada.** Cada tirada mueve una única ficha, el número exacto de casillas. No se puede repartir entre varias fichas.
