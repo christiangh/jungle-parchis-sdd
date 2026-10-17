@@ -1,5 +1,21 @@
 You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
 
+## Project Constitution
+
+This project follows spec-driven development. `specs/constitucion.md` holds the non-negotiable principles (P-01…P-17): read it before any spec, plan or code change. If it conflicts with anything below, the constitution wins. Game rules live in `specs/reglamento.md`.
+
+Rules that most affect how you work:
+
+- Never implement a feature without a spec in `Aprobado` status (P-11).
+- Never change a spec's status to `Aprobado` or `Implementado`; only a person does that (P-12).
+- Never create commits; a person commits after reviewing the diff (P-13). Suggest Conventional Commits messages, using `feat(spec-NNN)` for spec features (P-14).
+- Game rules go in `src/engine/` (pure TypeScript, no `@angular/*`, no randomness, no mutation); Angular only renders and forwards player intents, and imports the engine only through `src/engine/index.ts` (P-01…P-05).
+- In the engine, write the spec scenario tests first and see them fail; test names include the rule ID, e.g. `R-012` (P-06, P-07).
+- Never disable, skip or weaken tests, assertions or lint rules (P-09).
+- Never add a dependency without justifying it in the plan (P-17).
+
+Package manager: pnpm (`pnpm i`, `pnpm ng …`, `pnpm test`).
+
 ## TypeScript Best Practices
 
 - Use strict type checking
@@ -20,7 +36,7 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 ## Accessibility Requirements
 
 - It MUST pass all AXE checks.
-- It MUST follow all WCAG AA minimums, including focus management, color contrast, and ARIA attributes.
+- It MUST follow all WCAG 2.2 AA minimums, including focus management, color contrast, and ARIA attributes.
 
 ## Components
 
