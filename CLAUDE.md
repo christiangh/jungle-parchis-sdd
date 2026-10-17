@@ -1,41 +1,24 @@
 # jungle-parchis-sdd
 
-Parchís con temática de jungla, desarrollado con spec-driven design (SDD) como proyecto de portfolio. Partida local, sin backend.
-
-## Documentos de referencia
-
-Los principios del proyecto están en `specs/constitucion.md` (identificadores `P-NN`), y todo spec, plan y cambio de código debe cumplirlos. Las reglas del juego están en `specs/reglamento.md` (identificadores `R-NNN`, invariantes `I-NN`). Los specs citan las reglas por su identificador y no las redefinen.
+Parchís con temática de jungla hecho con spec-driven design, como proyecto de portfolio. Partida local, sin backend.
 
 @specs/constitucion.md
 @specs/reglamento.md
 
-## Flujo de trabajo
+## Convenciones
 
-- Las funcionalidades se especifican con `/cgh-sdd:cgh-spec` y se implementan con `/cgh-sdd:cgh-spec-impl` a partir de specs en estado `Aprobado`. Cada spec vive en `specs/NNN-slug/` con su `spec.md` y su `plan.md`.
-- En el motor (`src/engine/`) los tests se escriben primero y se ejecutan para comprobar que fallan en sus aserciones antes de implementar (P-07). En el plan, cada paso de código va precedido de su paso de tests.
-- Cada test de una regla incluye su identificador en el nombre, por ejemplo `R-050: come una ficha rival fuera de un seguro`.
-
-## Arquitectura
-
-- `src/engine/`: motor de reglas en TypeScript puro. No importa Angular ni ninguna librería; solo archivos del propio motor. Los tests del motor pueden usar `vitest` y `fast-check`.
-- `src/app/`: capa Angular. Solo importa el motor desde `src/engine/index.ts`.
-- Ambas fronteras las comprueba ESLint (`eslint.config.js`).
+- La constitución (`P-NN`) prevalece sobre todo lo demás. Los specs citan las reglas del reglamento por su identificador (`R-NNN`, `I-NN`) y no las redefinen.
+- Los specs se crean con `/cgh-sdd:cgh-spec` y se implementan con `/cgh-sdd:cgh-spec-impl`. Cada uno vive en `specs/NNN-slug/`, con su `spec.md` y su `plan.md`.
+- En el plan, cada paso de código del motor va precedido de su paso de tests (P-07). Los tests de una regla llevan su identificador en el nombre, por ejemplo `R-050: …`.
+- El código del motor solo importa archivos del propio motor; sus tests pueden usar además `vitest` y `fast-check`. Lo comprueba ESLint.
+- Documentación en castellano. Código, comentarios y commits en inglés (Conventional Commits, con ámbito `spec-NNN`).
 
 ## Comandos
 
-El gestor de paquetes es pnpm; no se usa npm.
+El gestor de paquetes es pnpm, nunca npm.
 
-- `pnpm check`: formato, lint y tests de una vez. Es la comprobación para cerrar cada parte de un spec.
-- `pnpm test:once`: tests sin modo watch.
-- `pnpm test:coverage`: tests con informe de cobertura.
-- `pnpm lint` / `pnpm lint:fix`: lint.
-- `pnpm format` / `pnpm format:check`: formato con Prettier.
-
-## Idioma y commits
-
-- Specs, planes, constitución y reglamento se escriben en castellano. El código, los identificadores y los comentarios técnicos, en inglés.
-- Los mensajes de commit van en inglés y siguen Conventional Commits. Las partes implementadas desde un spec usan `feat(spec-NNN): PARTE-NN <title in English>`.
-- Los commits los hace siempre una persona (P-13).
+- `pnpm check`: formato, lint y tests. Cierra cada parte de un spec.
+- `pnpm test:once`, `pnpm test:coverage`, `pnpm lint:fix`, `pnpm format`.
 
 ---
 
