@@ -86,7 +86,7 @@ Nuevo módulo `moves.ts` con `legalMoves(state)`, que lee el turno y la tirada p
 ### Pasos
 
 - [x] 1. `test-utils.ts`, tests de salida de casa en `moves.spec.ts` (HU-02 c1 a c3, R-020, R-021, RF-013 en la salida) y esqueleto de `moves.ts` que devuelve `[]`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
-- [ ] 2. Implementar la salida de casa en `legalMoves`.
+- [x] 2. Implementar la salida de casa en `legalMoves`.
 - [ ] 3. Tests de avance y consulta (HU-02 c4, RF-008, HU-03, HU-06, R-008, R-013, R-040, R-041, RF-012, RF-013, no mutación). Ejecutar y comprobar que fallan en sus aserciones.
 - [ ] 4. Implementar el avance y la ocupación, exportar en `index.ts` y pasar `pnpm check`.
 
