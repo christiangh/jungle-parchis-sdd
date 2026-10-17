@@ -1,6 +1,6 @@
 # SPEC 001 — Tablero y movimiento básico
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** —
 > **Fecha:** 2026-10-17
 > **Autor:** Christian Garcia
