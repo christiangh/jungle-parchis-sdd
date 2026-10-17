@@ -1,20 +1,45 @@
+# jungle-parchis-sdd
+
+Parchís con temática de jungla, desarrollado con spec-driven design (SDD) como proyecto de portfolio. Partida local, sin backend.
+
+## Documentos de referencia
+
+Los principios del proyecto están en `specs/constitucion.md` (identificadores `P-NN`), y todo spec, plan y cambio de código debe cumplirlos. Las reglas del juego están en `specs/reglamento.md` (identificadores `R-NNN`, invariantes `I-NN`). Los specs citan las reglas por su identificador y no las redefinen.
+
+@specs/constitucion.md
+@specs/reglamento.md
+
+## Flujo de trabajo
+
+- Las funcionalidades se especifican con `/cgh-sdd:spec` y se implementan con `/cgh-sdd:spec-impl` a partir de specs en estado `Aprobado`. Cada spec vive en `specs/NNN-slug/` con su `spec.md` y su `plan.md`.
+- En el motor (`src/engine/`) los tests se escriben primero y se ejecutan para comprobar que fallan en sus aserciones antes de implementar (P-07). En el plan, cada paso de código va precedido de su paso de tests.
+- Cada test de una regla incluye su identificador en el nombre, por ejemplo `R-050: come una ficha rival fuera de un seguro`.
+
+## Arquitectura
+
+- `src/engine/`: motor de reglas en TypeScript puro. No importa Angular ni ninguna librería; solo archivos del propio motor. Los tests del motor pueden usar `vitest` y `fast-check`.
+- `src/app/`: capa Angular. Solo importa el motor desde `src/engine/index.ts`.
+- Ambas fronteras las comprueba ESLint (`eslint.config.js`).
+
+## Comandos
+
+El gestor de paquetes es pnpm; no se usa npm.
+
+- `pnpm check`: formato, lint y tests de una vez. Es la comprobación para cerrar cada parte de un spec.
+- `pnpm test:once`: tests sin modo watch.
+- `pnpm test:coverage`: tests con informe de cobertura.
+- `pnpm lint` / `pnpm lint:fix`: lint.
+- `pnpm format` / `pnpm format:check`: formato con Prettier.
+
+## Idioma y commits
+
+- Specs, planes, constitución y reglamento se escriben en castellano. El código, los identificadores y los comentarios técnicos, en inglés.
+- Los mensajes de commit van en inglés y siguen Conventional Commits. Las partes implementadas desde un spec usan `feat(spec-NNN): PARTE-NN <title in English>`.
+- Los commits los hace siempre una persona (P-13).
+
+---
+
 You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
-
-## Project Constitution
-
-This project follows spec-driven development. `specs/constitucion.md` holds the non-negotiable principles (P-01…P-17): read it before any spec, plan or code change. If it conflicts with anything below, the constitution wins. Game rules live in `specs/reglamento.md`.
-
-Rules that most affect how you work:
-
-- Never implement a feature without a spec in `Aprobado` status (P-11).
-- Never change a spec's status to `Aprobado` or `Implementado`; only a person does that (P-12).
-- Never create commits; a person commits after reviewing the diff (P-13). Suggest Conventional Commits messages, using `feat(spec-NNN)` for spec features (P-14).
-- Game rules go in `src/engine/` (pure TypeScript, no `@angular/*`, no randomness, no mutation); Angular only renders and forwards player intents, and imports the engine only through `src/engine/index.ts` (P-01…P-05).
-- In the engine, write the spec scenario tests first and see them fail; test names include the rule ID, e.g. `R-012` (P-06, P-07).
-- Never disable, skip or weaken tests, assertions or lint rules (P-09).
-- Never add a dependency without justifying it in the plan (P-17).
-
-Package manager: pnpm (`pnpm i`, `pnpm ng …`, `pnpm test`).
 
 ## TypeScript Best Practices
 
@@ -36,7 +61,7 @@ Package manager: pnpm (`pnpm i`, `pnpm ng …`, `pnpm test`).
 ## Accessibility Requirements
 
 - It MUST pass all AXE checks.
-- It MUST follow all WCAG 2.2 AA minimums, including focus management, color contrast, and ARIA attributes.
+- It MUST follow all WCAG AA minimums, including focus management, color contrast, and ARIA attributes.
 
 ## Components
 

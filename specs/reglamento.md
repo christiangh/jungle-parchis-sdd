@@ -4,7 +4,7 @@ Reglas del juego de `jungle-parchis-sdd`, basadas en el parchís español clási
 
 El reglamento no habla de pantallas ni de temática: describe el juego como si fuera un tablero de cartón.
 
-Cada apartado usa su propia decena de identificadores (salida en R-02x, el seis en R-03x…), para poder añadir reglas sin renumerar. Las reglas marcadas con ⚠️ son decisiones por defecto pendientes de confirmar.
+Cada apartado usa su propia decena de identificadores (salida en R-02x, el seis en R-03x…), para poder añadir reglas sin renumerar.
 
 ## 1. Material y tablero
 
@@ -20,7 +20,7 @@ Cada apartado usa su propia decena de identificadores (salida en R-02x, el seis 
 
 ## 2. Turnos
 
-- **R-010 · Orden.** Empieza el jugador que saque el número más alto en una tirada inicial; si hay empate, repiten los empatados. Después se juega en el sentido de las agujas del reloj. ⚠️ *Decisión por defecto.*
+- **R-010 · Orden.** Empieza el jugador que saque el número más alto en una tirada inicial; si hay empate, repiten los empatados. Después se juega en el sentido de las agujas del reloj.
 - **R-011 · Turno.** En su turno, el jugador tira el dado y mueve una ficha según el resultado.
 - **R-012 · Movimiento obligatorio.** Si hay al menos un movimiento legal, el jugador debe hacer uno. Si no hay ninguno, pierde la tirada.
 - **R-013 · Una ficha por tirada.** Cada tirada mueve una única ficha, el número exacto de casillas. No se puede repartir entre varias fichas.
@@ -55,7 +55,7 @@ Cada apartado usa su propia decena de identificadores (salida en R-02x, el seis 
 - **R-060 · Qué es una barrera.** Hay barrera en una casilla del recorrido común cuando en ella hay 2 fichas, sean del mismo color o, en un seguro, de colores distintos.
 - **R-061 · Nadie atraviesa una barrera.** Ninguna ficha puede atravesar una barrera ni terminar en ella, tampoco las del propio dueño. La única excepción es salir de casa comiendo (R-023).
 - **R-062 · Abrir barrera con seis.** Si un jugador saca un 6 y tiene una barrera de su color, debe mover una de las fichas de esa barrera, siempre que alguna pueda moverse. Esta regla no aplica a las barreras mixtas de un seguro.
-- **R-063 · Sin barreras en el pasillo.** En el pasillo las fichas pueden adelantarse entre sí; las barreras solo existen en el recorrido común. ⚠️ *Decisión por defecto.*
+- **R-063 · Sin barreras en el pasillo.** En el pasillo las fichas pueden adelantarse entre sí; las barreras solo existen en el recorrido común.
 
 ## 8. Meta
 
