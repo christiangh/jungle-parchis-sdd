@@ -1,1 +1,4 @@
 pnpm-lock.yaml
+
+# Markdown: los specs se leen como texto plano y Prettier rellena las tablas hasta hacerlas ilegibles.
+*.md
