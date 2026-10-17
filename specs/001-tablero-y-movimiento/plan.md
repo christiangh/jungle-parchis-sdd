@@ -282,7 +282,7 @@ Con eso se juega una partida completa con `playRandomGame`. Tras cada acción se
 
 ### Archivos
 
-- `src/engine/test-utils.ts`: `invariantViolations`, `leftGoal` y un parámetro opcional `pickMove` en `playRandomGame`.
+- `src/engine/test-utils.ts`: `invariantViolations`, `leftGoal`, `seededRandom` (el generador de `seededRolls`, separado para elegir movimientos) y un parámetro opcional `pickMove` en `playRandomGame`.
 - `src/engine/test-utils.spec.ts` (nuevo): tests del comprobador con estados válidos y rotos a mano.
 - `src/engine/invariants.spec.ts` (nuevo): propiedad de I-01 a I-06 sobre 1000 partidas aleatorias con fast-check.
 
@@ -292,7 +292,7 @@ Con eso se juega una partida completa con `playRandomGame`. Tras cada acción se
 
 - [x] 1. Tests del comprobador en `test-utils.spec.ts`: una partida recién creada y una a mitad no incumplen nada; un estado roto a mano por cada invariante (I-01 con 3 o 5 fichas y con un color que no juega, I-02 con 3 fichas en una casilla del recorrido y del pasillo, I-03 con pasillo 0 u 8, I-05 con turno o ganador que no juegan, I-04 con una ficha que sale de meta). Esqueleto en `test-utils.ts` que devuelve `[]`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
 - [x] 2. Implementar `invariantViolations` y `leftGoal` hasta que pasen los tests del paso 1.
-- [ ] 3. Añadir `pickMove` a `playRandomGame` y la propiedad en `invariants.spec.ts` con 1000 ejecuciones. Medir su duración y pasar `pnpm check`.
+- [x] 3. Añadir `pickMove` a `playRandomGame` y la propiedad en `invariants.spec.ts` con 1000 ejecuciones. Medir su duración y pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
 
@@ -321,6 +321,6 @@ Comandos: `pnpm test:once`, `pnpm check`.
 - **Sí:** el comprobador devuelve los identificadores incumplidos, no un booleano. Si la propiedad falla, se ve qué invariante se rompe.
 - **Sí:** fast-check genera colores, jugador inicial y semillas, y la partida se juega con `seededRolls`. Las semillas hacen que un contraejemplo se pueda reproducir, y fast-check lo reduce a la semilla mínima.
 - **Sí:** el movimiento se elige al azar entre los legales (`pickMove`). Elegir siempre el primero explora poco: con el primero siempre avanza la misma ficha.
-- **Sí:** partidas completas hasta el ganador. Así se comprueban todos los estados intermedios y también I-06 al final. Si el test tarda demasiado, se sube su timeout y no se bajan las 1000 ejecuciones (CE-02).
+- **Sí:** partidas completas hasta el ganador. Así se comprueban todos los estados intermedios y también I-06 al final. Si el test tarda demasiado, se sube su timeout y no se bajan las 1000 ejecuciones (CE-02). Medido: unos 10 s, por encima de los 5 s por defecto de vitest; el test usa un timeout de 60 s.
 - **Sí:** I-06 se prueba con acciones generadas por fast-check, que incluyen tiradas no válidas y fichas de otros colores. En una partida terminada `game-over` va antes que cualquier otra comprobación.
 - **Sí:** los tests de los pasos 1 y 2 prueban el comprobador antes que la propiedad. La propiedad puede pasar a la primera porque el motor ya existe, y estos tests demuestran que el comprobador detecta incumplimientos.

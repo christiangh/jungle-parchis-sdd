@@ -52,17 +52,22 @@ export function buildGame(setup: GameSetup): GameState {
   };
 }
 
-/** Reproducible die rolls from a seed (mulberry32), so random games can be replayed. */
-export function seededRolls(seed: number): () => number {
+/** Reproducible numbers in [0, 1) from a seed (mulberry32), so random games can be replayed. */
+export function seededRandom(seed: number): () => number {
   let state = seed >>> 0;
   return () => {
     state = (state + 0x6d2b79f5) >>> 0;
     let t = state;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    const random = ((t ^ (t >>> 14)) >>> 0) / 2 ** 32;
-    return Math.floor(random * DIE_FACES) + 1;
+    return ((t ^ (t >>> 14)) >>> 0) / 2 ** 32;
   };
+}
+
+/** Reproducible die rolls from a seed. */
+export function seededRolls(seed: number): () => number {
+  const random = seededRandom(seed);
+  return () => Math.floor(random() * DIE_FACES) + 1;
 }
 
 export interface PlayedGame {
@@ -77,10 +82,15 @@ export interface PlayedGame {
 const MAX_ACTIONS = 20_000;
 
 /**
- * Plays from `initial` until there is a winner, always choosing the first legal move. Stops early
- * on a rejected action or after MAX_ACTIONS, so a broken engine makes tests fail instead of hang.
+ * Plays from `initial` until there is a winner. `pickMove` receives how many legal moves there are
+ * and returns the index of the one to make; by default, the first. Stops early on a rejected action
+ * or after MAX_ACTIONS, so a broken engine makes tests fail instead of hang.
  */
-export function playRandomGame(initial: GameState, nextRoll: () => number): PlayedGame {
+export function playRandomGame(
+  initial: GameState,
+  nextRoll: () => number,
+  pickMove: (count: number) => number = () => 0,
+): PlayedGame {
   const actions: Action[] = [];
   const states: GameState[] = [initial];
   const events: GameEvent[] = [];
@@ -89,10 +99,11 @@ export function playRandomGame(initial: GameState, nextRoll: () => number): Play
     if (actions.length >= MAX_ACTIONS) {
       return { actions, states, events, stopped: 'too-many-actions' };
     }
+    const moves = legalMoves(state);
     const action: Action =
       state.pendingRoll === null
         ? { type: 'roll', player: state.turn, value: nextRoll() }
-        : { type: 'move', player: state.turn, pieceId: legalMoves(state)[0].pieceId };
+        : { type: 'move', player: state.turn, pieceId: moves[pickMove(moves.length)].pieceId };
     const result = applyAction(state, action);
     if (!result.ok) {
       return { actions, states, events, stopped: result.error };
