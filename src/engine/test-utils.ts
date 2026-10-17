@@ -102,6 +102,22 @@ export function playRandomGame(initial: GameState, nextRoll: () => number): Play
   return { actions, states, events, stopped: null };
 }
 
+/** Invariants that can be checked on a single state; I-04 needs two states and I-06 an action. */
+export type StateInvariant = 'I-01' | 'I-02' | 'I-03' | 'I-05';
+
+/** Returns the invariants that `state` breaks, without repeats and in identifier order. */
+export function invariantViolations(state: GameState): StateInvariant[] {
+  void state;
+  return [];
+}
+
+/** I-04: returns the pieces at the goal in `before` that are no longer there in `after`. */
+export function leftGoal(before: GameState, after: GameState): PieceId[] {
+  void before;
+  void after;
+  return [];
+}
+
 /** Freezes a value and everything reachable from it, so any mutation throws (P-03). */
 export function deepFreeze<T>(value: T): T {
   if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {

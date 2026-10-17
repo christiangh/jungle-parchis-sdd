@@ -290,7 +290,7 @@ Con eso se juega una partida completa con `playRandomGame`. Tras cada acción se
 
 ### Pasos
 
-- [ ] 1. Tests del comprobador en `test-utils.spec.ts`: una partida recién creada y una a mitad no incumplen nada; un estado roto a mano por cada invariante (I-01 con 3 o 5 fichas y con un color que no juega, I-02 con 3 fichas en una casilla del recorrido y del pasillo, I-03 con pasillo 0 u 8, I-05 con turno o ganador que no juegan, I-04 con una ficha que sale de meta). Esqueleto en `test-utils.ts` que devuelve `[]`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
+- [x] 1. Tests del comprobador en `test-utils.spec.ts`: una partida recién creada y una a mitad no incumplen nada; un estado roto a mano por cada invariante (I-01 con 3 o 5 fichas y con un color que no juega, I-02 con 3 fichas en una casilla del recorrido y del pasillo, I-03 con pasillo 0 u 8, I-05 con turno o ganador que no juegan, I-04 con una ficha que sale de meta). Esqueleto en `test-utils.ts` que devuelve `[]`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
 - [ ] 2. Implementar `invariantViolations` y `leftGoal` hasta que pasen los tests del paso 1.
 - [ ] 3. Añadir `pickMove` a `playRandomGame` y la propiedad en `invariants.spec.ts` con 1000 ejecuciones. Medir su duración y pasar `pnpm check`.
 
@@ -305,7 +305,7 @@ Con eso se juega una partida completa con `playRandomGame`. Tras cada acción se
 | I-04 | 1-3 | Comprobador: «I-04: detecta una ficha que sale de meta», y propiedad de CE-02 (entre cada par de estados consecutivos) |
 | I-05 | 1-3 | Comprobador: «I-05: detecta un turno o un ganador que no participan», y propiedad de CE-02 |
 | I-06 | 3 | Propiedad de CE-02: tras terminar, toda acción generada se rechaza con `game-over` y el estado no cambia |
-| Comprobador sin falsos positivos | 1, 2 | «el comprobador no detecta nada en una partida recién creada ni a mitad» |
+| Comprobador sin falsos positivos | 1, 2 | «no detecta nada en una partida recién creada ni a mitad», «I-02: no suma fichas de pasillos de colores distintos», «I-04: no detecta nada si las fichas en meta siguen en ella», «devuelve cada invariante incumplido una vez y en orden» |
 | RNF-005 | 1-3 | Nombres de test con su `I-NN` o `CE-NN` |
 | Hecho cuando | 3 | CE-02 en verde con `pnpm check` |
 
