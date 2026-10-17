@@ -1,6 +1,6 @@
 // Game state and game creation.
 
-import { Color, Position } from './board';
+import { Color, COLORS, Position } from './board';
 
 export type PieceId = `${Color}-${0 | 1 | 2 | 3}`;
 
@@ -30,9 +30,32 @@ export interface GameConfig {
   readonly firstPlayer: Color;
 }
 
+const MIN_PLAYERS = 2;
+
+const PIECE_INDEXES = [0, 1, 2, 3] as const;
+
 export function createGame(config: GameConfig): Result<GameState, CreateGameError> {
+  const { players, firstPlayer } = config;
+  if (players.length < MIN_PLAYERS || players.length > COLORS.length) {
+    return { ok: false, error: 'invalid-player-count' };
+  }
+  if (new Set(players).size !== players.length) {
+    return { ok: false, error: 'duplicate-color' };
+  }
+  if (!players.includes(firstPlayer)) {
+    return { ok: false, error: 'first-player-not-playing' };
+  }
+
+  const turnOrder = COLORS.filter((color) => players.includes(color));
+  const pieces = turnOrder.flatMap((color) =>
+    PIECE_INDEXES.map((index): Piece => ({
+      id: `${color}-${index}`,
+      color,
+      position: { kind: 'home' },
+    })),
+  );
   return {
     ok: true,
-    value: { players: [], pieces: [], turn: config.firstPlayer, pendingRoll: null, winner: null },
+    value: { players: turnOrder, pieces, turn: firstPlayer, pendingRoll: null, winner: null },
   };
 }
