@@ -2,3 +2,4 @@
 // La app solo importa del motor a través de este archivo.
 export * from './board';
 export * from './game';
+export * from './moves';

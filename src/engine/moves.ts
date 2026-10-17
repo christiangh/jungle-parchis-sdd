@@ -1,6 +1,14 @@
 // Legal moves for the pending roll of the player in turn.
 
-import { BoardPosition, capacity, Color, START_SQUARE } from './board';
+import {
+  BoardPosition,
+  capacity,
+  Color,
+  LanePosition,
+  START_SQUARE,
+  stepForward,
+  TrackPosition,
+} from './board';
 import { GameState, Piece, PieceId } from './game';
 
 export interface Move {
@@ -17,7 +25,15 @@ export function legalMoves(state: GameState): readonly Move[] {
   }
   const exit = exitMove(state, roll);
   // R-021: leaving home is mandatory whenever it is possible.
-  return exit ? [exit] : [];
+  if (exit) {
+    return [exit];
+  }
+  return state.pieces
+    .filter((piece) => piece.color === state.turn)
+    .flatMap((piece) => {
+      const move = advanceMove(state, piece, roll);
+      return move ? [move] : [];
+    });
 }
 
 /** R-020, R-022: one piece leaves home to its start square with a 5. */
@@ -26,16 +42,50 @@ function exitMove(state: GameState, roll: number): Move | null {
   const pieceAtHome = state.pieces.find(
     (piece) => piece.color === color && piece.position.kind === 'home',
   );
-  const start: BoardPosition = { kind: 'track', square: START_SQUARE[color] };
-  if (roll !== EXIT_ROLL || !pieceAtHome || !hasRoom(state.pieces, color, start)) {
+  if (roll !== EXIT_ROLL || !pieceAtHome) {
     return null;
   }
-  return { pieceId: pieceAtHome.id, to: start };
+  const start: BoardPosition = { kind: 'track', square: START_SQUARE[color] };
+  return hasRoom(state.pieces, pieceAtHome, start) ? { pieceId: pieceAtHome.id, to: start } : null;
 }
 
-/** R-009, R-041: whether a piece of `color` may end its move on `position`. */
-function hasRoom(pieces: readonly Piece[], color: Color, position: BoardPosition): boolean {
-  const occupants = pieces.filter((piece) => isAt(piece, color, position)).length;
+/** R-013, R-040: a piece on the board moves forward exactly `roll` squares. */
+function advanceMove(state: GameState, piece: Piece, roll: number): Move | null {
+  const from = piece.position;
+  if (from.kind !== 'track' && from.kind !== 'lane') {
+    return null;
+  }
+  const to = advance(piece.color, from, roll);
+  return to && hasRoom(state.pieces, piece, to) ? { pieceId: piece.id, to } : null;
+}
+
+/**
+ * Walks `steps` squares forward. Squares passed through are not checked (RF-012, provisional).
+ * Returns null when the move overshoots the goal: provisional until bouncing (R-071).
+ */
+function advance(
+  color: Color,
+  from: TrackPosition | LanePosition,
+  steps: number,
+): BoardPosition | null {
+  let position: BoardPosition = from;
+  for (let step = 0; step < steps; step++) {
+    if (position.kind === 'goal') {
+      return null;
+    }
+    position = stepForward(color, position);
+  }
+  return position;
+}
+
+/**
+ * R-009, R-041: whether `mover` may end its move on `position`. The mover itself is not counted,
+ * and a single rival does not block it (RF-013, provisional).
+ */
+function hasRoom(pieces: readonly Piece[], mover: Piece, position: BoardPosition): boolean {
+  const occupants = pieces.filter(
+    (piece) => piece.id !== mover.id && isAt(piece, mover.color, position),
+  ).length;
   return occupants < capacity(position);
 }
 
