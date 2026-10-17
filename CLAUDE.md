@@ -11,7 +11,7 @@ Los principios del proyecto están en `specs/constitucion.md` (identificadores `
 
 ## Flujo de trabajo
 
-- Las funcionalidades se especifican con `/cgh-sdd:spec` y se implementan con `/cgh-sdd:spec-impl` a partir de specs en estado `Aprobado`. Cada spec vive en `specs/NNN-slug/` con su `spec.md` y su `plan.md`.
+- Las funcionalidades se especifican con `/cgh-sdd:cgh-spec` y se implementan con `/cgh-sdd:cgh-spec-impl` a partir de specs en estado `Aprobado`. Cada spec vive en `specs/NNN-slug/` con su `spec.md` y su `plan.md`.
 - En el motor (`src/engine/`) los tests se escriben primero y se ejecutan para comprobar que fallan en sus aserciones antes de implementar (P-07). En el plan, cada paso de código va precedido de su paso de tests.
 - Cada test de una regla incluye su identificador en el nombre, por ejemplo `R-050: come una ficha rival fuera de un seguro`.
 

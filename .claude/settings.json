@@ -1,3 +1,5 @@
 {
-  
+  "enabledPlugins": {
+    "cgh-sdd@cgh-sdd-marketplace": true
+  }
 }
