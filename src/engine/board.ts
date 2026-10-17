@@ -3,42 +3,40 @@
 export type Color = 'yellow' | 'blue' | 'red' | 'green';
 
 /** Turn order (R-010). */
-export const COLORS: readonly Color[] = [];
+export const COLORS: readonly Color[] = ['yellow', 'blue', 'red', 'green'];
 
-export const PIECES_PER_PLAYER = 0;
+export const PIECES_PER_PLAYER = 4;
 
-export const DIE_FACES = 0;
+export const DIE_FACES = 6;
 
 export function isValidRoll(value: number): boolean {
-  void value;
-  return false;
+  return Number.isInteger(value) && value >= 1 && value <= DIE_FACES;
 }
 
-export const TRACK_LENGTH = 0;
+export const TRACK_LENGTH = 68;
 
-export const LANE_LENGTH = 0;
+export const LANE_LENGTH = 7;
 
-export const MAX_PIECES_PER_SQUARE = 0;
+export const MAX_PIECES_PER_SQUARE = 2;
 
 export const START_SQUARE: Readonly<Record<Color, number>> = {
-  yellow: 0,
-  blue: 0,
-  red: 0,
-  green: 0,
+  yellow: 5,
+  blue: 22,
+  red: 39,
+  green: 56,
 };
 
 export const ENTRY_SQUARE: Readonly<Record<Color, number>> = {
-  yellow: 0,
-  blue: 0,
-  red: 0,
-  green: 0,
+  yellow: 68,
+  blue: 17,
+  red: 34,
+  green: 51,
 };
 
-export const SAFE_SQUARES: readonly number[] = [];
+export const SAFE_SQUARES: readonly number[] = [5, 12, 17, 22, 29, 34, 39, 46, 51, 56, 63, 68];
 
 export function isSafe(square: number): boolean {
-  void square;
-  return false;
+  return SAFE_SQUARES.includes(square);
 }
 
 export interface HomePosition {
@@ -66,13 +64,18 @@ export type BoardPosition = TrackPosition | LanePosition | GoalPosition;
 export type Position = HomePosition | BoardPosition;
 
 export function capacity(position: BoardPosition): number {
-  void position;
-  return 0;
+  return position.kind === 'goal' ? Number.POSITIVE_INFINITY : MAX_PIECES_PER_SQUARE;
 }
 
 /** Next position one step ahead for a piece of the given color. */
 export function stepForward(color: Color, position: TrackPosition | LanePosition): BoardPosition {
-  void color;
-  void position;
-  return { kind: 'goal' };
+  if (position.kind === 'lane') {
+    return position.square < LANE_LENGTH
+      ? { kind: 'lane', square: position.square + 1 }
+      : { kind: 'goal' };
+  }
+  if (position.square === ENTRY_SQUARE[color]) {
+    return { kind: 'lane', square: 1 };
+  }
+  return { kind: 'track', square: (position.square % TRACK_LENGTH) + 1 };
 }

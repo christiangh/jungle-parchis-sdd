@@ -23,7 +23,7 @@ El tablero se modela como datos y funciones puras en `board.ts`: colores en el o
 ### Pasos
 
 - [x] 1. Tests del tablero en `board.spec.ts` (R-001, R-002, R-003, R-005, R-006, R-007, R-008, R-009) y esqueleto de `board.ts` con tipos, firmas y valores neutros para que compile. Ejecutar y comprobar que fallan en sus aserciones (P-07).
-- [ ] 2. Implementar `board.ts` hasta que pasen los tests del paso 1.
+- [x] 2. Implementar `board.ts` hasta que pasen los tests del paso 1.
 - [ ] 3. Tests de creación de partida en `game.spec.ts` (HU-01, RF-001, RF-002, RF-003, R-001, R-004) y esqueleto de `game.ts`. Ejecutar y comprobar que fallan en sus aserciones.
 - [ ] 4. Implementar `createGame`, exportar la API en `index.ts` y pasar `pnpm check`.
 
