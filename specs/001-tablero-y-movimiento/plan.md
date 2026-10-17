@@ -183,7 +183,7 @@ Comandos: `pnpm test:once`, `pnpm check`.
 
 ## PARTE-04: Turnos y fin de partida
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
