@@ -291,7 +291,7 @@ Con eso se juega una partida completa con `playRandomGame`. Tras cada acción se
 ### Pasos
 
 - [x] 1. Tests del comprobador en `test-utils.spec.ts`: una partida recién creada y una a mitad no incumplen nada; un estado roto a mano por cada invariante (I-01 con 3 o 5 fichas y con un color que no juega, I-02 con 3 fichas en una casilla del recorrido y del pasillo, I-03 con pasillo 0 u 8, I-05 con turno o ganador que no juegan, I-04 con una ficha que sale de meta). Esqueleto en `test-utils.ts` que devuelve `[]`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
-- [ ] 2. Implementar `invariantViolations` y `leftGoal` hasta que pasen los tests del paso 1.
+- [x] 2. Implementar `invariantViolations` y `leftGoal` hasta que pasen los tests del paso 1.
 - [ ] 3. Añadir `pickMove` a `playRandomGame` y la propiedad en `invariants.spec.ts` con 1000 ejecuciones. Medir su duración y pasar `pnpm check`.
 
 ### Pruebas y trazabilidad

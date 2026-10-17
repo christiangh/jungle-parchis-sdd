@@ -6,7 +6,10 @@ import {
   DIE_FACES,
   GoalPosition,
   HomePosition,
+  LANE_LENGTH,
   LanePosition,
+  MAX_PIECES_PER_SQUARE,
+  PIECES_PER_PLAYER,
   Position,
   TrackPosition,
 } from './board';
@@ -107,15 +110,78 @@ export type StateInvariant = 'I-01' | 'I-02' | 'I-03' | 'I-05';
 
 /** Returns the invariants that `state` breaks, without repeats and in identifier order. */
 export function invariantViolations(state: GameState): StateInvariant[] {
-  void state;
-  return [];
+  const violations: StateInvariant[] = [];
+  if (!hasAllPieces(state)) {
+    violations.push('I-01');
+  }
+  if (hasOvercrowdedSquare(state)) {
+    violations.push('I-02');
+  }
+  if (hasPieceOutsideLane(state)) {
+    violations.push('I-03');
+  }
+  if (!hasPlayingTurnAndWinner(state)) {
+    violations.push('I-05');
+  }
+  return violations;
 }
 
 /** I-04: returns the pieces at the goal in `before` that are no longer there in `after`. */
 export function leftGoal(before: GameState, after: GameState): PieceId[] {
-  void before;
-  void after;
-  return [];
+  return before.pieces
+    .filter((piece) => piece.position.kind === 'goal')
+    .filter(
+      (piece) => after.pieces.find((other) => other.id === piece.id)?.position.kind !== 'goal',
+    )
+    .map((piece) => piece.id);
+}
+
+/** I-01: every player has exactly 4 pieces and no other color has any. */
+function hasAllPieces(state: GameState): boolean {
+  return (
+    state.pieces.every((piece) => state.players.includes(piece.color)) &&
+    state.players.every(
+      (color) => state.pieces.filter((piece) => piece.color === color).length === PIECES_PER_PLAYER,
+    )
+  );
+}
+
+/** I-02: no track square, nor lane square of a color, holds more than 2 pieces. */
+function hasOvercrowdedSquare(state: GameState): boolean {
+  const counts = new Map<string, number>();
+  for (const { color, position } of state.pieces) {
+    const key =
+      position.kind === 'track'
+        ? `track-${position.square}`
+        : position.kind === 'lane'
+          ? `lane-${color}-${position.square}`
+          : null;
+    if (key !== null) {
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+  return [...counts.values()].some((count) => count > MAX_PIECES_PER_SQUARE);
+}
+
+/** I-03: lane positions carry no color, so a piece is in its own lane if the square exists. */
+function hasPieceOutsideLane(state: GameState): boolean {
+  return state.pieces.some(
+    ({ position }) =>
+      position.kind === 'lane' &&
+      !(
+        Number.isInteger(position.square) &&
+        position.square >= 1 &&
+        position.square <= LANE_LENGTH
+      ),
+  );
+}
+
+/** I-05: the turn, and the winner if any, belong to playing colors. */
+function hasPlayingTurnAndWinner(state: GameState): boolean {
+  return (
+    state.players.includes(state.turn) &&
+    (state.winner === null || state.players.includes(state.winner))
+  );
 }
 
 /** Freezes a value and everything reachable from it, so any mutation throws (P-03). */
