@@ -67,3 +67,71 @@ Comandos: `pnpm test:once`, `pnpm check`.
 - **No:** validar en ejecución colores desconocidos. El tipo `Color` ya lo impide y la app es TypeScript.
 - **Sí:** ids de ficha `` `${Color}-${0 | 1 | 2 | 3}` ``. Estables y legibles en eventos y tests.
 - **Revisión del modelo contra el reglamento completo:** barreras (R-060) y ocupación se derivan de las posiciones; el seis (contador de seises, última ficha movida) y los premios (premio pendiente) se añadirán como campos nuevos de `GameState` en sus specs; comer al salir con dos rivales (R-023) necesitará orden de llegada a la casilla, que se añadirá entonces. Nada de esto obliga a cambiar lo de esta parte.
+
+## PARTE-02: Salida y avance
+
+**Estado:** Pendiente
+
+### Enfoque
+
+Nuevo módulo `moves.ts` con `legalMoves(state)`, que lee el turno y la tirada pendiente de `GameState` y devuelve los movimientos legales como `{ pieceId, to }`. La salida de casa se calcula aparte y, si es legal con un 5, es el único movimiento posible (R-021). El avance encadena `stepForward` tantas veces como indique la tirada y solo comprueba la ocupación de la casilla de destino, sin contar la propia ficha que se mueve: así se atraviesan casillas con 2 fichas (RF-012) y se puede terminar junto a una sola rival (RF-013). El rebote no entra en esta parte, así que un avance que se pasa de la meta no es legal hasta PARTE-03. Aplicar el movimiento al estado llega en PARTE-04, junto con la acción de mover y sus eventos.
+
+### Archivos
+
+- `src/engine/moves.ts` (nuevo): `Move`, `legalMoves` y funciones internas de salida, avance y ocupación.
+- `src/engine/moves.spec.ts` (nuevo): tests de HU-02, HU-03, HU-06 y de los RF provisionales.
+- `src/engine/test-utils.ts` (nuevo): `buildGame`, que crea una partida con `createGame` y coloca fichas y tirada pendiente. Es TypeScript puro sin vitest, para reutilizarlo en PARTE-03 a PARTE-05. No se exporta en `index.ts`.
+- `src/engine/index.ts`: exportar `moves.ts`.
+
+### Pasos
+
+- [ ] 1. `test-utils.ts`, tests de salida de casa en `moves.spec.ts` (HU-02, R-020, R-021, R-022, RF-008, RF-013 en la salida) y esqueleto de `moves.ts` que devuelve `[]`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
+- [ ] 2. Implementar la salida de casa en `legalMoves`.
+- [ ] 3. Tests de avance y consulta (HU-03, HU-06, R-008, R-013, R-040, R-041, RF-012, RF-013, no mutación). Ejecutar y comprobar que fallan en sus aserciones.
+- [ ] 4. Implementar el avance y la ocupación, exportar en `index.ts` y pasar `pnpm check`.
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+|--------|--------|--------|
+| HU-02 c1: todas en casa, saca 5 → único movimiento sacar a la 5 | 1, 2 | «R-020: con un 5 y todas en casa, el único movimiento es sacar una ficha a su salida» |
+| HU-02 c2: todas en casa, saca 3 → sin movimientos | 1, 2 | «R-020: sin un 5 no sale ninguna ficha de casa» |
+| HU-02 c3: fichas en casa, una en la 20, salida libre, saca 5 → solo sacar | 1, 2 | «R-021: con un 5, fichas en casa y salida libre, sacar ficha es obligatorio» |
+| HU-02 c4: 2 propias en la 5, saca 5 → no sale y sí mueve 5 otra | 1, 2 | «R-022: con 2 fichas propias en la salida no se sale y se mueve otra ficha» |
+| RF-006 | 1, 2 | Tests de HU-02 c1 y «R-020: cada color sale a su casilla de salida» |
+| RF-007 | 1, 2 | Tests de HU-02 c1, c3 y c4 |
+| RF-008 | 1, 2 | Test de HU-02 c4 y «R-022 (provisional RF-008): no se sale con una ficha propia y una rival en la salida» |
+| RF-013 (salida) | 1, 2 | «RF-013 (provisional): sale con una sola ficha rival en la salida, sin comerla» |
+| HU-03 c1: verde en 66 mueve 5 → casilla 3 | 3, 4 | «R-013: verde en la 66 con un 5 termina en la 3» |
+| HU-03 c2: amarillo en 66 mueve 4 → 2.ª del pasillo | 3, 4 | «R-008: amarillo en la 66 con un 4 termina en la segunda casilla de su pasillo» |
+| HU-03 c3: azul en 66 mueve 4 → casilla 2 | 3, 4 | «R-008: azul en la 66 con un 4 sigue por el recorrido común hasta la 2» |
+| HU-03 c4: destino con 2 fichas → no legal | 3, 4 | «R-041: no se termina en una casilla del recorrido con 2 fichas», «R-041: no se termina en una casilla del pasillo con 2 fichas» |
+| HU-06 c1: cada ficha que puede moverse con su destino | 3, 4 | «HU-06: devuelve cada ficha movible con su casilla de destino» |
+| HU-06 c2: ficha en meta nunca aparece | 3, 4 | «HU-06: una ficha en meta nunca aparece entre los movimientos legales» |
+| RF-005 | 3, 4 | Tests de HU-06 y «HU-06: sin tirada pendiente no hay movimientos legales» |
+| RF-009 | 3, 4 | Tests de HU-03 c1 a c3 y «R-040: avanza siempre hacia delante el número exacto de casillas» |
+| RF-010 | 3, 4 | Tests de HU-03 c2 y c3 |
+| RF-011 | 3, 4 | Tests de HU-03 c4; la casilla del pasillo de otro color no cuenta |
+| RF-012 | 3, 4 | «RF-012 (provisional): atraviesa una casilla con 2 fichas» |
+| RF-013 | 3, 4 | «RF-013 (provisional): termina junto a una sola ficha rival fuera de un seguro» |
+| Caso límite: única ficha bloqueada, resto en casa sin 5 → sin movimientos | 3, 4 | «R-041: sin movimientos si la única ficha en juego tiene el destino lleno» |
+| RNF-002 | 3, 4 | «legalMoves no modifica el estado recibido» (estado congelado en profundidad) |
+| RNF-005 | 1-4 | Nombres de test con su `R-NNN` o el RF provisional |
+| Hecho cuando | 4 | Tests de HU-02, HU-03 y HU-06 en verde con `pnpm check` |
+
+Comandos: `pnpm test:once`, `pnpm check`.
+
+### Skills y agentes
+
+- `caveman:cavecrew-reviewer` o `code-review`: revisión del diff al cerrar la parte.
+
+### Decisiones técnicas
+
+- **Sí:** `legalMoves(state)` lee la tirada de `state.pendingRoll` y devuelve `[]` sin tirada. Es la misma firma que usará la capa de presentación tras la acción de tirar de PARTE-04.
+- **Sí:** `Move = { pieceId, to }`, con un movimiento como máximo por ficha. En este spec cada ficha tiene un único destino posible.
+- **Sí:** la salida se ofrece como un único movimiento, con la primera ficha en casa por índice. HU-02 c1 pide «el único movimiento legal», y las 4 fichas en casa son equivalentes.
+- **Sí:** la ocupación del destino no cuenta la ficha que se mueve. Hace falta para el rebote de PARTE-03, que puede terminar en la casilla de origen (HU-04 c2).
+- **Sí:** las casillas de pasillo solo cuentan las fichas del mismo color. Cada color tiene su propio pasillo (R-007).
+- **Sí:** de forma provisional, un avance que se pasa de la meta no es legal. El rebote lo sustituye en PARTE-03.
+- **Sí:** helper `buildGame` compartido en `test-utils.ts`. Evita repetir la preparación de estados en las partes siguientes.
+- **Sí:** los tests de las reglas provisionales llevan «provisional» y su RF en el nombre, como pide la mitigación de riesgos del spec.
