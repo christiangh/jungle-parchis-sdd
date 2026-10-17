@@ -85,9 +85,9 @@ Nuevo módulo `moves.ts` con `legalMoves(state)`, que lee el turno y la tirada p
 
 ### Pasos
 
-- [ ] 1. `test-utils.ts`, tests de salida de casa en `moves.spec.ts` (HU-02, R-020, R-021, R-022, RF-008, RF-013 en la salida) y esqueleto de `moves.ts` que devuelve `[]`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
+- [x] 1. `test-utils.ts`, tests de salida de casa en `moves.spec.ts` (HU-02 c1 a c3, R-020, R-021, RF-013 en la salida) y esqueleto de `moves.ts` que devuelve `[]`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
 - [ ] 2. Implementar la salida de casa en `legalMoves`.
-- [ ] 3. Tests de avance y consulta (HU-03, HU-06, R-008, R-013, R-040, R-041, RF-012, RF-013, no mutación). Ejecutar y comprobar que fallan en sus aserciones.
+- [ ] 3. Tests de avance y consulta (HU-02 c4, RF-008, HU-03, HU-06, R-008, R-013, R-040, R-041, RF-012, RF-013, no mutación). Ejecutar y comprobar que fallan en sus aserciones.
 - [ ] 4. Implementar el avance y la ocupación, exportar en `index.ts` y pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
@@ -97,10 +97,10 @@ Nuevo módulo `moves.ts` con `legalMoves(state)`, que lee el turno y la tirada p
 | HU-02 c1: todas en casa, saca 5 → único movimiento sacar a la 5 | 1, 2 | «R-020: con un 5 y todas en casa, el único movimiento es sacar una ficha a su salida» |
 | HU-02 c2: todas en casa, saca 3 → sin movimientos | 1, 2 | «R-020: sin un 5 no sale ninguna ficha de casa» |
 | HU-02 c3: fichas en casa, una en la 20, salida libre, saca 5 → solo sacar | 1, 2 | «R-021: con un 5, fichas en casa y salida libre, sacar ficha es obligatorio» |
-| HU-02 c4: 2 propias en la 5, saca 5 → no sale y sí mueve 5 otra | 1, 2 | «R-022: con 2 fichas propias en la salida no se sale y se mueve otra ficha» |
+| HU-02 c4: 2 propias en la 5, saca 5 → no sale y sí mueve 5 otra | 3, 4 | «R-022: con 2 fichas propias en la salida no se sale y se mueve otra ficha» |
 | RF-006 | 1, 2 | Tests de HU-02 c1 y «R-020: cada color sale a su casilla de salida» |
-| RF-007 | 1, 2 | Tests de HU-02 c1, c3 y c4 |
-| RF-008 | 1, 2 | Test de HU-02 c4 y «R-022 (provisional RF-008): no se sale con una ficha propia y una rival en la salida» |
+| RF-007 | 1-4 | Tests de HU-02 c1, c3 y c4 |
+| RF-008 | 3, 4 | Test de HU-02 c4 y «R-022 (provisional RF-008): no se sale con una ficha propia y una rival en la salida» |
 | RF-013 (salida) | 1, 2 | «RF-013 (provisional): sale con una sola ficha rival en la salida, sin comerla» |
 | HU-03 c1: verde en 66 mueve 5 → casilla 3 | 3, 4 | «R-013: verde en la 66 con un 5 termina en la 3» |
 | HU-03 c2: amarillo en 66 mueve 4 → 2.ª del pasillo | 3, 4 | «R-008: amarillo en la 66 con un 4 termina en la segunda casilla de su pasillo» |
@@ -135,3 +135,4 @@ Comandos: `pnpm test:once`, `pnpm check`.
 - **Sí:** de forma provisional, un avance que se pasa de la meta no es legal. El rebote lo sustituye en PARTE-03.
 - **Sí:** helper `buildGame` compartido en `test-utils.ts`. Evita repetir la preparación de estados en las partes siguientes.
 - **Sí:** los tests de las reglas provisionales llevan «provisional» y su RF en el nombre, como pide la mitigación de riesgos del spec.
+- **Sí:** los tests de HU-02 c4 y RF-008 pasan a los pasos 3 y 4. Comprueban que, con la salida bloqueada, se puede avanzar otra ficha, y eso necesita el avance.
