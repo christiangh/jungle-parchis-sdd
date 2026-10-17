@@ -24,31 +24,32 @@ El tablero se modela como datos y funciones puras en `board.ts`: colores en el o
 
 - [x] 1. Tests del tablero en `board.spec.ts` (R-001, R-002, R-003, R-005, R-006, R-007, R-008, R-009) y esqueleto de `board.ts` con tipos, firmas y valores neutros para que compile. Ejecutar y comprobar que fallan en sus aserciones (P-07).
 - [x] 2. Implementar `board.ts` hasta que pasen los tests del paso 1.
-- [ ] 3. Tests de creación de partida en `game.spec.ts` (HU-01, RF-001, RF-002, RF-003, R-001, R-004) y esqueleto de `game.ts`. Ejecutar y comprobar que fallan en sus aserciones.
+- [x] 3. Tests de creación de partida en `game.spec.ts` (HU-01, RF-001, RF-002, RF-003, R-001, R-004) y esqueleto de `game.ts`. Ejecutar y comprobar que fallan en sus aserciones.
 - [ ] 4. Implementar `createGame`, exportar la API en `index.ts` y pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
 
-| Elemento | Paso | Prueba |
-|----------|------|--------|
-| HU-01 c1: amarillo y rojo, inicial amarillo → 2 jugadores, 4 fichas en casa cada uno, turno de amarillo | 3, 4 | `game.spec.ts`: «HU-01: crea una partida de amarillo y rojo con turno de amarillo» |
-| HU-01 c2: un solo color o color repetido → rechazo con motivo | 3, 4 | `game.spec.ts`: «R-001: rechaza una partida de un solo color» (`invalid-player-count`), «R-001: rechaza colores repetidos» (`duplicate-color`), también 0 colores |
-| HU-01 c3: azul y verde, inicial rojo → rechazo | 3, 4 | `game.spec.ts`: «HU-01: rechaza un jugador inicial que no participa» (`first-player-not-playing`) |
-| RF-001 | 3, 4 | Tests de HU-01 c2 y «R-001: acepta partidas de 2, 3 y 4 colores distintos» |
-| RF-002 | 3, 4 | Test de HU-01 c3 |
-| RF-003 | 3, 4 | «R-004: todas las fichas empiezan en casa, fuera del tablero» |
-| RF-004 (R-003) | 1, 2 | «R-003: el recorrido tiene 68 casillas y la 68 va seguida de la 1» |
-| RF-004 (R-005) | 1, 2 | «R-005: casillas de salida 5, 22, 39 y 56» |
-| RF-004 (R-006) | 1, 2 | «R-006: son seguros los 12 indicados y las salidas», «R-006: el resto no son seguros» |
-| RF-004 (R-007) | 1, 2 | «R-007: el pasillo tiene 7 casillas y después la meta», «R-007: una ficha de otro color no entra en un pasillo ajeno» |
-| RF-004 (R-008) | 1, 2 | «R-008: desde su entrada, cada color pasa a la primera casilla de su pasillo» |
-| R-001 (tablero) | 1, 2 | «R-001: cuatro colores en orden amarillo, azul, rojo, verde y 4 fichas por jugador» |
-| R-002 | 1, 2 | «R-002: solo son tiradas válidas los enteros de 1 a 6» (rechaza 0, 7, -1, 2.5, NaN) |
-| R-009 | 1, 2 | «R-009: capacidad 2 en recorrido y pasillo, sin límite en meta» |
-| RNF-001 | 4 | `pnpm lint` (frontera del motor en `eslint.config.js`) |
-| RNF-002 | 3, 4 | «createGame no modifica la lista de colores recibida» (entrada congelada con `Object.freeze`) |
-| RNF-005 | 1-4 | Nombres de test con su `R-NNN` |
-| Hecho cuando | 4 | Tests de HU-01 y de R-001 a R-009 en verde con `pnpm check` |
+| Elemento                                                                                                | Paso | Prueba                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| HU-01 c1: amarillo y rojo, inicial amarillo → 2 jugadores, 4 fichas en casa cada uno, turno de amarillo | 3, 4 | `game.spec.ts`: «HU-01: crea una partida de amarillo y rojo con turno de amarillo»                                                                              |
+| HU-01 c2: un solo color o color repetido → rechazo con motivo                                           | 3, 4 | `game.spec.ts`: «R-001: rechaza una partida con menos de 2 o más de 4 colores» (`invalid-player-count`), «R-001: rechaza colores repetidos» (`duplicate-color`) |
+| HU-01 c3: azul y verde, inicial rojo → rechazo                                                          | 3, 4 | `game.spec.ts`: «HU-01: rechaza un jugador inicial que no participa» (`first-player-not-playing`)                                                               |
+| RF-001                                                                                                  | 3, 4 | Tests de HU-01 c2 y «R-001: acepta partidas de 2, 3 y 4 colores distintos»                                                                                      |
+| RF-002                                                                                                  | 3, 4 | Test de HU-01 c3                                                                                                                                                |
+| R-010 (orden de turno guardado)                                                                         | 3, 4 | «R-010: guarda los jugadores en el orden de turno amarillo, azul, rojo, verde»                                                                                  |
+| RF-003                                                                                                  | 3, 4 | «R-004: todas las fichas empiezan en casa, fuera del tablero»                                                                                                   |
+| RF-004 (R-003)                                                                                          | 1, 2 | «R-003: el recorrido tiene 68 casillas y la 68 va seguida de la 1»                                                                                              |
+| RF-004 (R-005)                                                                                          | 1, 2 | «R-005: casillas de salida 5, 22, 39 y 56»                                                                                                                      |
+| RF-004 (R-006)                                                                                          | 1, 2 | «R-006: son seguros los 12 indicados y las salidas», «R-006: el resto no son seguros»                                                                           |
+| RF-004 (R-007)                                                                                          | 1, 2 | «R-007: el pasillo tiene 7 casillas y después la meta», «R-007: una ficha de otro color no entra en un pasillo ajeno»                                           |
+| RF-004 (R-008)                                                                                          | 1, 2 | «R-008: desde su entrada, cada color pasa a la primera casilla de su pasillo»                                                                                   |
+| R-001 (tablero)                                                                                         | 1, 2 | «R-001: cuatro colores en orden amarillo, azul, rojo, verde y 4 fichas por jugador»                                                                             |
+| R-002                                                                                                   | 1, 2 | «R-002: solo son tiradas válidas los enteros de 1 a 6» (rechaza 0, 7, -1, 2.5, NaN)                                                                             |
+| R-009                                                                                                   | 1, 2 | «R-009: capacidad 2 en recorrido y pasillo, sin límite en meta»                                                                                                 |
+| RNF-001                                                                                                 | 4    | `pnpm lint` (frontera del motor en `eslint.config.js`)                                                                                                          |
+| RNF-002                                                                                                 | 3, 4 | «createGame no modifica la lista de colores recibida» (entrada congelada con `Object.freeze`)                                                                   |
+| RNF-005                                                                                                 | 1-4  | Nombres de test con su `R-NNN`                                                                                                                                  |
+| Hecho cuando                                                                                            | 4    | Tests de HU-01 y de R-001 a R-009 en verde con `pnpm check`                                                                                                     |
 
 Comandos: `pnpm test:once`, `pnpm check`.
 
