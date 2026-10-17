@@ -254,3 +254,73 @@ Comandos: `pnpm test:once`, `pnpm check`.
 - **Sí:** una tirada con movimientos legales se acepta sin eventos. RF-021 no incluye un evento de tirada y el valor ya queda en `pendingRoll`.
 - **Sí:** al ganar no hay `turn-changed`. La partida termina en ese momento (R-090) y el turno se queda en el ganador.
 - **Sí:** `playRandomGame` elige siempre el primer movimiento legal y tiene un límite de acciones que hace fallar el test si se supera, en lugar de colgarlo (riesgo del spec).
+
+## PARTE-05: Invariantes con tests de propiedades
+
+**Estado:** Pendiente
+
+### Enfoque
+
+Esta parte no cambia el motor, solo añade tests. Un comprobador puro en `test-utils.ts` recibe un estado y devuelve la lista de invariantes incumplidos, con su identificador. Así un fallo dice qué invariante se rompe y en qué estado. Sus funciones:
+
+- `invariantViolations(state)` comprueba los invariantes de un estado:
+  - I-01: cada jugador tiene 4 fichas y no hay fichas de colores que no juegan.
+  - I-02: ninguna casilla del recorrido ni del pasillo de un color tiene más de 2 fichas.
+  - I-03: toda ficha de pasillo está en una casilla de 1 a 7. Que el pasillo sea de su color ya lo garantiza el tipo (decisión de PARTE-01).
+  - I-05: el turno, y el ganador si lo hay, son de un jugador que participa.
+- `leftGoal(before, after)` compara dos estados consecutivos y devuelve las fichas que han salido de la meta (I-04).
+
+Como el comprobador es código nuevo, primero se prueba con estados rotos construidos a mano y debe fallar antes de implementarlo (P-07).
+
+Después, `invariants.spec.ts` usa fast-check con 1000 ejecuciones (CE-02). En cada ejecución se generan:
+
+- los colores (2, 3 o 4, sin repetir),
+- el jugador inicial,
+- una semilla para las tiradas y otra para elegir el movimiento.
+
+Con eso se juega una partida completa con `playRandomGame`. Tras cada acción se comprueban I-01 a I-05 sobre el nuevo estado e I-04 entre el estado anterior y el nuevo. Al terminar, fast-check genera acciones cualesquiera: de cualquier color, de tirar con cualquier entero o de mover cualquier ficha. Todas deben rechazarse con `game-over` y sin cambiar el estado (I-06). Para que las partidas no sigan siempre el mismo camino, `playRandomGame` acepta un selector de movimiento opcional. Si no se pasa, elige el primero, como hasta ahora, y los tests de CE-03 y CE-04 no cambian.
+
+### Archivos
+
+- `src/engine/test-utils.ts`: `invariantViolations`, `leftGoal` y un parámetro opcional `pickMove` en `playRandomGame`.
+- `src/engine/test-utils.spec.ts` (nuevo): tests del comprobador con estados válidos y rotos a mano.
+- `src/engine/invariants.spec.ts` (nuevo): propiedad de I-01 a I-06 sobre 1000 partidas aleatorias con fast-check.
+
+`fast-check` ya está en `devDependencies` y lo permite CLAUDE.md para los tests del motor. No se añade ninguna dependencia.
+
+### Pasos
+
+- [ ] 1. Tests del comprobador en `test-utils.spec.ts`: una partida recién creada y una a mitad no incumplen nada; un estado roto a mano por cada invariante (I-01 con 3 o 5 fichas y con un color que no juega, I-02 con 3 fichas en una casilla del recorrido y del pasillo, I-03 con pasillo 0 u 8, I-05 con turno o ganador que no juegan, I-04 con una ficha que sale de meta). Esqueleto en `test-utils.ts` que devuelve `[]`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
+- [ ] 2. Implementar `invariantViolations` y `leftGoal` hasta que pasen los tests del paso 1.
+- [ ] 3. Añadir `pickMove` a `playRandomGame` y la propiedad en `invariants.spec.ts` con 1000 ejecuciones. Medir su duración y pasar `pnpm check`.
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+|--------|--------|--------|
+| RNF-004 / CE-02 | 3 | `invariants.spec.ts`: «CE-02: 1000 partidas aleatorias de 2, 3 y 4 jugadores cumplen I-01 a I-06 tras cada acción» |
+| I-01 | 1-3 | Comprobador: «I-01: detecta un jugador sin 4 fichas o fichas de un color que no juega», y propiedad de CE-02 |
+| I-02 | 1-3 | Comprobador: «I-02: detecta una casilla del recorrido o del pasillo con más de 2 fichas», y propiedad de CE-02 |
+| I-03 | 1-3 | Comprobador: «I-03: detecta una ficha fuera de las casillas de su pasillo», y propiedad de CE-02 |
+| I-04 | 1-3 | Comprobador: «I-04: detecta una ficha que sale de meta», y propiedad de CE-02 (entre cada par de estados consecutivos) |
+| I-05 | 1-3 | Comprobador: «I-05: detecta un turno o un ganador que no participan», y propiedad de CE-02 |
+| I-06 | 3 | Propiedad de CE-02: tras terminar, toda acción generada se rechaza con `game-over` y el estado no cambia |
+| Comprobador sin falsos positivos | 1, 2 | «el comprobador no detecta nada en una partida recién creada ni a mitad» |
+| RNF-005 | 1-3 | Nombres de test con su `I-NN` o `CE-NN` |
+| Hecho cuando | 3 | CE-02 en verde con `pnpm check` |
+
+Comandos: `pnpm test:once`, `pnpm check`.
+
+### Skills y agentes
+
+- `caveman:cavecrew-reviewer` o `code-review`: revisión del diff al cerrar la parte.
+
+### Decisiones técnicas
+
+- **Sí:** comprobador en `test-utils.ts`, no en el motor. Los invariantes los garantiza el motor; comprobarlos es cosa de los tests, y así no entra en la API pública.
+- **Sí:** el comprobador devuelve los identificadores incumplidos, no un booleano. Si la propiedad falla, se ve qué invariante se rompe.
+- **Sí:** fast-check genera colores, jugador inicial y semillas, y la partida se juega con `seededRolls`. Las semillas hacen que un contraejemplo se pueda reproducir, y fast-check lo reduce a la semilla mínima.
+- **Sí:** el movimiento se elige al azar entre los legales (`pickMove`). Elegir siempre el primero explora poco: con el primero siempre avanza la misma ficha.
+- **Sí:** partidas completas hasta el ganador. Así se comprueban todos los estados intermedios y también I-06 al final. Si el test tarda demasiado, se sube su timeout y no se bajan las 1000 ejecuciones (CE-02).
+- **Sí:** I-06 se prueba con acciones generadas por fast-check, que incluyen tiradas no válidas y fichas de otros colores. En una partida terminada `game-over` va antes que cualquier otra comprobación.
+- **Sí:** los tests de los pasos 1 y 2 prueban el comprobador antes que la propiedad. La propiedad puede pasar a la primera porque el motor ya existe, y estos tests demuestran que el comprobador detecta incumplimientos.
