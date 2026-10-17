@@ -136,3 +136,47 @@ Comandos: `pnpm test:once`, `pnpm check`.
 - **Sí:** helper `buildGame` compartido en `test-utils.ts`. Evita repetir la preparación de estados en las partes siguientes.
 - **Sí:** los tests de las reglas provisionales llevan «provisional» y su RF en el nombre, como pide la mitigación de riesgos del spec.
 - **Sí:** los tests de HU-02 c4 y RF-008 pasan a los pasos 3 y 4. Comprueban que, con la salida bloqueada, se puede avanzar otra ficha, y eso necesita el avance.
+
+## PARTE-03: Meta y rebote
+
+**Estado:** Pendiente
+
+### Enfoque
+
+Solo cambia `advance` en `moves.ts`: al llegar a la meta con pasos sobrantes, en lugar de devolver `null` (provisional de PARTE-02) retrocede por el pasillo esos pasos (R-071). Con un dado de 6 caras y sin premios, el máximo sobrante es 5 (séptima casilla con un 6), así que el rebote nunca alcanza el principio del pasillo y basta con el rebote simple: destino `lane(LANE_LENGTH + 1 - sobrantes)`. Como solo se devuelve el destino final, pasar por la meta durante un rebote no cuenta como llegar. La comprobación de ocupación de PARTE-02 se reutiliza sin cambios: no cuenta la ficha que se mueve (HU-04 c2) y bloquea un destino de pasillo con 2 fichas (HU-04 c3). Las fichas en meta ya no se mueven (`advanceMove` solo acepta `track` y `lane`); se añade su test con la regla R-070. Aplicar el movimiento y el evento de llegada a meta siguen en PARTE-04.
+
+### Archivos
+
+- `src/engine/moves.spec.ts`: nuevo `describe` «legalMoves: meta y rebote» con los tests de HU-04, R-070 y R-071.
+- `src/engine/moves.ts`: rebote en `advance` y comentario actualizado.
+
+### Pasos
+
+- [ ] 1. Tests de meta y rebote en `moves.spec.ts` (HU-04 c1 a c3, R-070, R-071, casos límite de la séptima casilla y del paso por la meta). Ejecutar y comprobar que fallan en sus aserciones (P-07).
+- [ ] 2. Implementar el rebote en `advance` y pasar `pnpm check`.
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+|--------|--------|--------|
+| HU-04 c1: amarilla en 5.ª del pasillo mueve 3 → llega a meta y no vuelve a moverse | 1, 2 | «R-070: desde la quinta casilla del pasillo con un 3 llega a meta», «R-070: una ficha en meta no vuelve a moverse» |
+| HU-04 c2: amarilla en 5.ª del pasillo mueve 6 → meta y retrocede 3 hasta la 5.ª | 1, 2 | «R-071: desde la quinta casilla del pasillo con un 6 rebota y termina en la quinta» |
+| HU-04 c3: rebote que termina en casilla del pasillo con 2 fichas → no legal | 1, 2 | «R-071: un rebote que termina en una casilla del pasillo con 2 fichas no es legal» |
+| RF-014 | 1, 2 | Tests de HU-04 c1 y «R-070: desde la segunda casilla del pasillo con un 6 llega justo a meta» |
+| RF-015 | 1, 2 | Tests de HU-04 c2 y c3, y casos límite |
+| Caso límite: séptima casilla con un 6 → tercera del pasillo | 1, 2 | «R-071: desde la séptima casilla del pasillo con un 6 rebota hasta la tercera, sin quedarse en meta» |
+| Caso límite: paso por la meta durante un rebote no cuenta | 1, 2 | Mismo test: el destino es la tercera casilla, no la meta |
+| RNF-005 | 1, 2 | Nombres de test con su `R-NNN` |
+| Hecho cuando | 2 | Tests de HU-04 en verde con `pnpm check` |
+
+Comandos: `pnpm test:once`, `pnpm check`.
+
+### Skills y agentes
+
+- `caveman:cavecrew-reviewer` o `code-review`: revisión del diff al cerrar la parte.
+
+### Decisiones técnicas
+
+- **Sí:** rebote simple, calculado como retroceso desde la meta por los pasos sobrantes. El rebote múltiple queda fuera del spec y no se alcanza con un dado sin premios.
+- **Sí:** el rebote se calcula en `advance` dentro de `moves.ts`, no en `stepForward`. Lo previsto en PARTE-01: `stepForward` es el paso unitario hacia delante.
+- **Sí:** reutilizar `hasRoom` tal cual para el destino del rebote, sin contar la ficha que se mueve.
