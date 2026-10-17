@@ -1,7 +1,7 @@
 // Game actions: the single pure transition from a state and an action to a new state and events.
 
 import { BoardPosition, Color, isValidRoll, LanePosition, TrackPosition } from './board';
-import { GameState, PieceId, Result } from './game';
+import { GameState, Piece, PieceId, Result } from './game';
 import { legalMoves } from './moves';
 
 export type Action =
@@ -74,10 +74,52 @@ function roll(state: GameState, action: RollAction): Result<ActionOutcome, Actio
   };
 }
 
+/** R-013, R-090: applies one legal move, then passes the turn or ends the game. */
 function move(state: GameState, action: MoveAction): Result<ActionOutcome, ActionError> {
-  void state;
-  void action;
-  return { ok: false, error: 'illegal-move' };
+  if (state.pendingRoll === null) {
+    return { ok: false, error: 'no-pending-roll' };
+  }
+  const legal = legalMoves(state).find((candidate) => candidate.pieceId === action.pieceId);
+  const piece = state.pieces.find((candidate) => candidate.id === action.pieceId);
+  if (!legal || !piece) {
+    return { ok: false, error: 'illegal-move' };
+  }
+
+  const pieces = state.pieces.map((current) =>
+    current.id === piece.id ? { ...current, position: legal.to } : current,
+  );
+  const events: GameEvent[] = [moveEvent(piece, legal.to)];
+  if (legal.to.kind === 'goal') {
+    events.push({ type: 'piece-reached-goal', pieceId: piece.id });
+  }
+  const moved: GameState = { ...state, pieces, pendingRoll: null };
+
+  if (hasWon(pieces, state.turn)) {
+    events.push({ type: 'game-over', winner: state.turn });
+    return { ok: true, value: { state: { ...moved, winner: state.turn }, events } };
+  }
+  const next = nextPlayer(state);
+  events.push({ type: 'turn-changed', player: next });
+  return { ok: true, value: { state: { ...moved, turn: next }, events } };
+}
+
+function moveEvent(piece: Piece, to: BoardPosition): GameEvent {
+  const from = piece.position;
+  if (from.kind === 'track' || from.kind === 'lane') {
+    return { type: 'piece-advanced', pieceId: piece.id, from, to };
+  }
+  // Only pieces at home or on the board have legal moves, and leaving home lands on the track.
+  if (from.kind !== 'home' || to.kind !== 'track') {
+    throw new Error(`Unexpected move of ${piece.id}`);
+  }
+  return { type: 'piece-left-home', pieceId: piece.id, to };
+}
+
+/** R-090: a player wins with all their pieces at the goal. */
+function hasWon(pieces: readonly Piece[], color: Color): boolean {
+  return pieces
+    .filter((piece) => piece.color === color)
+    .every((piece) => piece.position.kind === 'goal');
 }
 
 /** R-010: players are stored in turn order, so the next one follows, wrapping around. */
