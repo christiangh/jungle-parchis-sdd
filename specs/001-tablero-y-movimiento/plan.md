@@ -180,3 +180,77 @@ Comandos: `pnpm test:once`, `pnpm check`.
 - **Sí:** rebote simple, calculado como retroceso desde la meta por los pasos sobrantes. El rebote múltiple queda fuera del spec y no se alcanza con un dado sin premios.
 - **Sí:** el rebote se calcula en `advance` dentro de `moves.ts`, no en `stepForward`. Lo previsto en PARTE-01: `stepForward` es el paso unitario hacia delante.
 - **Sí:** reutilizar `hasRoom` tal cual para el destino del rebote, sin contar la ficha que se mueve.
+
+## PARTE-04: Turnos y fin de partida
+
+**Estado:** Pendiente
+
+### Enfoque
+
+Nuevo módulo `actions.ts` con una única transición pura, `applyAction(state, action)`, que devuelve `Result<ActionOutcome, ActionError>`. Si la acción se acepta, `ActionOutcome = { state, events }`; si no, el código del motivo, sin estado nuevo (P-03, RF-020). Hay dos acciones, y las dos indican el jugador que las envía, para poder rechazar las de quien no tiene el turno (HU-05 c4):
+
+- `{ type: 'roll', player, value }`: valida el turno, que no haya tirada pendiente y el valor (R-002). Si `legalMoves` no da ningún movimiento, se pierde la tirada y pasa el turno (R-012). Si da alguno, la tirada queda pendiente, aunque sea uno solo (caso límite).
+- `{ type: 'move', player, pieceId }`: valida el turno, la tirada pendiente y que la ficha esté entre los `legalMoves`. Aplica el destino, limpia la tirada y pasa el turno. Si con ese movimiento el jugador tiene sus 4 fichas en meta, la partida termina con él como ganador y el turno ya no cambia (R-090).
+
+Las acciones sobre una partida terminada se rechazan antes que cualquier otra comprobación (I-06). El turno rota al siguiente color de `players`, que ya está en el orden de R-010. Los eventos son exactamente los de RF-021.
+
+### Archivos
+
+- `src/engine/actions.ts` (nuevo): `Action`, `ActionError`, `GameEvent`, `ActionOutcome`, `applyAction` y funciones internas de tirada, movimiento y siguiente turno.
+- `src/engine/actions.spec.ts` (nuevo): tests de HU-05, HU-07, R-002, R-011, R-012, R-090, RF-016 a RF-023, casos límite, CE-03 y CE-04.
+- `src/engine/test-utils.ts`: `seededRolls(seed)`, un generador de tiradas reproducible (mulberry32), y `playRandomGame(state, nextRoll)`, que juega hasta que hay ganador eligiendo el primer movimiento legal y devuelve las acciones, los estados y los eventos. Lo reutilizará PARTE-05.
+- `src/engine/index.ts`: exportar `actions.ts`.
+
+### Pasos
+
+- [ ] 1. Tests de la acción de tirar en `actions.spec.ts` (HU-05 c2, c4 y c5 al tirar, R-002, R-011, R-012, RF-016, RF-017, caso límite del único movimiento legal) y esqueleto de `actions.ts` con tipos y un `applyAction` que siempre rechaza con `game-over`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
+- [ ] 2. Implementar la tirada: validaciones, tirada perdida, tirada pendiente y paso de turno.
+- [ ] 3. Tests de la acción de mover, del fin de partida y transversales (HU-05 c1, c3, c4 y c5 al mover, HU-07, R-013, R-090, RF-018 a RF-023, casos límite del 6 y de azul y verde, CE-03 y CE-04), con `seededRolls` y `playRandomGame` en `test-utils.ts`. Ejecutar y comprobar que fallan en sus aserciones.
+- [ ] 4. Implementar el movimiento, los eventos de salida, avance y meta, el fin de partida y el rechazo tras terminar; exportar en `index.ts` y pasar `pnpm check`.
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+|--------|--------|--------|
+| HU-05 c1: amarillo mueve una ficha legal → turno al siguiente color | 3, 4 | «R-011: tras mover, el turno pasa al siguiente color participante» |
+| HU-05 c2: tirada sin movimientos legales → pierde la tirada y pasa el turno | 1, 2 | «R-012: sin movimientos legales se pierde la tirada y pasa el turno» |
+| HU-05 c3: amarillo y rojo, turno de rojo, termina → turno de amarillo | 3, 4 | «RF-019: después del último color vuelve el primero» |
+| HU-05 c4: turno de amarillo, azul tira o mueve → rechazo sin cambio | 1-4 | «RF-016: rechaza la tirada de un jugador sin turno» (`not-your-turn`), «RF-018: rechaza el movimiento de un jugador sin turno» (`not-your-turn`) |
+| HU-05 c5: tirada pendiente, tira otra vez o mueve una ficha no legal → rechazo | 1-4 | «RF-016: rechaza tirar con una tirada pendiente» (`roll-pending`), «RF-018: rechaza mover una ficha sin movimiento legal» (`illegal-move`) |
+| HU-07 c1: amarillo con 3 en meta mete la cuarta → gana amarillo | 3, 4 | «R-090: gana quien mete su cuarta ficha en meta y la partida termina» |
+| HU-07 c2: partida terminada, cualquier acción → rechazo sin cambio | 3, 4 | «RF-023: rechaza tirar o mover en una partida terminada» (`game-over`) |
+| RF-016 | 1, 2 | Tests de HU-05 c4 y c5 al tirar, y «R-002: rechaza tiradas fuera de 1 a 6 o no enteras» (`invalid-roll`) |
+| RF-017 | 1, 2 | Test de HU-05 c2 |
+| RF-018 | 1-4 | «R-011: con movimientos legales la tirada queda pendiente y el turno no cambia», tests de HU-05 c4 y c5 al mover, y «RF-018: rechaza mover sin tirada pendiente» (`no-pending-roll`) |
+| RF-019 | 1-4 | Tests de HU-05 c1 a c3 y «RF-019: con azul y verde el turno alterna entre ellos» |
+| RF-020 | 1-4 | Todos los tests de rechazo comprueban el código del motivo y que el estado recibido no cambia |
+| RF-021 | 1-4 | «RF-021: sacar ficha produce los eventos de salida y cambio de turno», «RF-021: avanzar produce los eventos de avance y cambio de turno», «RF-021: llegar a meta produce los eventos de avance y llegada», test de HU-05 c2 (tirada perdida) y de HU-07 c1 (fin de partida) |
+| RF-022 | 3, 4 | Test de HU-07 c1 |
+| RF-023 | 3, 4 | Test de HU-07 c2 |
+| R-013 | 3, 4 | «R-013: mover aplica a la ficha el destino de su movimiento legal» |
+| Caso límite: único movimiento legal no se aplica solo | 1, 2 | Test de R-011 con tirada pendiente, con un solo movimiento legal |
+| Caso límite: tirada de 6 → 6 casillas y pasa el turno | 3, 4 | «R-011: con un 6 se mueve 6 y el turno pasa como con cualquier valor» |
+| Caso límite: azul y verde alternan | 3, 4 | Test de RF-019 con azul y verde |
+| Caso límite: tirada 0, 7, negativa o decimal → rechazo | 1, 2 | Test de R-002 |
+| Caso límite: mover sin tirada pendiente → rechazo | 3, 4 | Test de RF-018 sin tirada pendiente |
+| CE-03 / RNF-003 | 3, 4 | «CE-03: la misma secuencia de acciones produce el mismo estado final y los mismos eventos» (partida completa de 4 jugadores con `seededRolls`) |
+| CE-04 / RNF-002 | 3, 4 | «CE-04: ninguna acción modifica el estado recibido» (cada estado de una partida completa, congelado con `deepFreeze` y comparado con su copia) |
+| RNF-005 | 1-4 | Nombres de test con su `R-NNN`, `RF-NNN` o `CE-NN` |
+| Hecho cuando | 4 | Tests de HU-05, HU-07, CE-03 y CE-04 en verde con `pnpm check` |
+
+Comandos: `pnpm test:once`, `pnpm check`.
+
+### Skills y agentes
+
+- `caveman:cavecrew-reviewer` o `code-review`: revisión del diff al cerrar la parte.
+
+### Decisiones técnicas
+
+- **Sí:** una sola función `applyAction(state, action)` con acciones como unión discriminada. Es la forma de P-03 (estado y acción en, estado y eventos fuera) y deja una única puerta para la presentación y los tests de propiedades.
+- **Sí:** cada acción lleva `player`. Sin él no se puede rechazar la acción de quien no tiene el turno (HU-05 c4).
+- **Sí:** el movimiento se pide por `pieceId`. Cada ficha tiene un único movimiento legal por tirada (decisión de PARTE-02) y el destino lo calcula el motor.
+- **Sí:** códigos de rechazo `game-over`, `not-your-turn`, `roll-pending`, `invalid-roll`, `no-pending-roll` e `illegal-move`, comprobados en ese orden. Como en `createGame`: solo código, la presentación pone el texto.
+- **Sí:** eventos `piece-left-home`, `piece-advanced` (con `from` y `to`), `piece-reached-goal`, `roll-lost`, `turn-changed` y `game-over`, los de RF-021. Llegar a meta produce `piece-advanced` seguido de `piece-reached-goal`, para que la presentación pueda animar el avance y marcar la llegada.
+- **Sí:** una tirada con movimientos legales se acepta sin eventos. RF-021 no incluye un evento de tirada y el valor ya queda en `pendingRoll`.
+- **Sí:** al ganar no hay `turn-changed`. La partida termina en ese momento (R-090) y el turno se queda en el ganador.
+- **Sí:** `playRandomGame` elige siempre el primer movimiento legal y tiene un límite de acciones que hace fallar el test si se supera, en lugar de colgarlo (riesgo del spec).
