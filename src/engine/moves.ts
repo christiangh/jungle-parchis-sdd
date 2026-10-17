@@ -4,6 +4,7 @@ import {
   BoardPosition,
   capacity,
   Color,
+  LANE_LENGTH,
   LanePosition,
   START_SQUARE,
   stepForward,
@@ -56,22 +57,19 @@ function advanceMove(state: GameState, piece: Piece, roll: number): Move | null 
     return null;
   }
   const to = advance(piece.color, from, roll);
-  return to && hasRoom(state.pieces, piece, to) ? { pieceId: piece.id, to } : null;
+  return hasRoom(state.pieces, piece, to) ? { pieceId: piece.id, to } : null;
 }
 
 /**
  * Walks `steps` squares forward. Squares passed through are not checked (RF-012, provisional).
- * Returns null when the move overshoots the goal: provisional until bouncing (R-071).
+ * R-071: steps left over at the goal go back down the lane. A single bounce is enough, since a
+ * die roll leaves at most 5 steps over (from the last lane square with a 6).
  */
-function advance(
-  color: Color,
-  from: TrackPosition | LanePosition,
-  steps: number,
-): BoardPosition | null {
+function advance(color: Color, from: TrackPosition | LanePosition, steps: number): BoardPosition {
   let position: BoardPosition = from;
   for (let step = 0; step < steps; step++) {
     if (position.kind === 'goal') {
-      return null;
+      return { kind: 'lane', square: LANE_LENGTH + 1 - (steps - step) };
     }
     position = stepForward(color, position);
   }

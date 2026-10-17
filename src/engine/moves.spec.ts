@@ -273,7 +273,12 @@ describe('legalMoves: meta y rebote', () => {
       players: ['yellow', 'red'],
       turn: 'yellow',
       pendingRoll: 6,
-      positions: { 'yellow-0': lane(7), 'yellow-1': lane(3), 'yellow-2': lane(3), 'yellow-3': GOAL },
+      positions: {
+        'yellow-0': lane(7),
+        'yellow-1': lane(3),
+        'yellow-2': lane(3),
+        'yellow-3': GOAL,
+      },
     });
 
     expect(legalMoves(game)).toEqual([
