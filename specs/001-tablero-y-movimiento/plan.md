@@ -139,7 +139,7 @@ Comandos: `pnpm test:once`, `pnpm check`.
 
 ## PARTE-03: Meta y rebote
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
