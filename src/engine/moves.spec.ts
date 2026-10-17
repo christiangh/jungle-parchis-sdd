@@ -210,6 +210,79 @@ describe('legalMoves: avance', () => {
   });
 });
 
+describe('legalMoves: meta y rebote', () => {
+  it('R-070: desde la quinta casilla del pasillo con un 3 llega a meta', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 3,
+      positions: { 'yellow-0': lane(5), 'yellow-1': GOAL, 'yellow-2': GOAL, 'yellow-3': GOAL },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: GOAL }]);
+  });
+
+  it('R-070: desde la segunda casilla del pasillo con un 6 llega justo a meta', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: { 'yellow-0': lane(2), 'yellow-1': GOAL, 'yellow-2': GOAL, 'yellow-3': GOAL },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: GOAL }]);
+  });
+
+  it('R-070: una ficha en meta no vuelve a moverse', () => {
+    for (const roll of [1, 2, 3, 4, 5, 6]) {
+      const game = buildGame({
+        players: ['yellow', 'red'],
+        turn: 'yellow',
+        pendingRoll: roll,
+        positions: { 'yellow-0': GOAL, 'yellow-1': GOAL, 'yellow-2': GOAL, 'yellow-3': GOAL },
+      });
+
+      expect(legalMoves(game)).toEqual([]);
+    }
+  });
+
+  it('R-071: desde la quinta casilla del pasillo con un 6 rebota y termina en la quinta', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: { 'yellow-0': lane(5), 'yellow-1': GOAL, 'yellow-2': GOAL, 'yellow-3': GOAL },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: lane(5) }]);
+  });
+
+  it('R-071: desde la séptima casilla del pasillo con un 6 rebota hasta la tercera, sin quedarse en meta', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: { 'yellow-0': lane(7), 'yellow-1': GOAL, 'yellow-2': GOAL, 'yellow-3': GOAL },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: lane(3) }]);
+  });
+
+  it('R-071: un rebote que termina en una casilla del pasillo con 2 fichas no es legal', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: { 'yellow-0': lane(7), 'yellow-1': lane(3), 'yellow-2': lane(3), 'yellow-3': GOAL },
+    });
+
+    expect(legalMoves(game)).toEqual([
+      { pieceId: 'yellow-1', to: lane(7) },
+      { pieceId: 'yellow-2', to: lane(7) },
+    ]);
+  });
+});
+
 describe('legalMoves: consulta', () => {
   it('HU-06: devuelve cada ficha movible con su casilla de destino', () => {
     const game = buildGame({

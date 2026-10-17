@@ -152,7 +152,7 @@ Solo cambia `advance` en `moves.ts`: al llegar a la meta con pasos sobrantes, en
 
 ### Pasos
 
-- [ ] 1. Tests de meta y rebote en `moves.spec.ts` (HU-04 c1 a c3, R-070, R-071, casos límite de la séptima casilla y del paso por la meta). Ejecutar y comprobar que fallan en sus aserciones (P-07).
+- [x] 1. Tests de meta y rebote en `moves.spec.ts` (HU-04 c1 a c3, R-070, R-071, casos límite de la séptima casilla y del paso por la meta). Ejecutar y comprobar que fallan en sus aserciones (P-07).
 - [ ] 2. Implementar el rebote en `advance` y pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
