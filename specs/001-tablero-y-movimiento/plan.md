@@ -6,7 +6,7 @@
 
 ## PARTE-01: Tablero y creación de partida
 
-**Estado:** En curso
+**Estado:** Hecha
 
 ### Enfoque
 
