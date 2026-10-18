@@ -161,7 +161,7 @@ Hechos de CE-03 y cómo se reconocen en los eventos de una acción:
 ### Pasos
 
 - [x] 1. Tests de `mixedColorSquares` (dos colores fuera de seguro, en seguro, del mismo color, en el pasillo) y de `gameFacts` (un caso por hecho y una acción sin ninguno). Esqueleto: las dos funciones devuelven `[]`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
-- [ ] 2. Implementar `mixedColorSquares` y `gameFacts`; pasar `pnpm check`.
+- [x] 2. Implementar `mixedColorSquares` y `gameFacts`; pasar `pnpm check`.
 - [ ] 3. Ampliar el test de CE-02 con la propiedad de RNF-004 y la exclusión de tirada y premio pendientes tras cada acción, y la comprobación de CE-03 al final; medir cuántas veces sale cada hecho en las 1000 partidas; pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
