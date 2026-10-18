@@ -6,8 +6,12 @@ import { PieceId } from './game';
 import {
   buildGame,
   deepFreeze,
+  GAME_FACTS,
+  GameFact,
+  gameFacts,
   invariantViolations,
   leftGoal,
+  mixedColorSquares,
   playRandomGame,
   seededRandom,
   seededRolls,
@@ -45,8 +49,9 @@ const randomGame = fc.record({
 
 describe('invariantes', () => {
   it(
-    `CE-02: ${GAMES} partidas aleatorias de 2, 3 y 4 jugadores cumplen I-01 a I-06 tras cada acción`,
+    `CE-02, CE-03: ${GAMES} partidas aleatorias de 2, 3 y 4 jugadores cumplen I-01 a I-06 y RNF-004 tras cada acción, y producen todos los hechos de CE-03`,
     () => {
+      const facts = new Set<GameFact>();
       fc.assert(
         fc.property(randomGame, ({ players, firstPlayer, rollSeed, moveSeed, afterEnd }) => {
           const initial = buildGame({ players, turn: players[firstPlayer % players.length] });
@@ -59,9 +64,16 @@ describe('invariantes', () => {
           expect(played.stopped).toBeNull();
           for (const [step, state] of played.states.entries()) {
             expect(invariantViolations(state)).toEqual([]);
+            // RNF-004: captures always apply, so two colors only share a safe square.
+            expect(mixedColorSquares(state)).toEqual([]);
+            // A pending bonus must be used before rolling again (R-051, R-072).
+            expect(state.pendingRoll !== null && state.pendingBonus !== null).toBe(false);
             if (step > 0) {
               expect(leftGoal(played.states[step - 1], state)).toEqual([]);
             }
+          }
+          for (const fact of gameFacts(played)) {
+            facts.add(fact);
           }
 
           // I-06: once the game is over, every action is rejected and the state does not change.
@@ -77,6 +89,9 @@ describe('invariantes', () => {
         }),
         { numRuns: GAMES },
       );
+
+      // CE-03: every fact happened in at least one game.
+      expect(GAME_FACTS.filter((fact) => !facts.has(fact))).toEqual([]);
     },
     TIMEOUT_MS,
   );

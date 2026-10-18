@@ -162,14 +162,14 @@ Hechos de CE-03 y cómo se reconocen en los eventos de una acción:
 
 - [x] 1. Tests de `mixedColorSquares` (dos colores fuera de seguro, en seguro, del mismo color, en el pasillo) y de `gameFacts` (un caso por hecho y una acción sin ninguno). Esqueleto: las dos funciones devuelven `[]`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
 - [x] 2. Implementar `mixedColorSquares` y `gameFacts`; pasar `pnpm check`.
-- [ ] 3. Ampliar el test de CE-02 con la propiedad de RNF-004 y la exclusión de tirada y premio pendientes tras cada acción, y la comprobación de CE-03 al final; medir cuántas veces sale cada hecho en las 1000 partidas; pasar `pnpm check`.
+- [x] 3. Ampliar el test de CE-02 con la propiedad de RNF-004 y la exclusión de tirada y premio pendientes tras cada acción, y la comprobación de CE-03 al final; medir cuántas veces sale cada hecho en las 1000 partidas; pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
 
 | Elemento | Paso | Prueba |
 |----------|------|--------|
 | RNF-004 (propiedad) | 1, 2 | Tests de `mixedColorSquares` en `test-utils.spec.ts` |
-| RNF-004 / CE-02 | 3 | «CE-02: 1000 partidas aleatorias de 2, 3 y 4 jugadores cumplen I-01 a I-06 y RNF-004 tras cada acción» |
+| RNF-004 / CE-02 | 3 | «CE-02, CE-03: 1000 partidas aleatorias de 2, 3 y 4 jugadores cumplen I-01 a I-06 y RNF-004 tras cada acción, y producen todos los hechos de CE-03» |
 | CE-03 | 1-3 | Tests de `gameFacts` y, en el mismo test de CE-02, los 7 hechos producidos al menos una vez |
 | Enfoque de PARTE-02 (`pendingBonus` excluyente con `pendingRoll`) | 3 | En el mismo test de CE-02, ningún estado tiene a la vez tirada y premio pendientes |
 | Hecho cuando | 3 | `pnpm check` en verde |
@@ -188,3 +188,4 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso y
 - **Sí:** el rebote múltiple se reconoce como un movimiento de premio de 20 desde el pasillo. Siempre rebota dos veces o más, y no hace falta repetir el cálculo del rebote en los tests.
 - **Sí:** comprobar en las partidas aleatorias que nunca hay a la vez una tirada y un premio pendientes. Lo sugirió la revisión de PARTE-02: la exclusión solo la garantiza el código de `applyAction`, no el tipo de `GameState`. Decisión del usuario; no es un criterio del spec ni un invariante del reglamento.
 - **Sí:** si algún hecho no sale en las partidas aleatorias, se ajusta la elección de movimientos de las partidas, nunca la comprobación (riesgo de la sección 14 del spec).
+- **Sí:** la elección aleatoria de movimientos se queda como está. Medido en una ejecución de las 1000 partidas, el hecho menos frecuente es el premio perdido, en 313 partidas; el resto sale en más de 400 (premio encadenado 425, rebote múltiple 436, salir comiendo 519 y los demás más de 900).

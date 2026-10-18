@@ -187,7 +187,7 @@ export function gameFacts(played: Pick<PlayedGame, 'states' | 'actions'>): GameF
   return GAME_FACTS.filter((fact) => found.has(fact));
 }
 
-const GAME_FACTS: readonly GameFact[] = [
+export const GAME_FACTS: readonly GameFact[] = [
   'capture-on-track',
   'capture-on-exit',
   'bonus-20',
