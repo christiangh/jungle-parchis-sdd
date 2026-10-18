@@ -108,7 +108,7 @@ export function playRandomGame(
     }
     const moves = legalMoves(state);
     const action: Action =
-      state.pendingRoll === null
+      state.pendingRoll === null && state.pendingBonus === null
         ? { type: 'roll', player: state.turn, value: nextRoll() }
         : { type: 'move', player: state.turn, pieceId: moves[pickMove(moves.length)].pieceId };
     const result = applyAction(state, action);

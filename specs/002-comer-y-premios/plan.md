@@ -90,7 +90,7 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 - [x] 1. Tests de `legalMoves` con un premio pendiente: movimientos de 20 de cada ficha que puede, incluida la que ha comido (HU-03 c1, c3); sin salida de casa ni fichas en casa; comer con un premio (RF-010); rebote múltiple (HU-07 c1, c2, rebote en la primera casilla del pasillo); destino con 2 fichas no legal (HU-05 c2). Esqueleto: `pendingBonus` en `GameState` y `buildGame`, siempre `null` en el motor. Ejecutar y comprobar que fallan en sus aserciones (P-07).
 - [x] 2. Implementar en `moves.ts` los movimientos de premio y el rebote múltiple; pasar `pnpm check`.
 - [x] 3. Tests de `applyAction`: premio de 20 al comer y al salir comiendo, con `bonus-earned` y sin cambio de turno (HU-03); rechazo de tirar con premio pendiente (HU-03 c2); usar el premio pasa el turno (HU-03 c4); premio de 10 al llegar a meta (HU-04 c1); sin premio al ganar (HU-04 c2); premio perdido con `bonus-lost` y cambio de turno (HU-05 c1, c2); premios encadenados (HU-06 c1, c2); rebote que pasa por la meta sin premio (HU-07 c3). Esqueleto: error `bonus-pending` en `ActionError`. Ejecutar y comprobar que fallan en sus aserciones.
-- [ ] 4. Implementar en `actions.ts` los premios y sus eventos, y en `playRandomGame` el movimiento con premio pendiente; pasar `pnpm check`.
+- [x] 4. Implementar en `actions.ts` los premios y sus eventos, y en `playRandomGame` el movimiento con premio pendiente; pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
 
