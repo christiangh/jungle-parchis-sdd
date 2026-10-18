@@ -161,6 +161,7 @@ Los tests de las reglas provisionales sustituidas se reescriben en su sitio: mis
 | «RF-013 (provisional): sale con una sola ficha rival en la salida, sin comerla» | Sale y convive con la rival | Sale y come la rival | «R-023: sale con una sola ficha rival en la salida y la come» |
 | «R-022 (provisional RF-008): no se sale con una ficha propia y una rival en la salida» | No puede salir; mueve otras fichas | El único movimiento legal es salir, comiendo la rival | «R-023: con una ficha propia y una rival en la salida, sale comiendo la rival» |
 | «RF-013 (provisional): termina junto a una sola ficha rival fuera de un seguro» | Termina y convive con la rival | Termina y come la rival | «R-050: termina sobre una sola ficha rival fuera de un seguro y la come» |
+| «RF-021: llegar a meta produce los eventos de avance y llegada» | Tras llegar a meta, el turno pasa | Tras llegar a meta se gana un premio de 10 que otra ficha puede usar, y el turno no pasa (R-072) | «R-072: llegar a meta produce los eventos de avance, llegada y premio» |
 
 El test «RF-012 (provisional): atraviesa una casilla con 2 fichas» no cambia. El resto de tests de SPEC 001 debe pasar sin modificarse; si alguno más cambia de comportamiento, se revisa igual que estos y se añade a esta tabla antes de cerrar la parte.
 
