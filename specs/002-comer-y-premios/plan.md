@@ -70,7 +70,7 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 
 ## PARTE-02: Premios
 
-**Estado:** En curso
+**Estado:** Hecha
 
 ### Enfoque
 
