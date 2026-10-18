@@ -6,7 +6,7 @@
 
 ## PARTE-01: Comer
 
-**Estado:** En curso
+**Estado:** Hecha
 
 ### Enfoque
 
