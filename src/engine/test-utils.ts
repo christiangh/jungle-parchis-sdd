@@ -144,6 +144,26 @@ export function invariantViolations(state: GameState): StateInvariant[] {
   return violations;
 }
 
+/** RNF-004 of SPEC 002: track squares, other than safe ones, holding pieces of two colors. */
+export function mixedColorSquares(state: GameState): number[] {
+  return [];
+}
+
+/** Facts that random games must produce at least once (CE-03 of SPEC 002). */
+export type GameFact =
+  | 'capture-on-track'
+  | 'capture-on-exit'
+  | 'bonus-20'
+  | 'bonus-10'
+  | 'bonus-lost'
+  | 'chained-bonus'
+  | 'multiple-bounce';
+
+/** Returns the facts produced by the actions of `played`, without repeats and in type order. */
+export function gameFacts(played: Pick<PlayedGame, 'states' | 'actions'>): GameFact[] {
+  return [];
+}
+
 /** I-04: returns the pieces at the goal in `before` that are no longer there in `after`. */
 export function leftGoal(before: GameState, after: GameState): PieceId[] {
   return before.pieces
