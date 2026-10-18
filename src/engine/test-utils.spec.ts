@@ -113,3 +113,23 @@ describe('leftGoal', () => {
     expect(leftGoal(before, after)).toEqual([]);
   });
 });
+
+describe('buildGame', () => {
+  it('R-023: las fichas de positions llegan en el orden en que se listan, tras las no listadas', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      positions: { 'red-0': track(5), 'yellow-2': track(20), 'yellow-0': track(5) },
+    });
+
+    expect(game.arrivalOrder).toEqual([
+      'yellow-1',
+      'yellow-3',
+      'red-1',
+      'red-2',
+      'red-3',
+      'red-0',
+      'yellow-2',
+      'yellow-0',
+    ]);
+  });
+});

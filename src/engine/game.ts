@@ -17,6 +17,8 @@ export interface GameState {
   readonly turn: Color;
   readonly pendingRoll: number | null;
   readonly winner: Color | null;
+  /** Ids of all pieces, from the one that moved longest ago to the last one to move (R-023). */
+  readonly arrivalOrder: readonly PieceId[];
 }
 
 export type Result<T, E> =
@@ -56,6 +58,13 @@ export function createGame(config: GameConfig): Result<GameState, CreateGameErro
   );
   return {
     ok: true,
-    value: { players: turnOrder, pieces, turn: firstPlayer, pendingRoll: null, winner: null },
+    value: {
+      players: turnOrder,
+      pieces,
+      turn: firstPlayer,
+      pendingRoll: null,
+      winner: null,
+      arrivalOrder: [],
+    },
   };
 }

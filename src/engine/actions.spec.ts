@@ -104,6 +104,22 @@ describe('applyAction: mover', () => {
     expect(state.pendingRoll).toBeNull();
   });
 
+  it('R-023: la ficha movida pasa a ser la última en llegar', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 2,
+      positions: { 'yellow-0': track(10), 'red-0': track(30) },
+    });
+
+    const { state } = applyOk(game, { type: 'move', player: 'yellow', pieceId: 'yellow-0' });
+
+    expect(state.arrivalOrder).toEqual([
+      ...game.arrivalOrder.filter((id) => id !== 'yellow-0'),
+      'yellow-0',
+    ]);
+  });
+
   it('R-011: tras mover, el turno pasa al siguiente color participante', () => {
     const game = buildGame({
       players: ['yellow', 'blue', 'red'],

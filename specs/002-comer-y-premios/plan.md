@@ -26,7 +26,7 @@ El cálculo de movimientos legales (`moves.ts`) decide si un movimiento come y a
 
 ### Pasos
 
-- [ ] 1. Tests de `arrivalOrder`: estado inicial de `createGame`, orden de `buildGame` según `positions` y ficha movida al final tras `applyAction`. Deben fallar.
+- [x] 1. Tests de `arrivalOrder`: estado inicial de `createGame`, orden de `buildGame` según `positions` y ficha movida al final tras `applyAction`. Esqueleto: campo `arrivalOrder` en `GameState` con valor neutro `[]` para que compile. Ejecutar y comprobar que fallan en sus aserciones (P-07).
 - [ ] 2. Implementar `arrivalOrder` en `GameState`, `createGame`, `buildGame` y al mover; pasar `pnpm check`.
 - [ ] 3. Tests de `legalMoves`: reescribir en su sitio los 3 tests de la tabla del spec y añadir HU-01 c1-c3, HU-02 c1-c3 y el desempate por orden de llegada. Los que dependen del cambio deben fallar.
 - [ ] 4. Implementar en `moves.ts` la salida bloqueada solo por fichas propias, la salida comiendo, la comida en el recorrido común y el campo `captures`; pasar `pnpm check`.
@@ -61,4 +61,5 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 - **No:** decidir la comida solo en `applyAction`. La regla quedaría repartida entre dos módulos.
 - **Sí:** `arrivalOrder` en `GameState` con todos los ids, ordenados por su último movimiento. Basta con mover un id al final en cada movimiento, sin contadores.
 - **No:** un número de llegada en cada `Piece`. Cambiaría la forma de las fichas y el test «R-013: mover aplica a la ficha el destino de su movimiento legal» de SPEC 001, que no está en la tabla del spec.
+- **Sí:** cada paso de tests añade el esqueleto mínimo (tipos y valores neutros) para que compile, y los tests fallan en sus aserciones. El builder de Angular comprueba tipos al ejecutar los tests; es la misma convención que SPEC 001.
 - **Sí:** evento `piece-captured` con `pieceId` y `at` (casilla del recorrido), emitido después de `piece-left-home` o `piece-advanced`. Primero se mueve la ficha y después se come, como en el tablero.
