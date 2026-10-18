@@ -87,7 +87,7 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 
 ### Pasos
 
-- [ ] 1. Tests de `legalMoves` con un premio pendiente: movimientos de 20 de cada ficha que puede, incluida la que ha comido (HU-03 c1, c3); sin salida de casa ni fichas en casa; comer con un premio (RF-010); rebote múltiple (HU-07 c1, c2, rebote en la primera casilla del pasillo); destino con 2 fichas no legal (HU-05 c2). Esqueleto: `pendingBonus` en `GameState` y `buildGame`, siempre `null` en el motor. Ejecutar y comprobar que fallan en sus aserciones (P-07).
+- [x] 1. Tests de `legalMoves` con un premio pendiente: movimientos de 20 de cada ficha que puede, incluida la que ha comido (HU-03 c1, c3); sin salida de casa ni fichas en casa; comer con un premio (RF-010); rebote múltiple (HU-07 c1, c2, rebote en la primera casilla del pasillo); destino con 2 fichas no legal (HU-05 c2). Esqueleto: `pendingBonus` en `GameState` y `buildGame`, siempre `null` en el motor. Ejecutar y comprobar que fallan en sus aserciones (P-07).
 - [ ] 2. Implementar en `moves.ts` los movimientos de premio y el rebote múltiple; pasar `pnpm check`.
 - [ ] 3. Tests de `applyAction`: premio de 20 al comer y al salir comiendo, con `bonus-earned` y sin cambio de turno (HU-03); rechazo de tirar con premio pendiente (HU-03 c2); usar el premio pasa el turno (HU-03 c4); premio de 10 al llegar a meta (HU-04 c1); sin premio al ganar (HU-04 c2); premio perdido con `bonus-lost` y cambio de turno (HU-05 c1, c2); premios encadenados (HU-06 c1, c2); rebote que pasa por la meta sin premio (HU-07 c3). Esqueleto: error `bonus-pending` en `ActionError`. Ejecutar y comprobar que fallan en sus aserciones.
 - [ ] 4. Implementar en `actions.ts` los premios y sus eventos, y en `playRandomGame` el movimiento con premio pendiente; pasar `pnpm check`.
@@ -111,7 +111,7 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 | HU-07 c2 / RF-013 | 1, 2 | «R-071: desde la casilla 66 con un premio de 10 llega a meta» |
 | HU-07 c3 / RF-013 | 3, 4 | «R-071: un rebote que pasa por la meta no da premio» |
 | RF-013 (primera casilla del pasillo) | 1, 2 | «R-071: al llegar a la primera casilla del pasillo rebotando vuelve a avanzar» |
-| RF-010 | 1, 2 | «R-080: un movimiento de premio come como uno de tirada» y «R-080: con un premio no sale ninguna ficha de casa» |
+| RF-010 | 1, 2 | «R-080: un movimiento de premio come como uno de tirada» y «R-080: las fichas en casa no pueden usar un premio» |
 | RF-015 | 3, 4 | Eventos `bonus-earned` y `bonus-lost` en los tests de RF-006, RF-007 y RF-011 |
 | CE-01 / Hecho cuando | 4 | Tests con R-022, R-023, R-050, R-051, R-052, R-071, R-072, R-080 y R-081 en su nombre; `pnpm check` en verde |
 

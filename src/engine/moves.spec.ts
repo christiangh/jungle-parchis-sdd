@@ -365,6 +365,109 @@ describe('legalMoves: meta y rebote', () => {
   });
 });
 
+describe('legalMoves: premios', () => {
+  it('R-051: con un premio de 20 se mueve 20 cualquier ficha que pueda, también la que ha comido', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 20,
+      positions: { 'yellow-0': track(14), 'yellow-1': track(30) },
+    });
+
+    expect(legalMoves(game)).toEqual([
+      { pieceId: 'yellow-0', to: track(34) },
+      { pieceId: 'yellow-1', to: track(50) },
+    ]);
+  });
+
+  it('R-080: con una sola ficha que pueda usar el premio, es el único movimiento legal', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 20,
+      positions: {
+        'yellow-0': track(10),
+        'yellow-1': track(20),
+        'red-0': track(40),
+        'red-1': track(40),
+      },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(30) }]);
+  });
+
+  it('R-080: las fichas en casa no pueden usar un premio', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 20,
+      positions: { 'yellow-0': track(10) },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(30) }]);
+  });
+
+  it('R-080: un movimiento de premio come como uno de tirada', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 20,
+      positions: { 'yellow-0': track(10), 'red-0': track(30) },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(30), captures: 'red-0' }]);
+  });
+
+  it('R-080: un movimiento de premio a una casilla con 2 fichas no es legal', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 20,
+      positions: {
+        'yellow-0': lane(5),
+        'yellow-1': lane(5),
+        'yellow-2': lane(5),
+        'yellow-3': track(10),
+      },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-3', to: track(30) }]);
+  });
+
+  it('R-071: desde la quinta casilla del pasillo con un premio de 20 rebota dos veces y termina en la quinta', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 20,
+      positions: { 'yellow-0': lane(5) },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: lane(5) }]);
+  });
+
+  it('R-071: desde la casilla 66 con un premio de 10 llega a meta', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 10,
+      positions: { 'yellow-0': track(66) },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: GOAL }]);
+  });
+
+  it('R-071: al llegar a la primera casilla del pasillo rebotando vuelve a avanzar', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 10,
+      positions: { 'yellow-0': lane(7) },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: lane(3) }]);
+  });
+});
+
 describe('legalMoves: consulta', () => {
   it('HU-06: devuelve cada ficha movible con su casilla de destino', () => {
     const game = buildGame({

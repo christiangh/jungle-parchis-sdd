@@ -29,6 +29,7 @@ export interface GameSetup {
   /** Defaults to the first color in `players`. */
   readonly turn?: Color;
   readonly pendingRoll?: number | null;
+  readonly pendingBonus?: number | null;
   /**
    * Pieces not listed stay at home. Listed pieces arrive in the order they are listed, after the
    * ones not listed (R-023).
@@ -49,6 +50,7 @@ export function buildGame(setup: GameSetup): GameState {
   return {
     ...result.value,
     pendingRoll: setup.pendingRoll ?? null,
+    pendingBonus: setup.pendingBonus ?? null,
     pieces: result.value.pieces.map((piece) => {
       const position = positions[piece.id];
       return position ? { ...piece, position } : piece;
