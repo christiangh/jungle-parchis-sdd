@@ -24,6 +24,10 @@ export interface Move {
 const EXIT_ROLL = 5;
 
 export function legalMoves(state: GameState): readonly Move[] {
+  // R-080: a bonus is used whole by a single piece on the board; pieces at home cannot use it.
+  if (state.pendingBonus !== null) {
+    return advanceMoves(state, state.pendingBonus);
+  }
   const roll = state.pendingRoll;
   if (roll === null) {
     return [];
@@ -33,10 +37,14 @@ export function legalMoves(state: GameState): readonly Move[] {
   if (exit) {
     return [exit];
   }
+  return advanceMoves(state, roll);
+}
+
+function advanceMoves(state: GameState, steps: number): Move[] {
   return state.pieces
     .filter((piece) => piece.color === state.turn)
     .flatMap((piece) => {
-      const move = advanceMove(state, piece, roll);
+      const move = advanceMove(state, piece, steps);
       return move ? [move] : [];
     });
 }
@@ -105,16 +113,22 @@ function withCapture(piece: Piece, to: BoardPosition, captured: Piece | undefine
 
 /**
  * Walks `steps` squares forward. Squares passed through are not checked (RF-012, provisional).
- * R-071: steps left over at the goal go back down the lane. A single bounce is enough, since a
- * die roll leaves at most 5 steps over (from the last lane square with a 6).
+ * R-071: steps left over at the goal go back down the lane, and at the first lane square they go
+ * forward again, as many times as needed. Only ending on the goal counts as reaching it.
  */
 function advance(color: Color, from: TrackPosition | LanePosition, steps: number): BoardPosition {
   let position: BoardPosition = from;
+  let backwards = false;
   for (let step = 0; step < steps; step++) {
     if (position.kind === 'goal') {
-      return { kind: 'lane', square: LANE_LENGTH + 1 - (steps - step) };
+      backwards = true;
+      position = { kind: 'lane', square: LANE_LENGTH };
+    } else if (backwards && position.kind === 'lane' && position.square > 1) {
+      position = { kind: 'lane', square: position.square - 1 };
+    } else {
+      backwards = false;
+      position = stepForward(color, position);
     }
-    position = stepForward(color, position);
   }
   return position;
 }
