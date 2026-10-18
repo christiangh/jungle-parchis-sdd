@@ -134,3 +134,57 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 - **Sí:** rebote paso a paso, cambiando de sentido en la meta y en la primera casilla del pasillo. Cubre cualquier cantidad sin casos especiales.
 - **Sí:** al dar premios cambian 3 tests ya existentes, que se reescriben en su sitio en el paso 3. Uno es de SPEC 001 («RF-021: llegar a meta…»): con otra ficha en juego, llegar a meta da un premio de 10 y el turno ya no pasa, así que se añade a la tabla de la sección 7 del spec, como ella misma pide. Los otros dos son de PARTE-01 («RF-014: comer produce el evento…» y «R-023: al salir de casa come…») y esperaban que el turno pasara tras comer porque esa parte aún no daba premios.
 - **Sí:** `playRandomGame` se ajusta en esta parte y no en PARTE-03. Sin él, una partida aleatoria tiraría con un premio pendiente y CE-02 fallaría.
+
+## PARTE-03: Propiedades con comer y premios
+
+**Estado:** En curso
+
+### Enfoque
+
+El motor no cambia: esta parte solo amplía los tests de propiedades. Las partidas aleatorias ya comen y resuelven premios desde PARTE-02. Se añaden dos ayudas en `test-utils.ts`: `mixedColorSquares`, que devuelve las casillas del recorrido común que no son seguro y tienen fichas de dos colores (la propiedad de RNF-004), y `gameFacts`, que recorre una partida jugada y devuelve qué hechos de CE-03 se han producido en ella. `gameFacts` vuelve a aplicar cada acción sobre su estado previo para tener los eventos de cada acción por separado, sin cambiar la forma de `PlayedGame`. El test de CE-02 comprueba además la propiedad tras cada acción y acumula los hechos de sus 1000 partidas; al terminar, exige que se hayan producido los 7.
+
+Hechos de CE-03 y cómo se reconocen en los eventos de una acción:
+
+- Comer en el recorrido común: `piece-captured` tras `piece-advanced`.
+- Salir comiendo: `piece-captured` tras `piece-left-home`.
+- Premio de 20 y premio de 10: `bonus-earned` con esa cantidad.
+- Premio perdido: `bonus-lost`.
+- Premio encadenado: `bonus-earned` en una acción hecha con un premio pendiente.
+- Rebote múltiple: movimiento con un premio de 20 desde el pasillo. Desde cualquier casilla del pasillo, la meta está a 7 casillas como mucho y la primera casilla del pasillo a 6 más, así que con 20 siempre rebota al menos dos veces.
+
+### Archivos
+
+- `src/engine/test-utils.ts`: `mixedColorSquares` y `gameFacts`, con el tipo `GameFact`.
+- `src/engine/test-utils.spec.ts`: tests de las dos ayudas con escenarios de `buildGame`.
+- `src/engine/invariants.spec.ts`: el test de CE-02 comprueba la propiedad de RNF-004 y los hechos de CE-03, y su nombre lo dice.
+
+### Pasos
+
+- [ ] 1. Tests de `mixedColorSquares` (dos colores fuera de seguro, en seguro, del mismo color, en el pasillo) y de `gameFacts` (un caso por hecho y una acción sin ninguno). Esqueleto: las dos funciones devuelven `[]`. Ejecutar y comprobar que fallan en sus aserciones (P-07).
+- [ ] 2. Implementar `mixedColorSquares` y `gameFacts`; pasar `pnpm check`.
+- [ ] 3. Ampliar el test de CE-02 con la propiedad de RNF-004 y la exclusión de tirada y premio pendientes tras cada acción, y la comprobación de CE-03 al final; medir cuántas veces sale cada hecho en las 1000 partidas; pasar `pnpm check`.
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+|----------|------|--------|
+| RNF-004 (propiedad) | 1, 2 | Tests de `mixedColorSquares` en `test-utils.spec.ts` |
+| RNF-004 / CE-02 | 3 | «CE-02: 1000 partidas aleatorias de 2, 3 y 4 jugadores cumplen I-01 a I-06 y RNF-004 tras cada acción» |
+| CE-03 | 1-3 | Tests de `gameFacts` y, en el mismo test de CE-02, los 7 hechos producidos al menos una vez |
+| Enfoque de PARTE-02 (`pendingBonus` excluyente con `pendingRoll`) | 3 | En el mismo test de CE-02, ningún estado tiene a la vez tirada y premio pendientes |
+| Hecho cuando | 3 | `pnpm check` en verde |
+
+Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso y la parte.
+
+### Skills y agentes
+
+- `caveman:cavecrew-reviewer`: revisión del diff al cerrar la parte.
+
+### Decisiones técnicas
+
+- **Sí:** los hechos de CE-03 se cuentan en las mismas 1000 partidas de CE-02. El spec habla de «esas partidas», y no duplica el tiempo de los tests.
+- **No:** un test aparte con sus propias partidas. Dependería de otras semillas y alargaría la ejecución.
+- **Sí:** `gameFacts` repite cada acción para obtener sus eventos. Es puro y no cambia `PlayedGame`, que usa un test de SPEC 001.
+- **Sí:** el rebote múltiple se reconoce como un movimiento de premio de 20 desde el pasillo. Siempre rebota dos veces o más, y no hace falta repetir el cálculo del rebote en los tests.
+- **Sí:** comprobar en las partidas aleatorias que nunca hay a la vez una tirada y un premio pendientes. Lo sugirió la revisión de PARTE-02: la exclusión solo la garantiza el código de `applyAction`, no el tipo de `GameState`. Decisión del usuario; no es un criterio del spec ni un invariante del reglamento.
+- **Sí:** si algún hecho no sale en las partidas aleatorias, se ajusta la elección de movimientos de las partidas, nunca la comprobación (riesgo de la sección 14 del spec).
