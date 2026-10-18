@@ -31,7 +31,7 @@ El cálculo de movimientos legales (`moves.ts`) decide si un movimiento come y a
 - [x] 3. Tests de `legalMoves`: reescribir en su sitio los 3 tests de la tabla del spec y añadir HU-01 c1-c3, HU-02 c1-c3 y el desempate por orden de llegada. Esqueleto: campo opcional `captures` en `Move`. Los que dependen del cambio fallan en sus aserciones; los que comprueban que no se come pasan ya y quedan como guarda.
 - [x] 4. Implementar en `moves.ts` la salida bloqueada solo por fichas propias, la salida comiendo, la comida en el recorrido común y el campo `captures`, y en `actions.ts` la vuelta a casa de la ficha de `captures`; pasar `pnpm check`.
 - [x] 5. Tests de `applyAction`: la ficha comida vuelve a casa, evento `piece-captured` tras el de movimiento, comer al salir, convivir en un seguro sin evento, y el turno pasa tras comer. Los del evento deben fallar; los de la vuelta a casa pasan ya y quedan como guarda.
-- [ ] 6. Implementar en `actions.ts` el evento `piece-captured`; pasar `pnpm check`.
+- [x] 6. Implementar en `actions.ts` el evento `piece-captured`; pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
 

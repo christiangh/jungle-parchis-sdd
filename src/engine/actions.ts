@@ -24,6 +24,7 @@ export type GameEvent =
       readonly from: TrackPosition | LanePosition;
       readonly to: BoardPosition;
     }
+  | { readonly type: 'piece-captured'; readonly pieceId: PieceId; readonly at: TrackPosition }
   | { readonly type: 'piece-reached-goal'; readonly pieceId: PieceId }
   | { readonly type: 'roll-lost'; readonly player: Color; readonly value: number }
   | { readonly type: 'turn-changed'; readonly player: Color }
@@ -93,6 +94,10 @@ function move(state: GameState, action: MoveAction): Result<ActionOutcome, Actio
     return current.id === legal.captures ? { ...current, position: { kind: 'home' } } : current;
   });
   const events: GameEvent[] = [moveEvent(piece, legal.to)];
+  // Captures only happen on the track (R-023, R-050).
+  if (legal.captures && legal.to.kind === 'track') {
+    events.push({ type: 'piece-captured', pieceId: legal.captures, at: legal.to });
+  }
   if (legal.to.kind === 'goal') {
     events.push({ type: 'piece-reached-goal', pieceId: piece.id });
   }
