@@ -64,7 +64,7 @@ export function createGame(config: GameConfig): Result<GameState, CreateGameErro
       turn: firstPlayer,
       pendingRoll: null,
       winner: null,
-      arrivalOrder: [],
+      arrivalOrder: pieces.map((piece) => piece.id),
     },
   };
 }

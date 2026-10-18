@@ -29,7 +29,10 @@ export interface GameSetup {
   /** Defaults to the first color in `players`. */
   readonly turn?: Color;
   readonly pendingRoll?: number | null;
-  /** Pieces not listed stay at home. */
+  /**
+   * Pieces not listed stay at home. Listed pieces arrive in the order they are listed, after the
+   * ones not listed (R-023).
+   */
   readonly positions?: Partial<Record<PieceId, Position>>;
 }
 
@@ -42,6 +45,7 @@ export function buildGame(setup: GameSetup): GameState {
     throw new Error(`Invalid game setup: ${result.error}`);
   }
   const positions = setup.positions ?? {};
+  const listed = Object.keys(positions) as PieceId[];
   return {
     ...result.value,
     pendingRoll: setup.pendingRoll ?? null,
@@ -49,6 +53,7 @@ export function buildGame(setup: GameSetup): GameState {
       const position = positions[piece.id];
       return position ? { ...piece, position } : piece;
     }),
+    arrivalOrder: [...result.value.arrivalOrder.filter((id) => !listed.includes(id)), ...listed],
   };
 }
 

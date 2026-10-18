@@ -92,7 +92,8 @@ function move(state: GameState, action: MoveAction): Result<ActionOutcome, Actio
   if (legal.to.kind === 'goal') {
     events.push({ type: 'piece-reached-goal', pieceId: piece.id });
   }
-  const moved: GameState = { ...state, pieces, pendingRoll: null };
+  const arrivalOrder = [...state.arrivalOrder.filter((id) => id !== piece.id), piece.id];
+  const moved: GameState = { ...state, pieces, pendingRoll: null, arrivalOrder };
 
   if (hasWon(pieces, state.turn)) {
     events.push({ type: 'game-over', winner: state.turn });

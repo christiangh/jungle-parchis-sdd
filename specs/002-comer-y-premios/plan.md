@@ -27,7 +27,7 @@ El cálculo de movimientos legales (`moves.ts`) decide si un movimiento come y a
 ### Pasos
 
 - [x] 1. Tests de `arrivalOrder`: estado inicial de `createGame`, orden de `buildGame` según `positions` y ficha movida al final tras `applyAction`. Esqueleto: campo `arrivalOrder` en `GameState` con valor neutro `[]` para que compile. Ejecutar y comprobar que fallan en sus aserciones (P-07).
-- [ ] 2. Implementar `arrivalOrder` en `GameState`, `createGame`, `buildGame` y al mover; pasar `pnpm check`.
+- [x] 2. Implementar `arrivalOrder` en `GameState`, `createGame`, `buildGame` y al mover; pasar `pnpm check`.
 - [ ] 3. Tests de `legalMoves`: reescribir en su sitio los 3 tests de la tabla del spec y añadir HU-01 c1-c3, HU-02 c1-c3 y el desempate por orden de llegada. Los que dependen del cambio deben fallar.
 - [ ] 4. Implementar en `moves.ts` la salida bloqueada solo por fichas propias, la salida comiendo, la comida en el recorrido común y el campo `captures`; pasar `pnpm check`.
 - [ ] 5. Tests de `applyAction`: la ficha comida vuelve a casa, evento `piece-captured` tras el de movimiento, comer al salir, convivir en un seguro sin evento, y el turno pasa tras comer. Deben fallar.
