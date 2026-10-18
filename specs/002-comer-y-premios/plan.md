@@ -67,3 +67,68 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 - **Sí:** el paso 4 incluye la vuelta a casa de la ficha comida en `applyAction`. Sin ella, `legalMoves` deja salir a una salida con 2 fichas y CE-02 falla por I-02 hasta el paso 6; así cada commit pasa `pnpm check`.
 - **No:** un commit del paso 4 con CE-02 en rojo, ni juntar los pasos 4 a 6. El primero rompe la comprobación de un commit; el segundo mezcla tests y código.
 - **Sí:** evento `piece-captured` con `pieceId` y `at` (casilla del recorrido), emitido después de `piece-left-home` o `piece-advanced`. Primero se mueve la ficha y después se come, como en el tablero.
+
+## PARTE-02: Premios
+
+**Estado:** En curso
+
+### Enfoque
+
+`GameState` gana `pendingBonus` (20, 10 o `null`), excluyente con `pendingRoll`. Con un premio pendiente, `legalMoves` devuelve solo avances de esa cantidad, sin salida de casa (R-020), reutilizando las mismas comprobaciones de comer, seguros y ocupación (RF-010). En `applyAction`, tras cada movimiento, de tirada o de premio, se calcula el premio ganado: 20 si ha comido, 10 si ha llegado a meta sin ganar la partida. Si lo hay, se emite `bonus-earned` y el turno no pasa; si con ese premio no hay ningún movimiento legal, se emite `bonus-lost` y el turno pasa en la misma acción, igual que una tirada perdida. Así los premios encadenados (R-081) salen solos: usar un premio es un movimiento más, que puede ganar otro. El rebote deja de ser una fórmula de un solo rebote y pasa a recorrer el pasillo paso a paso cambiando de sentido en la meta y en la primera casilla del pasillo (R-071).
+
+### Archivos
+
+- `src/engine/game.ts`: campo `pendingBonus` en `GameState`, `null` en `createGame`.
+- `src/engine/moves.ts`: movimientos legales con premio pendiente y rebote múltiple en `advance`.
+- `src/engine/actions.ts`: error `bonus-pending`, eventos `bonus-earned` y `bonus-lost`, premio tras mover y aceptar `move` con un premio pendiente.
+- `src/engine/test-utils.ts`: opción `pendingBonus` en `buildGame`; `playRandomGame` mueve también cuando hay un premio pendiente, en lugar de tirar.
+- `src/engine/moves.spec.ts`: tests de movimientos de premio y rebote múltiple.
+- `src/engine/actions.spec.ts`: tests de ganar, usar, perder y encadenar premios, y de sus eventos.
+
+### Pasos
+
+- [ ] 1. Tests de `legalMoves` con un premio pendiente: movimientos de 20 de cada ficha que puede, incluida la que ha comido (HU-03 c1, c3); sin salida de casa ni fichas en casa; comer con un premio (RF-010); rebote múltiple (HU-07 c1, c2, rebote en la primera casilla del pasillo); destino con 2 fichas no legal (HU-05 c2). Esqueleto: `pendingBonus` en `GameState` y `buildGame`, siempre `null` en el motor. Ejecutar y comprobar que fallan en sus aserciones (P-07).
+- [ ] 2. Implementar en `moves.ts` los movimientos de premio y el rebote múltiple; pasar `pnpm check`.
+- [ ] 3. Tests de `applyAction`: premio de 20 al comer y al salir comiendo, con `bonus-earned` y sin cambio de turno (HU-03); rechazo de tirar con premio pendiente (HU-03 c2); usar el premio pasa el turno (HU-03 c4); premio de 10 al llegar a meta (HU-04 c1); sin premio al ganar (HU-04 c2); premio perdido con `bonus-lost` y cambio de turno (HU-05 c1, c2); premios encadenados (HU-06 c1, c2); rebote que pasa por la meta sin premio (HU-07 c3). Esqueleto: error `bonus-pending` en `ActionError`. Ejecutar y comprobar que fallan en sus aserciones.
+- [ ] 4. Implementar en `actions.ts` los premios y sus eventos, y en `playRandomGame` el movimiento con premio pendiente; pasar `pnpm check`.
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+|----------|------|--------|
+| HU-03 c1 / RF-009 | 1, 2 | «R-051: con un premio de 20 se mueve 20 cualquier ficha que pueda, también la que ha comido» |
+| HU-03 c2 / RF-008 | 3, 4 | «R-051: con un premio pendiente se rechaza tirar» |
+| HU-03 c3 / RF-009 | 1-4 | «R-080: con una sola ficha que pueda usar el premio, es el único movimiento legal» y «R-080: el premio no se aplica solo aunque haya un único movimiento» |
+| HU-03 c4 | 3, 4 | «R-051: usar el premio sin ganar otro pasa el turno» |
+| RF-006 | 3, 4 | «R-051: comer da un premio de 20 y el turno no pasa» y «R-051: salir comiendo da un premio de 20» |
+| HU-04 c1 / RF-007 | 3, 4 | «R-072: llegar a meta da un premio de 10 para otra ficha» |
+| HU-04 c2 / RF-007 | 3, 4 | «R-090: meter la cuarta ficha termina la partida sin premio» |
+| HU-05 c1 / RF-011 | 3, 4 | «R-080: un premio de 10 sin movimientos se pierde y el turno pasa» |
+| HU-05 c2 / RF-011 | 1-4 | «R-080: un movimiento de premio a una casilla con 2 fichas no es legal» y «R-080: si el único destino del premio está lleno, se pierde» |
+| HU-06 c1 / RF-012 | 3, 4 | «R-081: comer con un premio da otro premio de 20» |
+| HU-06 c2 / RF-012 | 3, 4 | «R-081: llegar a meta con un premio da un premio de 10» |
+| HU-07 c1 / RF-013 | 1, 2 | «R-071: desde la quinta casilla del pasillo con un premio de 20 rebota dos veces y termina en la quinta» |
+| HU-07 c2 / RF-013 | 1, 2 | «R-071: desde la casilla 66 con un premio de 10 llega a meta» |
+| HU-07 c3 / RF-013 | 3, 4 | «R-071: un rebote que pasa por la meta no da premio» |
+| RF-013 (primera casilla del pasillo) | 1, 2 | «R-071: al llegar a la primera casilla del pasillo rebotando vuelve a avanzar» |
+| RF-010 | 1, 2 | «R-080: un movimiento de premio come como uno de tirada» y «R-080: con un premio no sale ninguna ficha de casa» |
+| RF-015 | 3, 4 | Eventos `bonus-earned` y `bonus-lost` en los tests de RF-006, RF-007 y RF-011 |
+| CE-01 / Hecho cuando | 4 | Tests con R-022, R-023, R-050, R-051, R-052, R-071, R-072, R-080 y R-081 en su nombre; `pnpm check` en verde |
+
+Los tests de rebote de SPEC 001 (R-071 con un 6) deben seguir pasando sin cambios con el rebote nuevo.
+
+Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso de código y la parte.
+
+### Skills y agentes
+
+- `caveman:cavecrew-reviewer`: revisión del diff al cerrar la parte.
+
+### Decisiones técnicas
+
+- **Sí:** `pendingBonus` separado de `pendingRoll`. Una tirada y un premio se comportan distinto: solo la tirada saca de casa y solo el premio impide tirar.
+- **No:** reutilizar `pendingRoll` con valores 10 y 20. Mezclaría el valor del dado con premios y rompería la validación de 1 a 6.
+- **Sí:** el premio se calcula en `applyAction` tras cada movimiento, y un premio sin movimientos se pierde en la misma acción, como una tirada perdida. No hace falta una acción nueva para el premio: se usa con la misma acción `move`.
+- **Sí:** un movimiento solo puede ganar un premio, porque se come en el recorrido común y la meta está fuera de él.
+- **Sí:** eventos `bonus-earned` y `bonus-lost` con `player` y `amount`, después de los de movimiento y comida, y antes de `turn-changed`.
+- **Sí:** rebote paso a paso, cambiando de sentido en la meta y en la primera casilla del pasillo. Cubre cualquier cantidad sin casos especiales.
+- **Sí:** `playRandomGame` se ajusta en esta parte y no en PARTE-03. Sin él, una partida aleatoria tiraría con un premio pendiente y CE-02 fallaría.
