@@ -6,7 +6,7 @@
 
 ## PARTE-01: Reglas de barreras
 
-**Estado:** Aprobado
+**Estado:** Hecha
 
 ### Enfoque
 
@@ -45,7 +45,7 @@ Un módulo nuevo, `barriers.ts`, define qué es una barrera (R-060) y expone `ba
 | HU-01 c6 / RF-002 | 3, 4 | «R-061: si la única tirada atraviesa una barrera, se pierde la tirada» (`applyAction`) |
 | HU-02 c1 / RF-003 / CE-01 (R-023) | — | Ya cubierto por «R-023: con dos rivales del mismo color en la salida come la que llegó en último lugar» de SPEC 002, sin cambios |
 | HU-02 c2 / RF-003 | — | Ya cubierto por «R-023: con una ficha propia y una rival en la salida, sale comiendo la rival» de SPEC 002, sin cambios |
-| HU-02 c3 / RF-002 | 3, 4 | «R-061: la barrera mixta de una salida solo se puede ocupar saliendo de casa» |
+| HU-02 c3 / RF-002 | 3, 4 | «R-061: no atraviesa la barrera mixta de una salida»; la salida comiendo la cubren los tests de R-023 de HU-02 c1 y c2 |
 | HU-03 c1 / RF-006 | 3, 4 | «R-061: un movimiento de premio de 20 no atraviesa una barrera» |
 | HU-03 c2 / RF-006 | 3, 4 | «R-080: un premio cuyo único movimiento atraviesa una barrera se pierde» (`applyAction`) |
 | HU-03 c3 / RF-006 | 3, 4 | «R-061: un movimiento de premio de 10 no atraviesa una barrera» |
@@ -69,4 +69,5 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 - **Sí:** `barriers` aplica R-060 literalmente: 2 fichas de colores distintos fuera de un seguro no son barrera. En una partida válida no ocurre, porque se come (R-050).
 - **Sí:** las casillas atravesadas se calculan en `advance`, sin la de origen (RF-004) ni la de destino, que ya comprueba `hasRoom`. Solo cuentan las del recorrido común (R-063).
 - **Sí:** los tests de HU-02 c1 y c2 no se duplican: los de SPEC 002 ya tienen esos escenarios con una barrera en la salida y cumplen CE-01 para R-023.
+- **Sí:** en el cierre, el test de HU-02 c3 se renombra a «R-061: no atraviesa la barrera mixta de una salida», porque solo prueba el atravesar; salir comiendo ya lo prueban los tests de R-023. Decisión del usuario tras la revisión del diff.
 - **Sí:** si al cerrar el paso 4 alguna partida aleatoria se detiene por el límite de acciones, se para y se consulta al usuario (riesgo del spec); no se toca la comprobación.

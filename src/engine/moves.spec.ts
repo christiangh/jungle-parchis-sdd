@@ -527,7 +527,7 @@ describe('legalMoves: barreras', () => {
     expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(13) }]);
   });
 
-  it('R-061: la barrera mixta de una salida solo se puede ocupar saliendo de casa', () => {
+  it('R-061: no atraviesa la barrera mixta de una salida', () => {
     const game = buildGame({
       players: ['yellow', 'blue', 'red'],
       turn: 'blue',
