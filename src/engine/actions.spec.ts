@@ -5,6 +5,7 @@ import {
   buildGame,
   deepFreeze,
   GOAL,
+  HOME,
   lane,
   playRandomGame,
   seededRolls,
@@ -259,6 +260,87 @@ describe('applyAction: mover', () => {
       { type: 'move', player: 'yellow', pieceId: 'yellow-0' },
       'no-pending-roll',
     );
+  });
+});
+
+describe('applyAction: comer', () => {
+  const position = (state: GameState, id: string) =>
+    state.pieces.find((piece) => piece.id === id)?.position;
+
+  it('R-050: la ficha comida vuelve a casa', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 4,
+      positions: { 'yellow-0': track(10), 'red-0': track(14) },
+    });
+
+    const { state } = applyOk(game, { type: 'move', player: 'yellow', pieceId: 'yellow-0' });
+
+    expect(position(state, 'yellow-0')).toEqual(track(14));
+    expect(position(state, 'red-0')).toEqual(HOME);
+  });
+
+  it('RF-014: comer produce el evento de ficha comida tras el de movimiento', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 4,
+      positions: { 'yellow-0': track(10), 'red-0': track(14) },
+    });
+
+    const { events } = applyOk(game, { type: 'move', player: 'yellow', pieceId: 'yellow-0' });
+
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: track(10), to: track(14) },
+      { type: 'piece-captured', pieceId: 'red-0', at: track(14) },
+      { type: 'turn-changed', player: 'red' },
+    ]);
+  });
+
+  it('R-023: al salir de casa come la rival de la salida y produce el evento', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 5,
+      positions: { 'red-0': track(5) },
+    });
+
+    const { state, events } = applyOk(game, {
+      type: 'move',
+      player: 'yellow',
+      pieceId: 'yellow-0',
+    });
+
+    expect(position(state, 'yellow-0')).toEqual(track(5));
+    expect(position(state, 'red-0')).toEqual(HOME);
+    expect(events).toEqual([
+      { type: 'piece-left-home', pieceId: 'yellow-0', to: track(5) },
+      { type: 'piece-captured', pieceId: 'red-0', at: track(5) },
+      { type: 'turn-changed', player: 'red' },
+    ]);
+  });
+
+  it('R-052: en un seguro conviven sin evento de ficha comida', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 2,
+      positions: { 'yellow-0': track(10), 'red-0': track(12) },
+    });
+
+    const { state, events } = applyOk(game, {
+      type: 'move',
+      player: 'yellow',
+      pieceId: 'yellow-0',
+    });
+
+    expect(position(state, 'yellow-0')).toEqual(track(12));
+    expect(position(state, 'red-0')).toEqual(track(12));
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: track(10), to: track(12) },
+      { type: 'turn-changed', player: 'red' },
+    ]);
   });
 });
 

@@ -30,7 +30,7 @@ El cálculo de movimientos legales (`moves.ts`) decide si un movimiento come y a
 - [x] 2. Implementar `arrivalOrder` en `GameState`, `createGame`, `buildGame` y al mover; pasar `pnpm check`.
 - [x] 3. Tests de `legalMoves`: reescribir en su sitio los 3 tests de la tabla del spec y añadir HU-01 c1-c3, HU-02 c1-c3 y el desempate por orden de llegada. Esqueleto: campo opcional `captures` en `Move`. Los que dependen del cambio fallan en sus aserciones; los que comprueban que no se come pasan ya y quedan como guarda.
 - [x] 4. Implementar en `moves.ts` la salida bloqueada solo por fichas propias, la salida comiendo, la comida en el recorrido común y el campo `captures`, y en `actions.ts` la vuelta a casa de la ficha de `captures`; pasar `pnpm check`.
-- [ ] 5. Tests de `applyAction`: la ficha comida vuelve a casa, evento `piece-captured` tras el de movimiento, comer al salir, convivir en un seguro sin evento, y el turno pasa tras comer. Los del evento deben fallar; los de la vuelta a casa pasan ya y quedan como guarda.
+- [x] 5. Tests de `applyAction`: la ficha comida vuelve a casa, evento `piece-captured` tras el de movimiento, comer al salir, convivir en un seguro sin evento, y el turno pasa tras comer. Los del evento deben fallar; los de la vuelta a casa pasan ya y quedan como guarda.
 - [ ] 6. Implementar en `actions.ts` el evento `piece-captured`; pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
@@ -39,11 +39,11 @@ El cálculo de movimientos legales (`moves.ts`) decide si un movimiento come y a
 |----------|------|--------|
 | HU-01 c1 / RF-001 | 3-6 | «R-050: termina sobre una sola ficha rival fuera de un seguro y la come» (reescrito, `legalMoves` con `captures: 'red-0'`) y «R-050: la ficha comida vuelve a casa» (`applyAction`) |
 | RF-001 | 3, 4 | «R-050: no come una ficha propia» |
-| HU-01 c2 / RF-002 | 3-6 | «R-052: en un seguro conviven con una sola rival sin comerse» (casilla 12) en `legalMoves` y `applyAction` |
+| HU-01 c2 / RF-002 | 3-6 | «R-052: en un seguro conviven con una sola rival sin comerse» (casilla 12, `legalMoves`) y «R-052: en un seguro conviven sin evento de ficha comida» (`applyAction`) |
 | HU-01 c3 / RF-002 | 3, 4 | «R-052: en la salida de otro color conviven si no se sale de casa» (casilla 22) |
 | RF-002 (caso límite) | 3, 4 | «R-052: en la propia salida conviven si no se sale de casa» |
 | HU-01 c4 | — | Ya cubierto por «R-041: no se termina en una casilla del recorrido con 2 fichas» de SPEC 001, sin cambios |
-| HU-02 c1 / RF-004 | 3-6 | «R-023: sale con una sola ficha rival en la salida y la come» (reescrito) y su aplicación en `applyAction` |
+| HU-02 c1 / RF-004 | 3-6 | «R-023: sale con una sola ficha rival en la salida y la come» (reescrito) y «R-023: al salir de casa come la rival de la salida y produce el evento» (`applyAction`) |
 | HU-02 c2 / RF-003, RF-004 | 3, 4 | «R-023: con una ficha propia y una rival en la salida, sale comiendo la rival» (reescrito) |
 | HU-02 c3 / RF-005 | 1-4 | «R-023: con dos rivales en la salida come la que llegó en último lugar», con el orden de llegada en ambos sentidos, y «R-023: con dos rivales del mismo color en la salida come la que llegó en último lugar» |
 | HU-02 c4 / RF-003 | — | Ya cubierto por «R-022: con 2 fichas propias en la salida no se sale y se mueve otra ficha» de SPEC 001, sin cambios |
