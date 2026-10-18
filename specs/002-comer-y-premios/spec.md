@@ -1,6 +1,6 @@
 # SPEC 002 — Comer y premios
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 001
 > **Fecha:** 2026-10-17
 > **Autor:** Christian Garcia
