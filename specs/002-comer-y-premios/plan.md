@@ -29,9 +29,9 @@ El cálculo de movimientos legales (`moves.ts`) decide si un movimiento come y a
 - [x] 1. Tests de `arrivalOrder`: estado inicial de `createGame`, orden de `buildGame` según `positions` y ficha movida al final tras `applyAction`. Esqueleto: campo `arrivalOrder` en `GameState` con valor neutro `[]` para que compile. Ejecutar y comprobar que fallan en sus aserciones (P-07).
 - [x] 2. Implementar `arrivalOrder` en `GameState`, `createGame`, `buildGame` y al mover; pasar `pnpm check`.
 - [x] 3. Tests de `legalMoves`: reescribir en su sitio los 3 tests de la tabla del spec y añadir HU-01 c1-c3, HU-02 c1-c3 y el desempate por orden de llegada. Esqueleto: campo opcional `captures` en `Move`. Los que dependen del cambio fallan en sus aserciones; los que comprueban que no se come pasan ya y quedan como guarda.
-- [ ] 4. Implementar en `moves.ts` la salida bloqueada solo por fichas propias, la salida comiendo, la comida en el recorrido común y el campo `captures`; pasar `pnpm check`.
-- [ ] 5. Tests de `applyAction`: la ficha comida vuelve a casa, evento `piece-captured` tras el de movimiento, comer al salir, convivir en un seguro sin evento, y el turno pasa tras comer. Deben fallar.
-- [ ] 6. Implementar en `actions.ts` la comida y el evento `piece-captured`; pasar `pnpm check`.
+- [x] 4. Implementar en `moves.ts` la salida bloqueada solo por fichas propias, la salida comiendo, la comida en el recorrido común y el campo `captures`, y en `actions.ts` la vuelta a casa de la ficha de `captures`; pasar `pnpm check`.
+- [ ] 5. Tests de `applyAction`: la ficha comida vuelve a casa, evento `piece-captured` tras el de movimiento, comer al salir, convivir en un seguro sin evento, y el turno pasa tras comer. Los del evento deben fallar; los de la vuelta a casa pasan ya y quedan como guarda.
+- [ ] 6. Implementar en `actions.ts` el evento `piece-captured`; pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
 
@@ -64,4 +64,6 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 - **Sí:** `arrivalOrder` en `GameState` con todos los ids, ordenados por su último movimiento. Basta con mover un id al final en cada movimiento, sin contadores.
 - **No:** un número de llegada en cada `Piece`. Cambiaría la forma de las fichas y el test «R-013: mover aplica a la ficha el destino de su movimiento legal» de SPEC 001, que no está en la tabla del spec.
 - **Sí:** cada paso de tests añade el esqueleto mínimo (tipos y valores neutros) para que compile, y los tests fallan en sus aserciones. El builder de Angular comprueba tipos al ejecutar los tests; es la misma convención que SPEC 001.
+- **Sí:** el paso 4 incluye la vuelta a casa de la ficha comida en `applyAction`. Sin ella, `legalMoves` deja salir a una salida con 2 fichas y CE-02 falla por I-02 hasta el paso 6; así cada commit pasa `pnpm check`.
+- **No:** un commit del paso 4 con CE-02 en rojo, ni juntar los pasos 4 a 6. El primero rompe la comprobación de un commit; el segundo mezcla tests y código.
 - **Sí:** evento `piece-captured` con `pieceId` y `at` (casilla del recorrido), emitido después de `piece-left-home` o `piece-advanced`. Primero se mueve la ficha y después se come, como en el tablero.

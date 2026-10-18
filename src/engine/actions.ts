@@ -85,9 +85,13 @@ function move(state: GameState, action: MoveAction): Result<ActionOutcome, Actio
     return { ok: false, error: 'illegal-move' };
   }
 
-  const pieces = state.pieces.map((current) =>
-    current.id === piece.id ? { ...current, position: legal.to } : current,
-  );
+  // R-023, R-050: a captured piece goes back home.
+  const pieces = state.pieces.map((current): Piece => {
+    if (current.id === piece.id) {
+      return { ...current, position: legal.to };
+    }
+    return current.id === legal.captures ? { ...current, position: { kind: 'home' } } : current;
+  });
   const events: GameEvent[] = [moveEvent(piece, legal.to)];
   if (legal.to.kind === 'goal') {
     events.push({ type: 'piece-reached-goal', pieceId: piece.id });
