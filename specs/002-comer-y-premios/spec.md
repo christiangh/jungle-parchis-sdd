@@ -201,7 +201,7 @@ El test «RF-012 (provisional): atraviesa una casilla con 2 fichas» no cambia. 
 - **CE-01**: Existe al menos un test con su identificador para cada una de R-022, R-023, R-050, R-051, R-052, R-071, R-072, R-080 y R-081.
 - **CE-02**: Los tests de propiedades simulan al menos 1000 partidas aleatorias de 2, 3 y 4 jugadores sin que ninguna incumpla I-01 a I-06 ni la propiedad de RNF-004.
 - **CE-03**: En esas partidas aleatorias se produce al menos una vez cada uno de estos hechos: comer en el recorrido común, salir comiendo, premio de 20, premio de 10, premio perdido, premio encadenado y rebote múltiple.
-- **CE-04**: Los tres tests de la tabla de la sección 7 llevan su nombre nuevo y ningún test menciona RF-008 o RF-013 como provisionales.
+- **CE-04**: Los cuatro tests de la tabla de la sección 7 llevan su nombre nuevo y ningún test menciona RF-008 o RF-013 como provisionales.
 - **CE-05**: La comprobación completa del proyecto (formato, lint y tests) pasa sin errores.
 
 ## 12. Supuestos y dependencias
