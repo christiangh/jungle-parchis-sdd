@@ -89,7 +89,7 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 
 - [x] 1. Tests de `legalMoves` con un premio pendiente: movimientos de 20 de cada ficha que puede, incluida la que ha comido (HU-03 c1, c3); sin salida de casa ni fichas en casa; comer con un premio (RF-010); rebote múltiple (HU-07 c1, c2, rebote en la primera casilla del pasillo); destino con 2 fichas no legal (HU-05 c2). Esqueleto: `pendingBonus` en `GameState` y `buildGame`, siempre `null` en el motor. Ejecutar y comprobar que fallan en sus aserciones (P-07).
 - [x] 2. Implementar en `moves.ts` los movimientos de premio y el rebote múltiple; pasar `pnpm check`.
-- [ ] 3. Tests de `applyAction`: premio de 20 al comer y al salir comiendo, con `bonus-earned` y sin cambio de turno (HU-03); rechazo de tirar con premio pendiente (HU-03 c2); usar el premio pasa el turno (HU-03 c4); premio de 10 al llegar a meta (HU-04 c1); sin premio al ganar (HU-04 c2); premio perdido con `bonus-lost` y cambio de turno (HU-05 c1, c2); premios encadenados (HU-06 c1, c2); rebote que pasa por la meta sin premio (HU-07 c3). Esqueleto: error `bonus-pending` en `ActionError`. Ejecutar y comprobar que fallan en sus aserciones.
+- [x] 3. Tests de `applyAction`: premio de 20 al comer y al salir comiendo, con `bonus-earned` y sin cambio de turno (HU-03); rechazo de tirar con premio pendiente (HU-03 c2); usar el premio pasa el turno (HU-03 c4); premio de 10 al llegar a meta (HU-04 c1); sin premio al ganar (HU-04 c2); premio perdido con `bonus-lost` y cambio de turno (HU-05 c1, c2); premios encadenados (HU-06 c1, c2); rebote que pasa por la meta sin premio (HU-07 c3). Esqueleto: error `bonus-pending` en `ActionError`. Ejecutar y comprobar que fallan en sus aserciones.
 - [ ] 4. Implementar en `actions.ts` los premios y sus eventos, y en `playRandomGame` el movimiento con premio pendiente; pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
@@ -102,7 +102,8 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 | HU-03 c4 | 3, 4 | «R-051: usar el premio sin ganar otro pasa el turno» |
 | RF-006 | 3, 4 | «R-051: comer da un premio de 20 y el turno no pasa» y «R-051: salir comiendo da un premio de 20» |
 | HU-04 c1 / RF-007 | 3, 4 | «R-072: llegar a meta da un premio de 10 para otra ficha» |
-| HU-04 c2 / RF-007 | 3, 4 | «R-090: meter la cuarta ficha termina la partida sin premio» |
+| HU-04 c2 / RF-007 | 3, 4 | «R-090: meter la cuarta ficha con un premio termina la partida sin premio de 10» y «R-090: gana quien mete su cuarta ficha en meta y la partida termina» de SPEC 001, sin cambios |
+| RNF-003 | 3 | «RF-021: llegar a meta produce los eventos de avance y llegada» de SPEC 001, reescrito en su sitio como «R-072: llegar a meta produce los eventos de avance, llegada y premio» y añadido a la tabla de la sección 7 del spec |
 | HU-05 c1 / RF-011 | 3, 4 | «R-080: un premio de 10 sin movimientos se pierde y el turno pasa» |
 | HU-05 c2 / RF-011 | 1-4 | «R-080: un movimiento de premio a una casilla con 2 fichas no es legal» y «R-080: si el único destino del premio está lleno, se pierde» |
 | HU-06 c1 / RF-012 | 3, 4 | «R-081: comer con un premio da otro premio de 20» |
@@ -131,4 +132,5 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 - **Sí:** un movimiento solo puede ganar un premio, porque se come en el recorrido común y la meta está fuera de él.
 - **Sí:** eventos `bonus-earned` y `bonus-lost` con `player` y `amount`, después de los de movimiento y comida, y antes de `turn-changed`.
 - **Sí:** rebote paso a paso, cambiando de sentido en la meta y en la primera casilla del pasillo. Cubre cualquier cantidad sin casos especiales.
+- **Sí:** al dar premios cambian 3 tests ya existentes, que se reescriben en su sitio en el paso 3. Uno es de SPEC 001 («RF-021: llegar a meta…»): con otra ficha en juego, llegar a meta da un premio de 10 y el turno ya no pasa, así que se añade a la tabla de la sección 7 del spec, como ella misma pide. Los otros dos son de PARTE-01 («RF-014: comer produce el evento…» y «R-023: al salir de casa come…») y esperaban que el turno pasara tras comer porque esa parte aún no daba premios.
 - **Sí:** `playRandomGame` se ajusta en esta parte y no en PARTE-03. Sin él, una partida aleatoria tiraría con un premio pendiente y CE-02 fallaría.

@@ -12,6 +12,7 @@ export type ActionError =
   | 'game-over'
   | 'not-your-turn'
   | 'roll-pending'
+  | 'bonus-pending'
   | 'invalid-roll'
   | 'no-pending-roll'
   | 'illegal-move';

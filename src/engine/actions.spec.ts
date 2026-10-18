@@ -1,6 +1,7 @@
 import { Action, ActionError, ActionOutcome, applyAction, GameEvent } from './actions';
 import { Color, COLORS } from './board';
-import { GameState } from './game';
+import { GameState, PieceId } from './game';
+import { legalMoves } from './moves';
 import {
   buildGame,
   deepFreeze,
@@ -203,7 +204,7 @@ describe('applyAction: mover', () => {
     ]);
   });
 
-  it('RF-021: llegar a meta produce los eventos de avance y llegada', () => {
+  it('R-072: llegar a meta produce los eventos de avance, llegada y premio', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       turn: 'yellow',
@@ -220,7 +221,7 @@ describe('applyAction: mover', () => {
     expect(events).toEqual([
       { type: 'piece-advanced', pieceId: 'yellow-0', from: lane(5), to: GOAL },
       { type: 'piece-reached-goal', pieceId: 'yellow-0' },
-      { type: 'turn-changed', player: 'red' },
+      { type: 'bonus-earned', player: 'yellow', amount: 10 },
     ]);
     expect(state.winner).toBeNull();
   });
@@ -294,7 +295,7 @@ describe('applyAction: comer', () => {
     expect(events).toEqual([
       { type: 'piece-advanced', pieceId: 'yellow-0', from: track(10), to: track(14) },
       { type: 'piece-captured', pieceId: 'red-0', at: track(14) },
-      { type: 'turn-changed', player: 'red' },
+      { type: 'bonus-earned', player: 'yellow', amount: 20 },
     ]);
   });
 
@@ -317,7 +318,7 @@ describe('applyAction: comer', () => {
     expect(events).toEqual([
       { type: 'piece-left-home', pieceId: 'yellow-0', to: track(5) },
       { type: 'piece-captured', pieceId: 'red-0', at: track(5) },
-      { type: 'turn-changed', player: 'red' },
+      { type: 'bonus-earned', player: 'yellow', amount: 20 },
     ]);
   });
 
@@ -341,6 +342,224 @@ describe('applyAction: comer', () => {
       { type: 'piece-advanced', pieceId: 'yellow-0', from: track(10), to: track(12) },
       { type: 'turn-changed', player: 'red' },
     ]);
+  });
+});
+
+describe('applyAction: premios', () => {
+  const move = (pieceId: PieceId): Action => ({ type: 'move', player: 'yellow', pieceId });
+
+  it('R-051: comer da un premio de 20 y el turno no pasa', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 4,
+      positions: { 'yellow-0': track(10), 'red-0': track(14), 'yellow-1': track(30) },
+    });
+
+    const { state, events } = applyOk(game, move('yellow-0'));
+
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: track(10), to: track(14) },
+      { type: 'piece-captured', pieceId: 'red-0', at: track(14) },
+      { type: 'bonus-earned', player: 'yellow', amount: 20 },
+    ]);
+    expect(state.turn).toBe('yellow');
+    expect(state.pendingRoll).toBeNull();
+    expect(state.pendingBonus).toBe(20);
+  });
+
+  it('R-051: salir comiendo da un premio de 20', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 5,
+      positions: { 'red-0': track(5) },
+    });
+
+    const { state } = applyOk(game, move('yellow-0'));
+
+    expect(state.turn).toBe('yellow');
+    expect(state.pendingBonus).toBe(20);
+  });
+
+  it('R-051: con un premio pendiente se rechaza tirar', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 20,
+      positions: { 'yellow-0': track(10) },
+    });
+
+    expectRejected(game, { type: 'roll', player: 'yellow', value: 3 }, 'bonus-pending');
+  });
+
+  it('R-080: el premio no se aplica solo aunque haya un único movimiento', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 4,
+      positions: { 'yellow-0': track(10), 'red-0': track(14) },
+    });
+
+    const { state } = applyOk(game, move('yellow-0'));
+
+    expect(legalMoves(state)).toEqual([{ pieceId: 'yellow-0', to: track(34) }]);
+    expect(state.pieces.find((piece) => piece.id === 'yellow-0')?.position).toEqual(track(14));
+    expect(state.pendingBonus).toBe(20);
+  });
+
+  it('R-051: usar el premio sin ganar otro pasa el turno', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 20,
+      positions: { 'yellow-0': track(10) },
+    });
+
+    const { state, events } = applyOk(game, move('yellow-0'));
+
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: track(10), to: track(30) },
+      { type: 'turn-changed', player: 'red' },
+    ]);
+    expect(state.turn).toBe('red');
+    expect(state.pendingBonus).toBeNull();
+  });
+
+  it('R-072: llegar a meta da un premio de 10 para otra ficha', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 3,
+      positions: { 'yellow-0': lane(5), 'yellow-1': track(30) },
+    });
+
+    const { state } = applyOk(game, move('yellow-0'));
+
+    expect(state.turn).toBe('yellow');
+    expect(state.pendingBonus).toBe(10);
+    expect(legalMoves(state)).toEqual([{ pieceId: 'yellow-1', to: track(40) }]);
+  });
+
+  it('R-090: meter la cuarta ficha con un premio termina la partida sin premio de 10', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 10,
+      positions: { 'yellow-0': track(66), 'yellow-1': GOAL, 'yellow-2': GOAL, 'yellow-3': GOAL },
+    });
+
+    const { state, events } = applyOk(game, move('yellow-0'));
+
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: track(66), to: GOAL },
+      { type: 'piece-reached-goal', pieceId: 'yellow-0' },
+      { type: 'game-over', winner: 'yellow' },
+    ]);
+    expect(state.winner).toBe('yellow');
+    expect(state.pendingBonus).toBeNull();
+  });
+
+  it('R-080: un premio de 10 sin movimientos se pierde y el turno pasa', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 3,
+      positions: { 'yellow-0': lane(5) },
+    });
+
+    const { state, events } = applyOk(game, move('yellow-0'));
+
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: lane(5), to: GOAL },
+      { type: 'piece-reached-goal', pieceId: 'yellow-0' },
+      { type: 'bonus-earned', player: 'yellow', amount: 10 },
+      { type: 'bonus-lost', player: 'yellow', amount: 10 },
+      { type: 'turn-changed', player: 'red' },
+    ]);
+    expect(state.turn).toBe('red');
+    expect(state.pendingBonus).toBeNull();
+  });
+
+  it('R-080: si el único destino del premio está lleno, se pierde', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 4,
+      positions: {
+        'yellow-0': track(10),
+        'red-0': track(14),
+        'red-1': track(34),
+        'red-2': track(34),
+      },
+    });
+
+    const { state, events } = applyOk(game, move('yellow-0'));
+
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: track(10), to: track(14) },
+      { type: 'piece-captured', pieceId: 'red-0', at: track(14) },
+      { type: 'bonus-earned', player: 'yellow', amount: 20 },
+      { type: 'bonus-lost', player: 'yellow', amount: 20 },
+      { type: 'turn-changed', player: 'red' },
+    ]);
+    expect(state.turn).toBe('red');
+    expect(state.pendingBonus).toBeNull();
+  });
+
+  it('R-081: comer con un premio da otro premio de 20', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 20,
+      positions: { 'yellow-0': track(10), 'red-0': track(30) },
+    });
+
+    const { state, events } = applyOk(game, move('yellow-0'));
+
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: track(10), to: track(30) },
+      { type: 'piece-captured', pieceId: 'red-0', at: track(30) },
+      { type: 'bonus-earned', player: 'yellow', amount: 20 },
+    ]);
+    expect(state.turn).toBe('yellow');
+    expect(state.pendingBonus).toBe(20);
+  });
+
+  it('R-081: llegar a meta con un premio da un premio de 10', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 20,
+      positions: { 'yellow-0': track(56), 'yellow-1': track(30) },
+    });
+
+    const { state, events } = applyOk(game, move('yellow-0'));
+
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: track(56), to: GOAL },
+      { type: 'piece-reached-goal', pieceId: 'yellow-0' },
+      { type: 'bonus-earned', player: 'yellow', amount: 10 },
+    ]);
+    expect(state.turn).toBe('yellow');
+    expect(state.pendingBonus).toBe(10);
+  });
+
+  it('R-071: un rebote que pasa por la meta no da premio', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 20,
+      positions: { 'yellow-0': lane(5) },
+    });
+
+    const { state, events } = applyOk(game, move('yellow-0'));
+
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: lane(5), to: lane(5) },
+      { type: 'turn-changed', player: 'red' },
+    ]);
+    expect(state.pendingBonus).toBeNull();
   });
 });
 
