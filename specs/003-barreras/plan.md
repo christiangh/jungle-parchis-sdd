@@ -24,7 +24,7 @@ Un módulo nuevo, `barriers.ts`, define qué es una barrera (R-060) y expone `ba
 ### Pasos
 
 - [x] 1. Tests de `barriers` (HU-05 c1-c3 y barrera de un color en un seguro). Esqueleto: `barriers.ts` con el tipo `Barrier` y `barriers` devolviendo `[]`, reexportado en `index.ts`. Ejecutar y comprobar que fallan en sus aserciones (P-07); el de la casilla del pasillo pasa ya y queda como guarda.
-- [ ] 2. Implementar `barriers`; pasar `pnpm check`.
+- [x] 2. Implementar `barriers`; pasar `pnpm check`.
 - [ ] 3. Tests de `legalMoves` y `applyAction`: reescribir en su sitio el test de la tabla del spec y añadir HU-01 c2-c6, HU-02 c3, HU-03 c1-c3, HU-04 c1-c2 y el destino justo antes de una barrera. Sin esqueleto: no cambia ninguna firma pública. Los de atravesar deben fallar; los de terminar en una barrera, salir comiendo, pasillo y destino previo pasan ya y quedan como guarda.
 - [ ] 4. Implementar en `moves.ts` la prohibición de atravesar barreras y quitar la mención provisional de RF-012; pasar `pnpm check`, incluido el test de propiedades de SPEC 002.
 
