@@ -92,4 +92,10 @@ describe('createGame', () => {
     expect(players).toEqual(['red', 'yellow']);
     expect(game.players).not.toBe(players);
   });
+
+  it('R-023: el orden de llegada empieza con todas las fichas en el orden de las fichas', () => {
+    const game = createOk({ players: ['yellow', 'red'], firstPlayer: 'yellow' });
+
+    expect(game.arrivalOrder).toEqual(game.pieces.map((piece) => piece.id));
+  });
 });

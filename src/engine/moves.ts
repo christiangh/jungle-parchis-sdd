@@ -4,8 +4,10 @@ import {
   BoardPosition,
   capacity,
   Color,
+  isSafe,
   LANE_LENGTH,
   LanePosition,
+  MAX_PIECES_PER_SQUARE,
   START_SQUARE,
   stepForward,
   TrackPosition,
@@ -15,11 +17,17 @@ import { GameState, Piece, PieceId } from './game';
 export interface Move {
   readonly pieceId: PieceId;
   readonly to: BoardPosition;
+  /** Rival piece sent home by this move, if any (R-023, R-050). */
+  readonly captures?: PieceId;
 }
 
 const EXIT_ROLL = 5;
 
 export function legalMoves(state: GameState): readonly Move[] {
+  // R-080: a bonus is used whole by a single piece on the board; pieces at home cannot use it.
+  if (state.pendingBonus !== null) {
+    return advanceMoves(state, state.pendingBonus);
+  }
   const roll = state.pendingRoll;
   if (roll === null) {
     return [];
@@ -29,15 +37,22 @@ export function legalMoves(state: GameState): readonly Move[] {
   if (exit) {
     return [exit];
   }
+  return advanceMoves(state, roll);
+}
+
+function advanceMoves(state: GameState, steps: number): Move[] {
   return state.pieces
     .filter((piece) => piece.color === state.turn)
     .flatMap((piece) => {
-      const move = advanceMove(state, piece, roll);
+      const move = advanceMove(state, piece, steps);
       return move ? [move] : [];
     });
 }
 
-/** R-020, R-022: one piece leaves home to its start square with a 5. */
+/**
+ * R-020, R-022, R-023: one piece leaves home to its start square with a 5. Only two own pieces
+ * block it; otherwise it captures the rival that arrived last, even on a safe square.
+ */
 function exitMove(state: GameState, roll: number): Move | null {
   const color = state.turn;
   const pieceAtHome = state.pieces.find(
@@ -46,39 +61,82 @@ function exitMove(state: GameState, roll: number): Move | null {
   if (roll !== EXIT_ROLL || !pieceAtHome) {
     return null;
   }
-  const start: BoardPosition = { kind: 'track', square: START_SQUARE[color] };
-  return hasRoom(state.pieces, pieceAtHome, start) ? { pieceId: pieceAtHome.id, to: start } : null;
+  const start: TrackPosition = { kind: 'track', square: START_SQUARE[color] };
+  const occupants = state.pieces.filter((piece) => isAt(piece, color, start));
+  const own = occupants.filter((piece) => piece.color === color);
+  if (own.length >= MAX_PIECES_PER_SQUARE) {
+    return null;
+  }
+  const rivals = occupants.filter((piece) => piece.color !== color);
+  return withCapture(pieceAtHome, start, lastArrived(state, rivals));
 }
 
-/** R-013, R-040: a piece on the board moves forward exactly `roll` squares. */
+/** R-013, R-040, R-050: a piece on the board moves forward exactly `roll` squares. */
 function advanceMove(state: GameState, piece: Piece, roll: number): Move | null {
   const from = piece.position;
   if (from.kind !== 'track' && from.kind !== 'lane') {
     return null;
   }
   const to = advance(piece.color, from, roll);
-  return hasRoom(state.pieces, piece, to) ? { pieceId: piece.id, to } : null;
+  if (!hasRoom(state.pieces, piece, to)) {
+    return null;
+  }
+  return withCapture(piece, to, capturedOnTrack(state.pieces, piece, to));
+}
+
+/** R-050, R-052: a single rival on a track square that is not safe is captured. */
+function capturedOnTrack(
+  pieces: readonly Piece[],
+  mover: Piece,
+  to: BoardPosition,
+): Piece | undefined {
+  if (to.kind !== 'track' || isSafe(to.square)) {
+    return undefined;
+  }
+  const others = pieces.filter((piece) => piece.id !== mover.id && isAt(piece, mover.color, to));
+  return others.length === 1 && others[0].color !== mover.color ? others[0] : undefined;
+}
+
+/** R-023: of several pieces, the one that moved last according to `arrivalOrder`. */
+function lastArrived(state: GameState, pieces: readonly Piece[]): Piece | undefined {
+  const order = (piece: Piece): number => state.arrivalOrder.indexOf(piece.id);
+  return pieces.reduce<Piece | undefined>(
+    (last, piece) => (last === undefined || order(piece) > order(last) ? piece : last),
+    undefined,
+  );
+}
+
+/** Leaves `captures` out when nothing is captured, so moves without a capture keep their shape. */
+function withCapture(piece: Piece, to: BoardPosition, captured: Piece | undefined): Move {
+  return captured ? { pieceId: piece.id, to, captures: captured.id } : { pieceId: piece.id, to };
 }
 
 /**
  * Walks `steps` squares forward. Squares passed through are not checked (RF-012, provisional).
- * R-071: steps left over at the goal go back down the lane. A single bounce is enough, since a
- * die roll leaves at most 5 steps over (from the last lane square with a 6).
+ * R-071: steps left over at the goal go back down the lane, and at the first lane square they go
+ * forward again, as many times as needed. Only ending on the goal counts as reaching it.
  */
 function advance(color: Color, from: TrackPosition | LanePosition, steps: number): BoardPosition {
   let position: BoardPosition = from;
+  let backwards = false;
   for (let step = 0; step < steps; step++) {
     if (position.kind === 'goal') {
-      return { kind: 'lane', square: LANE_LENGTH + 1 - (steps - step) };
+      backwards = true;
+      position = { kind: 'lane', square: LANE_LENGTH };
+    } else if (backwards && position.kind === 'lane' && position.square > 1) {
+      position = { kind: 'lane', square: position.square - 1 };
+    } else {
+      backwards = false;
+      position = stepForward(color, position);
     }
-    position = stepForward(color, position);
   }
   return position;
 }
 
 /**
  * R-009, R-041: whether `mover` may end its move on `position`. The mover itself is not counted,
- * and a single rival does not block it (RF-013, provisional).
+ * and a single rival does not block it, since it is captured (R-050) or shares a safe square
+ * (R-052). Leaving home has its own check (R-023).
  */
 function hasRoom(pieces: readonly Piece[], mover: Piece, position: BoardPosition): boolean {
   const occupants = pieces.filter(

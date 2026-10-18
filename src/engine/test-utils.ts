@@ -6,6 +6,7 @@ import {
   DIE_FACES,
   GoalPosition,
   HomePosition,
+  isSafe,
   LANE_LENGTH,
   LanePosition,
   MAX_PIECES_PER_SQUARE,
@@ -29,7 +30,11 @@ export interface GameSetup {
   /** Defaults to the first color in `players`. */
   readonly turn?: Color;
   readonly pendingRoll?: number | null;
-  /** Pieces not listed stay at home. */
+  readonly pendingBonus?: number | null;
+  /**
+   * Pieces not listed stay at home. Listed pieces arrive in the order they are listed, after the
+   * ones not listed (R-023).
+   */
   readonly positions?: Partial<Record<PieceId, Position>>;
 }
 
@@ -42,13 +47,16 @@ export function buildGame(setup: GameSetup): GameState {
     throw new Error(`Invalid game setup: ${result.error}`);
   }
   const positions = setup.positions ?? {};
+  const listed = Object.keys(positions) as PieceId[];
   return {
     ...result.value,
     pendingRoll: setup.pendingRoll ?? null,
+    pendingBonus: setup.pendingBonus ?? null,
     pieces: result.value.pieces.map((piece) => {
       const position = positions[piece.id];
       return position ? { ...piece, position } : piece;
     }),
+    arrivalOrder: [...result.value.arrivalOrder.filter((id) => !listed.includes(id)), ...listed],
   };
 }
 
@@ -101,7 +109,7 @@ export function playRandomGame(
     }
     const moves = legalMoves(state);
     const action: Action =
-      state.pendingRoll === null
+      state.pendingRoll === null && state.pendingBonus === null
         ? { type: 'roll', player: state.turn, value: nextRoll() }
         : { type: 'move', player: state.turn, pieceId: moves[pickMove(moves.length)].pieceId };
     const result = applyAction(state, action);
@@ -135,6 +143,85 @@ export function invariantViolations(state: GameState): StateInvariant[] {
     violations.push('I-05');
   }
   return violations;
+}
+
+/** RNF-004 of SPEC 002: track squares, other than safe ones, holding pieces of two colors. */
+export function mixedColorSquares(state: GameState): number[] {
+  const colorsBySquare = new Map<number, Set<Color>>();
+  for (const { color, position } of state.pieces) {
+    if (position.kind === 'track' && !isSafe(position.square)) {
+      const colors = colorsBySquare.get(position.square) ?? new Set<Color>();
+      colorsBySquare.set(position.square, colors.add(color));
+    }
+  }
+  return [...colorsBySquare]
+    .filter(([, colors]) => colors.size > 1)
+    .map(([square]) => square)
+    .sort((a, b) => a - b);
+}
+
+/** Facts that random games must produce at least once (CE-03 of SPEC 002). */
+export type GameFact =
+  | 'capture-on-track'
+  | 'capture-on-exit'
+  | 'bonus-20'
+  | 'bonus-10'
+  | 'bonus-lost'
+  | 'chained-bonus'
+  | 'multiple-bounce';
+
+/** Returns the facts produced by the actions of `played`, without repeats and in type order. */
+export function gameFacts(played: Pick<PlayedGame, 'states' | 'actions'>): GameFact[] {
+  const found = new Set<GameFact>();
+  played.actions.forEach((action, index) => {
+    // Replaying the action gives its own events, which PlayedGame keeps all together.
+    const before = played.states[index];
+    const result = applyAction(before, action);
+    if (!result.ok) {
+      throw new Error(`Action ${index} was rejected: ${result.error}`);
+    }
+    for (const fact of actionFacts(before, action, result.value.events)) {
+      found.add(fact);
+    }
+  });
+  return GAME_FACTS.filter((fact) => found.has(fact));
+}
+
+export const GAME_FACTS: readonly GameFact[] = [
+  'capture-on-track',
+  'capture-on-exit',
+  'bonus-20',
+  'bonus-10',
+  'bonus-lost',
+  'chained-bonus',
+  'multiple-bounce',
+];
+
+const CAPTURE_BONUS = 20;
+
+function actionFacts(before: GameState, action: Action, events: readonly GameEvent[]): GameFact[] {
+  const facts: GameFact[] = [];
+  events.forEach((event, index) => {
+    if (event.type === 'piece-captured') {
+      // The capture follows the event of the move that made it.
+      const leftHome = events[index - 1]?.type === 'piece-left-home';
+      facts.push(leftHome ? 'capture-on-exit' : 'capture-on-track');
+    } else if (event.type === 'bonus-earned') {
+      facts.push(event.amount === CAPTURE_BONUS ? 'bonus-20' : 'bonus-10');
+      if (before.pendingBonus !== null) {
+        facts.push('chained-bonus');
+      }
+    } else if (event.type === 'bonus-lost') {
+      facts.push('bonus-lost');
+    }
+  });
+  // From any lane square, 20 squares always bounce at the goal and again at the first lane square.
+  const piece =
+    action.type === 'move' ? before.pieces.find(({ id }) => id === action.pieceId) : undefined;
+  if (before.pendingBonus === CAPTURE_BONUS && piece?.position.kind === 'lane') {
+    facts.push('multiple-bounce');
+  }
+  return facts;
 }
 
 /** I-04: returns the pieces at the goal in `before` that are no longer there in `after`. */

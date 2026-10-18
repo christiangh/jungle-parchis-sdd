@@ -2,7 +2,11 @@
 
 import { BoardPosition, Color, isValidRoll, LanePosition, TrackPosition } from './board';
 import { GameState, Piece, PieceId, Result } from './game';
-import { legalMoves } from './moves';
+import { legalMoves, Move } from './moves';
+
+const CAPTURE_BONUS = 20;
+
+const GOAL_BONUS = 10;
 
 export type Action =
   | { readonly type: 'roll'; readonly player: Color; readonly value: number }
@@ -12,6 +16,7 @@ export type ActionError =
   | 'game-over'
   | 'not-your-turn'
   | 'roll-pending'
+  | 'bonus-pending'
   | 'invalid-roll'
   | 'no-pending-roll'
   | 'illegal-move';
@@ -24,7 +29,10 @@ export type GameEvent =
       readonly from: TrackPosition | LanePosition;
       readonly to: BoardPosition;
     }
+  | { readonly type: 'piece-captured'; readonly pieceId: PieceId; readonly at: TrackPosition }
   | { readonly type: 'piece-reached-goal'; readonly pieceId: PieceId }
+  | { readonly type: 'bonus-earned'; readonly player: Color; readonly amount: number }
+  | { readonly type: 'bonus-lost'; readonly player: Color; readonly amount: number }
   | { readonly type: 'roll-lost'; readonly player: Color; readonly value: number }
   | { readonly type: 'turn-changed'; readonly player: Color }
   | { readonly type: 'game-over'; readonly winner: Color };
@@ -51,6 +59,10 @@ export function applyAction(state: GameState, action: Action): Result<ActionOutc
 
 /** R-011, R-012: a roll stays pending if it has legal moves; otherwise it is lost. */
 function roll(state: GameState, action: RollAction): Result<ActionOutcome, ActionError> {
+  // R-051, R-072: a bonus is used before the next roll.
+  if (state.pendingBonus !== null) {
+    return { ok: false, error: 'bonus-pending' };
+  }
   if (state.pendingRoll !== null) {
     return { ok: false, error: 'roll-pending' };
   }
@@ -74,9 +86,12 @@ function roll(state: GameState, action: RollAction): Result<ActionOutcome, Actio
   };
 }
 
-/** R-013, R-090: applies one legal move, then passes the turn or ends the game. */
+/**
+ * R-013, R-090: applies one legal move with the pending roll or bonus, then ends the game, keeps
+ * the turn for a new bonus (R-051, R-072, R-081) or passes it.
+ */
 function move(state: GameState, action: MoveAction): Result<ActionOutcome, ActionError> {
-  if (state.pendingRoll === null) {
+  if (state.pendingRoll === null && state.pendingBonus === null) {
     return { ok: false, error: 'no-pending-roll' };
   }
   const legal = legalMoves(state).find((candidate) => candidate.pieceId === action.pieceId);
@@ -85,22 +100,55 @@ function move(state: GameState, action: MoveAction): Result<ActionOutcome, Actio
     return { ok: false, error: 'illegal-move' };
   }
 
-  const pieces = state.pieces.map((current) =>
-    current.id === piece.id ? { ...current, position: legal.to } : current,
-  );
+  // R-023, R-050: a captured piece goes back home.
+  const pieces = state.pieces.map((current): Piece => {
+    if (current.id === piece.id) {
+      return { ...current, position: legal.to };
+    }
+    return current.id === legal.captures ? { ...current, position: { kind: 'home' } } : current;
+  });
   const events: GameEvent[] = [moveEvent(piece, legal.to)];
+  // Captures only happen on the track (R-023, R-050).
+  if (legal.captures && legal.to.kind === 'track') {
+    events.push({ type: 'piece-captured', pieceId: legal.captures, at: legal.to });
+  }
   if (legal.to.kind === 'goal') {
     events.push({ type: 'piece-reached-goal', pieceId: piece.id });
   }
-  const moved: GameState = { ...state, pieces, pendingRoll: null };
+  const arrivalOrder = [...state.arrivalOrder.filter((id) => id !== piece.id), piece.id];
+  const moved: GameState = {
+    ...state,
+    pieces,
+    pendingRoll: null,
+    pendingBonus: null,
+    arrivalOrder,
+  };
 
   if (hasWon(pieces, state.turn)) {
     events.push({ type: 'game-over', winner: state.turn });
     return { ok: true, value: { state: { ...moved, winner: state.turn }, events } };
   }
+  const bonus = earnedBonus(legal);
+  if (bonus !== null) {
+    events.push({ type: 'bonus-earned', player: state.turn, amount: bonus });
+    const rewarded: GameState = { ...moved, pendingBonus: bonus };
+    if (legalMoves(rewarded).length > 0) {
+      return { ok: true, value: { state: rewarded, events } };
+    }
+    // R-080: a bonus no piece can use is lost.
+    events.push({ type: 'bonus-lost', player: state.turn, amount: bonus });
+  }
   const next = nextPlayer(state);
   events.push({ type: 'turn-changed', player: next });
   return { ok: true, value: { state: { ...moved, turn: next }, events } };
+}
+
+/** R-051: capturing counts 20. R-072: reaching the goal counts 10, not bouncing past it (R-071). */
+function earnedBonus(move: Move): number | null {
+  if (move.captures) {
+    return CAPTURE_BONUS;
+  }
+  return move.to.kind === 'goal' ? GOAL_BONUS : null;
 }
 
 function moveEvent(piece: Piece, to: BoardPosition): GameEvent {

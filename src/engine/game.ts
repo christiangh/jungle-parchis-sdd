@@ -16,7 +16,11 @@ export interface GameState {
   readonly pieces: readonly Piece[];
   readonly turn: Color;
   readonly pendingRoll: number | null;
+  /** Squares the player in turn must move with one piece before rolling again (R-051, R-072). */
+  readonly pendingBonus: number | null;
   readonly winner: Color | null;
+  /** Ids of all pieces, from the one that moved longest ago to the last one to move (R-023). */
+  readonly arrivalOrder: readonly PieceId[];
 }
 
 export type Result<T, E> =
@@ -56,6 +60,14 @@ export function createGame(config: GameConfig): Result<GameState, CreateGameErro
   );
   return {
     ok: true,
-    value: { players: turnOrder, pieces, turn: firstPlayer, pendingRoll: null, winner: null },
+    value: {
+      players: turnOrder,
+      pieces,
+      turn: firstPlayer,
+      pendingRoll: null,
+      pendingBonus: null,
+      winner: null,
+      arrivalOrder: pieces.map((piece) => piece.id),
+    },
   };
 }
