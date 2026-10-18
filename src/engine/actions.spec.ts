@@ -46,6 +46,23 @@ describe('applyAction: tirar', () => {
     expect(state.pieces).toEqual(game.pieces);
   });
 
+  it('R-061: si la única tirada atraviesa una barrera, se pierde la tirada', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      positions: { 'yellow-0': track(10), 'red-0': track(12), 'red-1': track(12) },
+    });
+
+    const { state, events } = applyOk(game, { type: 'roll', player: 'yellow', value: 4 });
+
+    expect(events).toEqual([
+      { type: 'roll-lost', player: 'yellow', value: 4 },
+      { type: 'turn-changed', player: 'red' },
+    ]);
+    expect(state.turn).toBe('red');
+    expect(state.pieces).toEqual(game.pieces);
+  });
+
   it('R-011: con movimientos legales la tirada queda pendiente y el turno no cambia', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
@@ -491,6 +508,32 @@ describe('applyAction: premios', () => {
         'red-0': track(14),
         'red-1': track(34),
         'red-2': track(34),
+      },
+    });
+
+    const { state, events } = applyOk(game, move('yellow-0'));
+
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: track(10), to: track(14) },
+      { type: 'piece-captured', pieceId: 'red-0', at: track(14) },
+      { type: 'bonus-earned', player: 'yellow', amount: 20 },
+      { type: 'bonus-lost', player: 'yellow', amount: 20 },
+      { type: 'turn-changed', player: 'red' },
+    ]);
+    expect(state.turn).toBe('red');
+    expect(state.pendingBonus).toBeNull();
+  });
+
+  it('R-080: un premio cuyo único movimiento atraviesa una barrera se pierde', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 4,
+      positions: {
+        'yellow-0': track(10),
+        'red-0': track(14),
+        'red-1': track(20),
+        'red-2': track(20),
       },
     });
 
