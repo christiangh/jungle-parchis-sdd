@@ -15,6 +15,8 @@ import { GameState, Piece, PieceId } from './game';
 export interface Move {
   readonly pieceId: PieceId;
   readonly to: BoardPosition;
+  /** Rival piece sent home by this move, if any (R-023, R-050). */
+  readonly captures?: PieceId;
 }
 
 const EXIT_ROLL = 5;

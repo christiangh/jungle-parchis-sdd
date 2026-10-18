@@ -36,7 +36,7 @@ describe('legalMoves: salida de casa', () => {
     expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-1', to: track(5) }]);
   });
 
-  it('RF-013 (provisional): sale con una sola ficha rival en la salida, sin comerla', () => {
+  it('R-023: sale con una sola ficha rival en la salida y la come', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       turn: 'yellow',
@@ -44,7 +44,38 @@ describe('legalMoves: salida de casa', () => {
       positions: { 'red-0': track(5) },
     });
 
-    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(5) }]);
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(5), captures: 'red-0' }]);
+  });
+
+  it('R-023: con dos rivales en la salida come la que llegó en último lugar', () => {
+    const redLast = buildGame({
+      players: ['yellow', 'blue', 'red'],
+      turn: 'yellow',
+      pendingRoll: 5,
+      positions: { 'blue-0': track(5), 'red-0': track(5) },
+    });
+    const blueLast = buildGame({
+      players: ['yellow', 'blue', 'red'],
+      turn: 'yellow',
+      pendingRoll: 5,
+      positions: { 'red-0': track(5), 'blue-0': track(5) },
+    });
+
+    expect(legalMoves(redLast)).toEqual([{ pieceId: 'yellow-0', to: track(5), captures: 'red-0' }]);
+    expect(legalMoves(blueLast)).toEqual([
+      { pieceId: 'yellow-0', to: track(5), captures: 'blue-0' },
+    ]);
+  });
+
+  it('R-023: con dos rivales del mismo color en la salida come la que llegó en último lugar', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 5,
+      positions: { 'red-1': track(5), 'red-0': track(5) },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(5), captures: 'red-0' }]);
   });
 });
 
@@ -63,7 +94,7 @@ describe('legalMoves: salida bloqueada', () => {
     ]);
   });
 
-  it('R-022 (provisional RF-008): no se sale con una ficha propia y una rival en la salida', () => {
+  it('R-023: con una ficha propia y una rival en la salida, sale comiendo la rival', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       turn: 'yellow',
@@ -71,10 +102,7 @@ describe('legalMoves: salida bloqueada', () => {
       positions: { 'yellow-0': track(5), 'red-0': track(5), 'yellow-2': track(30) },
     });
 
-    expect(legalMoves(game)).toEqual([
-      { pieceId: 'yellow-0', to: track(10) },
-      { pieceId: 'yellow-2', to: track(35) },
-    ]);
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-1', to: track(5), captures: 'red-0' }]);
   });
 });
 
@@ -198,7 +226,7 @@ describe('legalMoves: avance', () => {
     expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(14) }]);
   });
 
-  it('RF-013 (provisional): termina junto a una sola ficha rival fuera de un seguro', () => {
+  it('R-050: termina sobre una sola ficha rival fuera de un seguro y la come', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       turn: 'yellow',
@@ -206,7 +234,56 @@ describe('legalMoves: avance', () => {
       positions: { 'yellow-0': track(10), 'red-0': track(14) },
     });
 
-    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(14) }]);
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(14), captures: 'red-0' }]);
+  });
+});
+
+describe('legalMoves: comer', () => {
+  it('R-050: no come una ficha propia', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 4,
+      positions: { 'yellow-0': track(10), 'yellow-1': track(14) },
+    });
+
+    expect(legalMoves(game)).toStrictEqual([
+      { pieceId: 'yellow-0', to: track(14) },
+      { pieceId: 'yellow-1', to: track(18) },
+    ]);
+  });
+
+  it('R-052: en un seguro conviven con una sola rival sin comerse', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 2,
+      positions: { 'yellow-0': track(10), 'red-0': track(12) },
+    });
+
+    expect(legalMoves(game)).toStrictEqual([{ pieceId: 'yellow-0', to: track(12) }]);
+  });
+
+  it('R-052: en la salida de otro color conviven si no se sale de casa', () => {
+    const game = buildGame({
+      players: ['yellow', 'blue', 'red'],
+      turn: 'yellow',
+      pendingRoll: 2,
+      positions: { 'yellow-0': track(20), 'red-0': track(22) },
+    });
+
+    expect(legalMoves(game)).toStrictEqual([{ pieceId: 'yellow-0', to: track(22) }]);
+  });
+
+  it('R-052: en la propia salida conviven si no se sale de casa', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 4,
+      positions: { 'yellow-0': track(1), 'red-0': track(5) },
+    });
+
+    expect(legalMoves(game)).toStrictEqual([{ pieceId: 'yellow-0', to: track(5) }]);
   });
 });
 
