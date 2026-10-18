@@ -137,7 +137,7 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 
 ## PARTE-03: Propiedades con comer y premios
 
-**Estado:** En curso
+**Estado:** Hecha
 
 ### Enfoque
 
