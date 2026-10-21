@@ -1,6 +1,6 @@
 # SPEC 003 — Barreras
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 001, SPEC 002
 > **Fecha:** 2026-10-18
 > **Autor:** Christian Garcia
