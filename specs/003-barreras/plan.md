@@ -98,7 +98,7 @@ La propiedad de RNF-004 se comprueba tras cada acción de mover una ficha que no
 ### Pasos
 
 - [x] 1. Tests de `barrierHits` (barrera de otro color, propia y mixta atravesadas; destino en una barrera; barrera en la casilla de origen, que no cuenta; barrera tras la casilla de entrada, que no cuenta; sin barreras) y de `gameFacts` (un caso por hecho nuevo y una salida comiendo sin barrera en la salida, que no da el hecho). Esqueleto: `barrierHits` devuelve `{ passed: [], end: null }` y los hechos nuevos entran en `GameFact` y `GAME_FACTS` sin que `gameFacts` los produzca. Ejecutar y comprobar que fallan en sus aserciones (P-07); el de CE-03 de `invariants.spec.ts` también falla hasta el paso 2.
-- [ ] 2. Implementar `barrierHits` y los hechos nuevos de `gameFacts`; pasar `pnpm check`.
+- [x] 2. Implementar `barrierHits` y los hechos nuevos de `gameFacts`; pasar `pnpm check`.
 - [ ] 3. Ampliar el test de CE-02 con la propiedad de RNF-004 de este spec tras cada acción y renombrarlo; medir cuántas veces sale cada hecho en las 1000 partidas y cuántas se detienen por el límite de acciones; pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
@@ -123,4 +123,5 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso y
 - **Sí:** `barrierHits` separa las casillas atravesadas del destino. El hecho de CE-03 habla de atravesar, y la propiedad de RNF-004 comprueba las dos cosas.
 - **Sí:** los hechos nuevos se cuentan en las mismas 1000 partidas de CE-02, como en SPEC 002.
 - **Sí:** el movimiento descartado se reconoce solo en acciones que no salen de casa. Con un 5 y fichas en casa, la salida obligatoria (R-021) impide calcular los avances, y no estarían descartados por la barrera.
+- **Sí:** `playRandomGame` guarda el resultado de cada acción (`outcomes`) y `gameFacts` lo lee en lugar de repetir cada acción. Con los hechos nuevos, el test de CE-02 pasaba del límite de 60 s en una máquina cargada (entre 30 y 95 s según la ejecución). Con el cambio tarda unos 25 s, pero ha llegado a 77 s, así que el límite sube a 180 s. Subirlo no debilita ninguna aserción: se siguen jugando las 1000 partidas con las mismas comprobaciones.
 - **Sí:** si algún hecho no sale o alguna partida se detiene por el límite de acciones, se para y se consulta al usuario; se ajusta la elección de movimientos o el límite, nunca la comprobación (riesgos de la sección 14 del spec).

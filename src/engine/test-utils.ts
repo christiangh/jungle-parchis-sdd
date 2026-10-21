@@ -1,6 +1,7 @@
 // Helpers to build game states in engine tests. Pure TypeScript, not exported from index.ts.
 
-import { Action, ActionError, applyAction, GameEvent } from './actions';
+import { Action, ActionError, ActionOutcome, applyAction, GameEvent } from './actions';
+import { barriers } from './barriers';
 import {
   Color,
   DIE_FACES,
@@ -12,9 +13,11 @@ import {
   MAX_PIECES_PER_SQUARE,
   PIECES_PER_PLAYER,
   Position,
+  START_SQUARE,
+  stepForward,
   TrackPosition,
 } from './board';
-import { createGame, GameState, PieceId } from './game';
+import { createGame, GameState, Piece, PieceId } from './game';
 import { legalMoves } from './moves';
 
 export const HOME: HomePosition = { kind: 'home' };
@@ -83,6 +86,8 @@ export interface PlayedGame {
   /** The initial state followed by the state after each action. */
   readonly states: readonly GameState[];
   readonly events: readonly GameEvent[];
+  /** The outcome of each action, so its own events need no replaying. */
+  readonly outcomes: readonly ActionOutcome[];
   /** Why the game stopped before having a winner, if it did. */
   readonly stopped: ActionError | 'too-many-actions' | null;
 }
@@ -102,10 +107,11 @@ export function playRandomGame(
   const actions: Action[] = [];
   const states: GameState[] = [initial];
   const events: GameEvent[] = [];
+  const outcomes: ActionOutcome[] = [];
   let state = initial;
   while (state.winner === null) {
     if (actions.length >= MAX_ACTIONS) {
-      return { actions, states, events, stopped: 'too-many-actions' };
+      return { actions, states, events, outcomes, stopped: 'too-many-actions' };
     }
     const moves = legalMoves(state);
     const action: Action =
@@ -114,14 +120,15 @@ export function playRandomGame(
         : { type: 'move', player: state.turn, pieceId: moves[pickMove(moves.length)].pieceId };
     const result = applyAction(state, action);
     if (!result.ok) {
-      return { actions, states, events, stopped: result.error };
+      return { actions, states, events, outcomes, stopped: result.error };
     }
     actions.push(action);
     states.push(result.value.state);
     events.push(...result.value.events);
+    outcomes.push(result.value);
     state = result.value.state;
   }
-  return { actions, states, events, stopped: null };
+  return { actions, states, events, outcomes, stopped: null };
 }
 
 /** Invariants that can be checked on a single state; I-04 needs two states and I-06 an action. */
@@ -172,8 +179,38 @@ export interface BarrierHits {
  * RNF-004 of SPEC 003: walks the move on its own, without moves.ts, so the property does not share
  * the engine's mistakes. Only the common track counts: once in its lane, a piece never leaves it.
  */
-export function barrierHits(_state: GameState, _pieceId: PieceId, _steps: number): BarrierHits {
-  return { passed: [], end: null };
+export function barrierHits(state: GameState, pieceId: PieceId, steps: number): BarrierHits {
+  return walkHits(barrierSquares(state), pieceOf(state, pieceId), steps);
+}
+
+function barrierSquares(state: GameState): ReadonlySet<number> {
+  return new Set(barriers(state).map(({ square }) => square));
+}
+
+function walkHits(blocked: ReadonlySet<number>, piece: Piece, steps: number): BarrierHits {
+  const passed: number[] = [];
+  if (blocked.size === 0) {
+    return { passed, end: null };
+  }
+  let position: Position = piece.position;
+  for (let step = 1; step <= steps && position.kind === 'track'; step++) {
+    position = stepForward(piece.color, position);
+    if (position.kind === 'track' && blocked.has(position.square)) {
+      if (step === steps) {
+        return { passed, end: position.square };
+      }
+      passed.push(position.square);
+    }
+  }
+  return { passed, end: null };
+}
+
+function pieceOf(state: GameState, pieceId: PieceId): Piece {
+  const piece = state.pieces.find(({ id }) => id === pieceId);
+  if (piece === undefined) {
+    throw new Error(`Unknown piece: ${pieceId}`);
+  }
+  return piece;
 }
 
 /** Facts that random games must produce at least once (CE-03 of SPEC 002 and SPEC 003). */
@@ -193,16 +230,10 @@ export type GameFact =
   | 'bonus-lost-to-barrier';
 
 /** Returns the facts produced by the actions of `played`, without repeats and in type order. */
-export function gameFacts(played: Pick<PlayedGame, 'states' | 'actions'>): GameFact[] {
+export function gameFacts(played: Pick<PlayedGame, 'states' | 'actions' | 'outcomes'>): GameFact[] {
   const found = new Set<GameFact>();
   played.actions.forEach((action, index) => {
-    // Replaying the action gives its own events, which PlayedGame keeps all together.
-    const before = played.states[index];
-    const result = applyAction(before, action);
-    if (!result.ok) {
-      throw new Error(`Action ${index} was rejected: ${result.error}`);
-    }
-    for (const fact of actionFacts(before, action, result.value.events)) {
+    for (const fact of actionFacts(played.states[index], action, played.outcomes[index])) {
       found.add(fact);
     }
   });
@@ -226,13 +257,27 @@ export const GAME_FACTS: readonly GameFact[] = [
 
 const CAPTURE_BONUS = 20;
 
-function actionFacts(before: GameState, action: Action, events: readonly GameEvent[]): GameFact[] {
+function actionFacts(
+  before: GameState,
+  action: Action,
+  { state: after, events }: ActionOutcome,
+): GameFact[] {
   const facts: GameFact[] = [];
+  // Random games run this on every action, so barriers are found once per state.
+  const barriersBefore = barriers(before);
+  const blockedBefore = new Set(barriersBefore.map(({ square }) => square));
+  for (const barrier of barriersBefore) {
+    const [first, second] = barrier.pieces.map((id) => pieceOf(before, id).color);
+    facts.push(first === second ? 'single-color-barrier' : 'mixed-barrier');
+  }
   events.forEach((event, index) => {
     if (event.type === 'piece-captured') {
       // The capture follows the event of the move that made it.
       const leftHome = events[index - 1]?.type === 'piece-left-home';
       facts.push(leftHome ? 'capture-on-exit' : 'capture-on-track');
+      if (leftHome && blockedBefore.has(START_SQUARE[before.turn])) {
+        facts.push('capture-on-exit-with-barrier');
+      }
     } else if (event.type === 'bonus-earned') {
       facts.push(event.amount === CAPTURE_BONUS ? 'bonus-20' : 'bonus-10');
       if (before.pendingBonus !== null) {
@@ -240,15 +285,37 @@ function actionFacts(before: GameState, action: Action, events: readonly GameEve
       }
     } else if (event.type === 'bonus-lost') {
       facts.push('bonus-lost');
+      // The pieces are already where the move that earned the bonus left them.
+      const blockedAfter = barrierSquares(after);
+      const blocked = ownPieces(after, event.player).some((other) => {
+        const hits = walkHits(blockedAfter, other, event.amount);
+        return hits.passed.length > 0 || hits.end !== null;
+      });
+      if (blocked) {
+        facts.push('bonus-lost-to-barrier');
+      }
     }
   });
+  const piece = action.type === 'move' ? pieceOf(before, action.pieceId) : undefined;
   // From any lane square, 20 squares always bounce at the goal and again at the first lane square.
-  const piece =
-    action.type === 'move' ? before.pieces.find(({ id }) => id === action.pieceId) : undefined;
   if (before.pendingBonus === CAPTURE_BONUS && piece?.position.kind === 'lane') {
     facts.push('multiple-bounce');
   }
+  // Without leaving home, the engine has walked every own piece with the same steps (R-021).
+  const steps = before.pendingBonus ?? before.pendingRoll;
+  if (piece !== undefined && piece.position.kind !== 'home' && steps !== null) {
+    const blocked = ownPieces(before, piece.color)
+      .filter(({ id }) => id !== piece.id)
+      .some((other) => walkHits(blockedBefore, other, steps).passed.length > 0);
+    if (blocked) {
+      facts.push('move-blocked-by-barrier');
+    }
+  }
   return facts;
+}
+
+function ownPieces(state: GameState, color: Color): readonly Piece[] {
+  return state.pieces.filter((piece) => piece.color === color);
 }
 
 /** I-04: returns the pieces at the goal in `before` that are no longer there in `after`. */

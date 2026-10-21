@@ -19,8 +19,11 @@ import {
 
 const GAMES = 1000;
 
-/** Playing 1000 full games takes around 10 s, well above the default 5 s. */
-const TIMEOUT_MS = 60_000;
+/**
+ * Playing and checking 1000 full games takes around 25 s, but has gone over 75 s on a busy
+ * machine, well above the default 5 s.
+ */
+const TIMEOUT_MS = 180_000;
 
 const pieceIds: PieceId[] = COLORS.flatMap((color) =>
   Array.from({ length: PIECES_PER_PLAYER }, (_, index) => `${color}-${index}` as PieceId),

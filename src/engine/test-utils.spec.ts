@@ -1,4 +1,4 @@
-import { Action } from './actions';
+import { Action, applyAction } from './actions';
 import { GameState, Piece, PieceId } from './game';
 import {
   barrierHits,
@@ -235,8 +235,20 @@ describe('barrierHits', () => {
 describe('gameFacts', () => {
   const move = (pieceId: PieceId): Action => ({ type: 'move', player: 'yellow', pieceId });
 
-  const factsOf = (state: GameState, action: Action) =>
-    gameFacts({ states: [state], actions: [action] });
+  /** Each action is applied to the state at its index, as gameFacts reads them. */
+  const replayed = (states: GameState[], actions: Action[]) => ({
+    states,
+    actions,
+    outcomes: actions.map((action, index) => {
+      const result = applyAction(states[index], action);
+      if (!result.ok) {
+        throw new Error(`Action ${index} was rejected: ${result.error}`);
+      }
+      return result.value;
+    }),
+  });
+
+  const factsOf = (state: GameState, action: Action) => gameFacts(replayed([state], [action]));
 
   const captureOnTrack = (): GameState =>
     buildGame({
@@ -404,10 +416,10 @@ describe('gameFacts', () => {
   });
 
   it('CE-03: devuelve cada hecho de la partida una vez y en orden', () => {
-    const played = {
-      states: [multipleBounce(), captureOnTrack(), captureOnTrack()],
-      actions: [move('yellow-0'), move('yellow-0'), move('yellow-0')],
-    };
+    const played = replayed(
+      [multipleBounce(), captureOnTrack(), captureOnTrack()],
+      [move('yellow-0'), move('yellow-0'), move('yellow-0')],
+    );
 
     expect(gameFacts(played)).toEqual(['capture-on-track', 'bonus-20', 'multiple-bounce']);
   });
