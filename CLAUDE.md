@@ -17,8 +17,10 @@ Parchís con temática de jungla hecho con spec-driven design, como proyecto de 
 
 El gestor de paquetes es pnpm, nunca npm.
 
-- `pnpm check`: formato, lint y tests. Cierra cada parte de un spec.
-- `pnpm test:once`, `pnpm test:coverage`, `pnpm lint:fix`, `pnpm format`.
+- `pnpm check`: formato, lint y todos los tests, incluidos los de propiedades. Cierra cada parte de un spec.
+- `pnpm test:once`: todos los tests menos los de propiedades; tarda segundos. Es el que se usa en cada paso.
+- `pnpm test:properties`: solo los tests de propiedades (`src/engine/invariants.spec.ts`, 1000 partidas aleatorias).
+- `pnpm test:coverage`, `pnpm lint:fix`, `pnpm format`.
 
 ---
 
