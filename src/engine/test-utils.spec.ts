@@ -169,7 +169,7 @@ describe('mixedColorSquares', () => {
 });
 
 describe('barrierHits', () => {
-  it('RNF-004: detecta barreras atravesadas de otro color, propias y mixtas', () => {
+  it('RNF-004 de SPEC 003: detecta barreras atravesadas de otro color, propias y mixtas', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       positions: {
@@ -186,7 +186,7 @@ describe('barrierHits', () => {
     expect(barrierHits(game, 'yellow-0', 10)).toEqual({ passed: [12, 14, 17], end: null });
   });
 
-  it('RNF-004: detecta una barrera en la casilla de destino', () => {
+  it('RNF-004 de SPEC 003: detecta una barrera en la casilla de destino', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       positions: { 'yellow-0': track(10), 'red-0': track(14), 'red-1': track(14) },
@@ -195,7 +195,7 @@ describe('barrierHits', () => {
     expect(barrierHits(game, 'yellow-0', 4)).toEqual({ passed: [], end: 14 });
   });
 
-  it('RNF-004: detecta barreras al pasar de la casilla 68 a la 1', () => {
+  it('RNF-004 de SPEC 003: detecta barreras al pasar de la casilla 68 a la 1', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       positions: { 'red-0': track(66), 'yellow-0': track(1), 'yellow-1': track(1) },
@@ -204,7 +204,7 @@ describe('barrierHits', () => {
     expect(barrierHits(game, 'red-0', 4)).toEqual({ passed: [1], end: null });
   });
 
-  it('RNF-004: no cuenta la barrera de la casilla de origen', () => {
+  it('RNF-004 de SPEC 003: no cuenta la barrera de la casilla de origen', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       positions: { 'yellow-0': track(10), 'yellow-1': track(10) },
@@ -222,7 +222,7 @@ describe('barrierHits', () => {
     expect(barrierHits(game, 'yellow-0', 4)).toEqual({ passed: [], end: null });
   });
 
-  it('RNF-004: no detecta nada sin barreras en el camino', () => {
+  it('RNF-004 de SPEC 003: no detecta nada sin barreras en el camino', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       positions: { 'yellow-0': track(10), 'red-0': track(12), 'red-1': track(20) },
