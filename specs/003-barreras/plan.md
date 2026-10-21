@@ -71,3 +71,56 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 - **Sí:** los tests de HU-02 c1 y c2 no se duplican: los de SPEC 002 ya tienen esos escenarios con una barrera en la salida y cumplen CE-01 para R-023.
 - **Sí:** en el cierre, el test de HU-02 c3 se renombra a «R-061: no atraviesa la barrera mixta de una salida», porque solo prueba el atravesar; salir comiendo ya lo prueban los tests de R-023. Decisión del usuario tras la revisión del diff.
 - **Sí:** si al cerrar el paso 4 alguna partida aleatoria se detiene por el límite de acciones, se para y se consulta al usuario (riesgo del spec); no se toca la comprobación.
+
+## PARTE-02: Propiedades con barreras
+
+**Estado:** Pendiente
+
+### Enfoque
+
+El motor no cambia: esta parte solo amplía los tests de propiedades, como PARTE-03 de SPEC 002. Las partidas aleatorias ya juegan con barreras desde PARTE-01. Se añade una ayuda en `test-utils.ts`, `barrierHits(state, pieceId, steps)`, que recorre por su cuenta el avance de una ficha del tablero y devuelve las casillas con barrera de `state` que atraviesa (`passed`, sin la de origen) y la de destino si tiene barrera (`end`, o `null`). Solo mira el recorrido común: en cuanto la ficha entra en su pasillo ya no vuelve a él (R-063). Usa `barriers` y `stepForward`, pero no `moves.ts`, que es lo que se comprueba.
+
+La propiedad de RNF-004 se comprueba tras cada acción de mover una ficha que no sale de casa: con la tirada o el premio pendiente del estado previo, `barrierHits` no da ninguna casilla. La salida comiendo queda fuera porque la ficha sale de casa y se coloca en su salida sin atravesar nada.
+
+`gameFacts` reconoce cinco hechos nuevos de CE-03:
+
+- Barrera de un color y barrera mixta: `barriers` del estado previo a una acción tiene una barrera con fichas del mismo color o de colores distintos.
+- Movimiento descartado por atravesar una barrera: en una acción de mover que no sale de casa, otra ficha del jugador en el recorrido común tiene `passed` no vacío con la misma tirada o premio. Al no salir de casa, el motor ha calculado los avances de todas sus fichas.
+- Salida comiendo con barrera en la salida: salida comiendo con una barrera en la casilla de salida del jugador en el estado previo.
+- Premio perdido por una barrera: `bonus-lost` y, en el estado tras la acción, alguna ficha del jugador en el recorrido común tiene `passed` no vacío o `end` con esa cantidad. Las fichas ya están colocadas tras el movimiento que ganó el premio; solo ha cambiado el turno.
+
+### Archivos
+
+- `src/engine/test-utils.ts`: `barrierHits` con el tipo `BarrierHits`, y los cinco hechos nuevos en `GameFact`, `GAME_FACTS` y `gameFacts`.
+- `src/engine/test-utils.spec.ts`: tests de `barrierHits` y de los hechos nuevos con escenarios de `buildGame`.
+- `src/engine/invariants.spec.ts`: el test de CE-02 comprueba la propiedad de RNF-004 de este spec, y su nombre lo dice.
+
+### Pasos
+
+- [x] 1. Tests de `barrierHits` (barrera de otro color, propia y mixta atravesadas; destino en una barrera; barrera en la casilla de origen, que no cuenta; barrera tras la casilla de entrada, que no cuenta; sin barreras) y de `gameFacts` (un caso por hecho nuevo y una salida comiendo sin barrera en la salida, que no da el hecho). Esqueleto: `barrierHits` devuelve `{ passed: [], end: null }` y los hechos nuevos entran en `GameFact` y `GAME_FACTS` sin que `gameFacts` los produzca. Ejecutar y comprobar que fallan en sus aserciones (P-07); el de CE-03 de `invariants.spec.ts` también falla hasta el paso 2.
+- [ ] 2. Implementar `barrierHits` y los hechos nuevos de `gameFacts`; pasar `pnpm check`.
+- [ ] 3. Ampliar el test de CE-02 con la propiedad de RNF-004 de este spec tras cada acción y renombrarlo; medir cuántas veces sale cada hecho en las 1000 partidas y cuántas se detienen por el límite de acciones; pasar `pnpm check`.
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+|----------|------|--------|
+| RNF-004 (propiedad) | 1, 2 | Tests de `barrierHits` en `test-utils.spec.ts` |
+| RNF-004 / CE-02 | 3 | «CE-02, CE-03: 1000 partidas aleatorias de 2, 3 y 4 jugadores cumplen I-01 a I-06, RNF-004 de SPEC 002 y RNF-004 de SPEC 003 tras cada acción, y producen todos los hechos de CE-03» |
+| CE-03 | 1-3 | Tests de los hechos nuevos de `gameFacts` y, en el mismo test de CE-02, los 12 hechos producidos al menos una vez |
+| Riesgo: límite de acciones | 3 | En el mismo test, `played.stopped` es `null` en las 1000 partidas |
+| Hecho cuando | 3 | `pnpm check` en verde |
+
+Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso y la parte.
+
+### Skills y agentes
+
+- `caveman:cavecrew-reviewer`: revisión del diff al cerrar la parte.
+
+### Decisiones técnicas
+
+- **Sí:** `barrierHits` recorre el avance por su cuenta en lugar de reutilizar `advance` de `moves.ts`. Si la propiedad usara el mismo cálculo que el motor, no detectaría sus errores. Usa `stepForward` y `barriers`, que tienen sus propios tests.
+- **Sí:** `barrierHits` separa las casillas atravesadas del destino. El hecho de CE-03 habla de atravesar, y la propiedad de RNF-004 comprueba las dos cosas.
+- **Sí:** los hechos nuevos se cuentan en las mismas 1000 partidas de CE-02, como en SPEC 002.
+- **Sí:** el movimiento descartado se reconoce solo en acciones que no salen de casa. Con un 5 y fichas en casa, la salida obligatoria (R-021) impide calcular los avances, y no estarían descartados por la barrera.
+- **Sí:** si algún hecho no sale o alguna partida se detiene por el límite de acciones, se para y se consulta al usuario; se ajusta la elección de movimientos o el límite, nunca la comprobación (riesgos de la sección 14 del spec).

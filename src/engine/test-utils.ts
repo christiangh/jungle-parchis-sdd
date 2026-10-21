@@ -160,7 +160,23 @@ export function mixedColorSquares(state: GameState): number[] {
     .sort((a, b) => a - b);
 }
 
-/** Facts that random games must produce at least once (CE-03 of SPEC 002). */
+/** Barrier squares that a piece meets when moving some steps along the common track. */
+export interface BarrierHits {
+  /** Squares passed through, in order, without the starting square. */
+  readonly passed: readonly number[];
+  /** The final square, if it holds a barrier. */
+  readonly end: number | null;
+}
+
+/**
+ * RNF-004 of SPEC 003: walks the move on its own, without moves.ts, so the property does not share
+ * the engine's mistakes. Only the common track counts: once in its lane, a piece never leaves it.
+ */
+export function barrierHits(_state: GameState, _pieceId: PieceId, _steps: number): BarrierHits {
+  return { passed: [], end: null };
+}
+
+/** Facts that random games must produce at least once (CE-03 of SPEC 002 and SPEC 003). */
 export type GameFact =
   | 'capture-on-track'
   | 'capture-on-exit'
@@ -168,7 +184,13 @@ export type GameFact =
   | 'bonus-10'
   | 'bonus-lost'
   | 'chained-bonus'
-  | 'multiple-bounce';
+  | 'multiple-bounce'
+  // CE-03 of SPEC 003.
+  | 'single-color-barrier'
+  | 'mixed-barrier'
+  | 'move-blocked-by-barrier'
+  | 'capture-on-exit-with-barrier'
+  | 'bonus-lost-to-barrier';
 
 /** Returns the facts produced by the actions of `played`, without repeats and in type order. */
 export function gameFacts(played: Pick<PlayedGame, 'states' | 'actions'>): GameFact[] {
@@ -195,6 +217,11 @@ export const GAME_FACTS: readonly GameFact[] = [
   'bonus-lost',
   'chained-bonus',
   'multiple-bounce',
+  'single-color-barrier',
+  'mixed-barrier',
+  'move-blocked-by-barrier',
+  'capture-on-exit-with-barrier',
+  'bonus-lost-to-barrier',
 ];
 
 const CAPTURE_BONUS = 20;
