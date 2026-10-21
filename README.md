@@ -38,8 +38,9 @@ Requiere [pnpm](https://pnpm.io/).
 ```bash
 pnpm i               # instalar dependencias
 pnpm start           # servidor de desarrollo en http://localhost:4200/
-pnpm check           # formato, lint y tests: lo que comprueba el CI
-pnpm test            # tests unitarios (Vitest) en modo watch
+pnpm check           # formato, lint y todos los tests: lo que comprueba el CI
+pnpm test            # tests unitarios (Vitest) en modo watch, sin los de propiedades
+pnpm test:properties # tests de propiedades: 1000 partidas aleatorias
 pnpm test:coverage   # tests con informe de cobertura
 pnpm build           # build de producción en dist/
 ```
