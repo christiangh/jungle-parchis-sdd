@@ -1,6 +1,7 @@
-import { Action } from './actions';
+import { Action, applyAction } from './actions';
 import { GameState, Piece, PieceId } from './game';
 import {
+  barrierHits,
   buildGame,
   gameFacts,
   GOAL,
@@ -167,11 +168,87 @@ describe('mixedColorSquares', () => {
   });
 });
 
+describe('barrierHits', () => {
+  it('RNF-004 de SPEC 003: detecta barreras atravesadas de otro color, propias y mixtas', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      positions: {
+        'yellow-0': track(10),
+        'yellow-1': track(12),
+        'yellow-2': track(12),
+        'red-0': track(14),
+        'red-1': track(14),
+        'yellow-3': track(17),
+        'red-2': track(17),
+      },
+    });
+
+    expect(barrierHits(game, 'yellow-0', 10)).toEqual({ passed: [12, 14, 17], end: null });
+  });
+
+  it('RNF-004 de SPEC 003: detecta una barrera en la casilla de destino', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      positions: { 'yellow-0': track(10), 'red-0': track(14), 'red-1': track(14) },
+    });
+
+    expect(barrierHits(game, 'yellow-0', 4)).toEqual({ passed: [], end: 14 });
+  });
+
+  it('RNF-004 de SPEC 003: detecta barreras al pasar de la casilla 68 a la 1', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      positions: { 'red-0': track(66), 'yellow-0': track(1), 'yellow-1': track(1) },
+    });
+
+    expect(barrierHits(game, 'red-0', 4)).toEqual({ passed: [1], end: null });
+  });
+
+  it('RNF-004 de SPEC 003: no cuenta la barrera de la casilla de origen', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      positions: { 'yellow-0': track(10), 'yellow-1': track(10) },
+    });
+
+    expect(barrierHits(game, 'yellow-0', 3)).toEqual({ passed: [], end: null });
+  });
+
+  it('R-063: no cuenta las barreras tras la casilla de entrada al pasillo', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      positions: { 'yellow-0': track(66), 'red-0': track(1), 'red-1': track(1) },
+    });
+
+    expect(barrierHits(game, 'yellow-0', 4)).toEqual({ passed: [], end: null });
+  });
+
+  it('RNF-004 de SPEC 003: no detecta nada sin barreras en el camino', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      positions: { 'yellow-0': track(10), 'red-0': track(12), 'red-1': track(20) },
+    });
+
+    expect(barrierHits(game, 'yellow-0', 5)).toEqual({ passed: [], end: null });
+  });
+});
+
 describe('gameFacts', () => {
   const move = (pieceId: PieceId): Action => ({ type: 'move', player: 'yellow', pieceId });
 
-  const factsOf = (state: GameState, action: Action) =>
-    gameFacts({ states: [state], actions: [action] });
+  /** Each action is applied to the state at its index, as gameFacts reads them. */
+  const replayed = (states: GameState[], actions: Action[]) => ({
+    states,
+    actions,
+    outcomes: actions.map((action, index) => {
+      const result = applyAction(states[index], action);
+      if (!result.ok) {
+        throw new Error(`Action ${index} was rejected: ${result.error}`);
+      }
+      return result.value;
+    }),
+  });
+
+  const factsOf = (state: GameState, action: Action) => gameFacts(replayed([state], [action]));
 
   const captureOnTrack = (): GameState =>
     buildGame({
@@ -187,7 +264,7 @@ describe('gameFacts', () => {
     expect(factsOf(captureOnTrack(), move('yellow-0'))).toEqual(['capture-on-track', 'bonus-20']);
   });
 
-  it('CE-03: salir comiendo da un premio de 20', () => {
+  it('CE-03: salir comiendo da un premio de 20, sin barrera en la salida si solo hay un rival', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       pendingRoll: 5,
@@ -245,11 +322,104 @@ describe('gameFacts', () => {
     expect(factsOf(game, move('yellow-0'))).toEqual([]);
   });
 
+  it('CE-03: reconoce una barrera de un color', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      pendingRoll: 3,
+      positions: { 'yellow-0': track(10), 'yellow-1': track(10) },
+    });
+
+    expect(factsOf(game, move('yellow-0'))).toEqual(['single-color-barrier']);
+  });
+
+  it('CE-03: reconoce una barrera mixta en un seguro', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      pendingRoll: 3,
+      positions: { 'yellow-0': track(12), 'red-0': track(12) },
+    });
+
+    expect(factsOf(game, move('yellow-0'))).toEqual(['mixed-barrier']);
+  });
+
+  it('CE-03: reconoce un movimiento descartado por atravesar una barrera', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      pendingRoll: 4,
+      positions: {
+        'yellow-0': track(10),
+        'yellow-1': track(20),
+        'red-0': track(12),
+        'red-1': track(12),
+      },
+    });
+
+    expect(factsOf(game, move('yellow-1'))).toEqual([
+      'single-color-barrier',
+      'move-blocked-by-barrier',
+    ]);
+  });
+
+  it('CE-03: reconoce una salida comiendo con barrera en la salida', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      pendingRoll: 5,
+      positions: { 'red-0': track(5), 'red-1': track(5) },
+    });
+
+    expect(factsOf(game, move('yellow-0'))).toEqual([
+      'capture-on-exit',
+      'bonus-20',
+      'single-color-barrier',
+      'capture-on-exit-with-barrier',
+    ]);
+  });
+
+  it('CE-03: reconoce un premio perdido por una barrera', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      pendingRoll: 3,
+      positions: {
+        'yellow-0': lane(5),
+        'yellow-1': track(10),
+        'red-0': track(14),
+        'red-1': track(14),
+      },
+    });
+
+    expect(factsOf(game, move('yellow-0'))).toEqual([
+      'bonus-10',
+      'bonus-lost',
+      'single-color-barrier',
+      'bonus-lost-to-barrier',
+    ]);
+  });
+
+  it('CE-03: reconoce un premio perdido por terminar en una barrera', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      pendingRoll: 3,
+      positions: {
+        'yellow-0': lane(5),
+        'yellow-1': track(10),
+        'red-0': track(20),
+        'red-1': track(20),
+      },
+    });
+
+    expect(factsOf(game, move('yellow-0'))).toEqual([
+      'bonus-10',
+      'bonus-lost',
+      'single-color-barrier',
+      'bonus-lost-to-barrier',
+    ]);
+  });
+
   it('CE-03: devuelve cada hecho de la partida una vez y en orden', () => {
-    const played = {
-      states: [multipleBounce(), captureOnTrack(), captureOnTrack()],
-      actions: [move('yellow-0'), move('yellow-0'), move('yellow-0')],
-    };
+    const played = replayed(
+      [multipleBounce(), captureOnTrack(), captureOnTrack()],
+      [move('yellow-0'), move('yellow-0'), move('yellow-0')],
+    );
 
     expect(gameFacts(played)).toEqual(['capture-on-track', 'bonus-20', 'multiple-bounce']);
   });

@@ -215,7 +215,7 @@ describe('legalMoves: avance', () => {
     expect(legalMoves(game)).toEqual([]);
   });
 
-  it('RF-012 (provisional): atraviesa una casilla con 2 fichas', () => {
+  it('R-061: no atraviesa una barrera de otro color', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       turn: 'yellow',
@@ -223,7 +223,7 @@ describe('legalMoves: avance', () => {
       positions: { 'yellow-0': track(10), 'red-0': track(12), 'red-1': track(12) },
     });
 
-    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(14) }]);
+    expect(legalMoves(game)).toEqual([]);
   });
 
   it('R-050: termina sobre una sola ficha rival fuera de un seguro y la come', () => {
@@ -465,6 +465,139 @@ describe('legalMoves: premios', () => {
     });
 
     expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: lane(3) }]);
+  });
+});
+
+describe('legalMoves: barreras', () => {
+  it('R-061: no atraviesa una barrera propia, pero sus fichas sí salen de ella', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 4,
+      positions: { 'yellow-0': track(10), 'yellow-1': track(12), 'yellow-2': track(12) },
+    });
+
+    expect(legalMoves(game)).toEqual([
+      { pieceId: 'yellow-1', to: track(16) },
+      { pieceId: 'yellow-2', to: track(16) },
+    ]);
+  });
+
+  it('R-061: no atraviesa una barrera mixta en un seguro', () => {
+    const game = buildGame({
+      players: ['yellow', 'blue', 'red'],
+      turn: 'blue',
+      pendingRoll: 4,
+      positions: { 'blue-0': track(10), 'yellow-0': track(12), 'red-0': track(12) },
+    });
+
+    expect(legalMoves(game)).toEqual([]);
+  });
+
+  it('R-061: una barrera en la casilla de entrada impide entrar en el pasillo', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 4,
+      positions: { 'yellow-0': track(66), 'red-0': track(68), 'red-1': track(68) },
+    });
+
+    expect(legalMoves(game)).toEqual([]);
+  });
+
+  it('R-042: no se termina en una barrera', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 3,
+      positions: { 'yellow-0': track(10), 'red-0': track(13), 'red-1': track(13) },
+    });
+
+    expect(legalMoves(game)).toEqual([]);
+  });
+
+  it('R-061: se puede terminar justo antes de una barrera', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 3,
+      positions: { 'yellow-0': track(10), 'red-0': track(14), 'red-1': track(14) },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(13) }]);
+  });
+
+  it('R-061: no atraviesa la barrera mixta de una salida', () => {
+    const game = buildGame({
+      players: ['yellow', 'blue', 'red'],
+      turn: 'blue',
+      pendingRoll: 4,
+      positions: { 'blue-0': track(3), 'yellow-0': track(5), 'red-0': track(5) },
+    });
+
+    expect(legalMoves(game)).toEqual([]);
+  });
+
+  it('R-061: un movimiento de premio de 20 no atraviesa una barrera', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 20,
+      positions: {
+        'yellow-0': track(10),
+        'yellow-1': track(40),
+        'red-0': track(20),
+        'red-1': track(20),
+      },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-1', to: track(60) }]);
+  });
+
+  it('R-061: un movimiento de premio de 10 no atraviesa una barrera', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 10,
+      positions: {
+        'yellow-0': track(30),
+        'yellow-1': track(50),
+        'red-0': track(35),
+        'red-1': track(35),
+      },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-1', to: track(60) }]);
+  });
+
+  it('R-063: en el pasillo se adelanta a dos fichas propias', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 4,
+      positions: { 'yellow-0': lane(1), 'yellow-1': lane(3), 'yellow-2': lane(3) },
+    });
+
+    expect(legalMoves(game)).toEqual([
+      { pieceId: 'yellow-0', to: lane(5) },
+      { pieceId: 'yellow-1', to: lane(7) },
+      { pieceId: 'yellow-2', to: lane(7) },
+    ]);
+  });
+
+  it('R-063: un rebote pasa por una casilla del pasillo con 2 fichas', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: { 'yellow-0': lane(7), 'yellow-1': lane(6), 'yellow-2': lane(6) },
+    });
+
+    expect(legalMoves(game)).toEqual([
+      { pieceId: 'yellow-0', to: lane(3) },
+      { pieceId: 'yellow-1', to: lane(4) },
+      { pieceId: 'yellow-2', to: lane(4) },
+    ]);
   });
 });
 

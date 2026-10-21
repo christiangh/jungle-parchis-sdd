@@ -1,5 +1,6 @@
 // Legal moves for the pending roll of the player in turn.
 
+import { barriers } from './barriers';
 import {
   BoardPosition,
   capacity,
@@ -71,13 +72,20 @@ function exitMove(state: GameState, roll: number): Move | null {
   return withCapture(pieceAtHome, start, lastArrived(state, rivals));
 }
 
-/** R-013, R-040, R-050: a piece on the board moves forward exactly `roll` squares. */
+/**
+ * R-013, R-040, R-050: a piece on the board moves forward exactly `roll` squares.
+ * R-061: it cannot pass through a barrier, not even one of its own color.
+ */
 function advanceMove(state: GameState, piece: Piece, roll: number): Move | null {
   const from = piece.position;
   if (from.kind !== 'track' && from.kind !== 'lane') {
     return null;
   }
-  const to = advance(piece.color, from, roll);
+  const { to, passed } = advance(piece.color, from, roll);
+  const blocked = barriers(state).map((barrier) => barrier.square);
+  if (passed.some((square) => blocked.includes(square))) {
+    return null;
+  }
   if (!hasRoom(state.pieces, piece, to)) {
     return null;
   }
@@ -111,15 +119,25 @@ function withCapture(piece: Piece, to: BoardPosition, captured: Piece | undefine
   return captured ? { pieceId: piece.id, to, captures: captured.id } : { pieceId: piece.id, to };
 }
 
+interface Walk {
+  readonly to: BoardPosition;
+  /** Track squares passed through, without the origin and the destination (R-061, R-063). */
+  readonly passed: readonly number[];
+}
+
 /**
- * Walks `steps` squares forward. Squares passed through are not checked (RF-012, provisional).
+ * Walks `steps` squares forward.
  * R-071: steps left over at the goal go back down the lane, and at the first lane square they go
  * forward again, as many times as needed. Only ending on the goal counts as reaching it.
  */
-function advance(color: Color, from: TrackPosition | LanePosition, steps: number): BoardPosition {
+function advance(color: Color, from: TrackPosition | LanePosition, steps: number): Walk {
   let position: BoardPosition = from;
   let backwards = false;
+  const passed: number[] = [];
   for (let step = 0; step < steps; step++) {
+    if (step > 0 && position.kind === 'track') {
+      passed.push(position.square);
+    }
     if (position.kind === 'goal') {
       backwards = true;
       position = { kind: 'lane', square: LANE_LENGTH };
@@ -130,7 +148,7 @@ function advance(color: Color, from: TrackPosition | LanePosition, steps: number
       position = stepForward(color, position);
     }
   }
-  return position;
+  return { to: position, passed };
 }
 
 /**

@@ -4,6 +4,7 @@ import { Action, applyAction } from './actions';
 import { COLORS, PIECES_PER_PLAYER } from './board';
 import { PieceId } from './game';
 import {
+  barrierHits,
   buildGame,
   deepFreeze,
   GAME_FACTS,
@@ -19,8 +20,11 @@ import {
 
 const GAMES = 1000;
 
-/** Playing 1000 full games takes around 10 s, well above the default 5 s. */
-const TIMEOUT_MS = 60_000;
+/**
+ * Playing and checking 1000 full games takes around 25 s, but has gone over 75 s on a busy
+ * machine, well above the default 5 s.
+ */
+const TIMEOUT_MS = 180_000;
 
 const pieceIds: PieceId[] = COLORS.flatMap((color) =>
   Array.from({ length: PIECES_PER_PLAYER }, (_, index) => `${color}-${index}` as PieceId),
@@ -49,7 +53,7 @@ const randomGame = fc.record({
 
 describe('invariantes', () => {
   it(
-    `CE-02, CE-03: ${GAMES} partidas aleatorias de 2, 3 y 4 jugadores cumplen I-01 a I-06 y RNF-004 tras cada acción, y producen todos los hechos de CE-03`,
+    `CE-02, CE-03: ${GAMES} partidas aleatorias de 2, 3 y 4 jugadores cumplen I-01 a I-06, RNF-004 de SPEC 002 y RNF-004 de SPEC 003 tras cada acción, y producen todos los hechos de CE-03`,
     () => {
       const facts = new Set<GameFact>();
       fc.assert(
@@ -64,12 +68,24 @@ describe('invariantes', () => {
           expect(played.stopped).toBeNull();
           for (const [step, state] of played.states.entries()) {
             expect(invariantViolations(state)).toEqual([]);
-            // RNF-004: captures always apply, so two colors only share a safe square.
+            // RNF-004 of SPEC 002: captures always apply, so two colors only share a safe square.
             expect(mixedColorSquares(state)).toEqual([]);
             // A pending bonus must be used before rolling again (R-051, R-072).
             expect(state.pendingRoll !== null && state.pendingBonus !== null).toBe(false);
             if (step > 0) {
               expect(leftGoal(played.states[step - 1], state)).toEqual([]);
+            }
+          }
+          // RNF-004 of SPEC 003: no move passes through or ends on a barrier (R-042, R-061).
+          // Leaving home is left out: the piece is placed on its start square without walking.
+          for (const [index, action] of played.actions.entries()) {
+            const before = played.states[index];
+            const piece = before.pieces.find(
+              ({ id }) => action.type === 'move' && id === action.pieceId,
+            );
+            const steps = before.pendingBonus ?? before.pendingRoll;
+            if (piece !== undefined && piece.position.kind !== 'home' && steps !== null) {
+              expect(barrierHits(before, piece.id, steps)).toEqual({ passed: [], end: null });
             }
           }
           for (const fact of gameFacts(played)) {
