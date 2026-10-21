@@ -74,7 +74,7 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 
 ## PARTE-02: Propiedades con barreras
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
@@ -99,7 +99,7 @@ La propiedad de RNF-004 se comprueba tras cada acción de mover una ficha que no
 
 - [x] 1. Tests de `barrierHits` (barrera de otro color, propia y mixta atravesadas; destino en una barrera; barrera en la casilla de origen, que no cuenta; barrera tras la casilla de entrada, que no cuenta; sin barreras) y de `gameFacts` (un caso por hecho nuevo y una salida comiendo sin barrera en la salida, que no da el hecho). Esqueleto: `barrierHits` devuelve `{ passed: [], end: null }` y los hechos nuevos entran en `GameFact` y `GAME_FACTS` sin que `gameFacts` los produzca. Ejecutar y comprobar que fallan en sus aserciones (P-07); el de CE-03 de `invariants.spec.ts` también falla hasta el paso 2.
 - [x] 2. Implementar `barrierHits` y los hechos nuevos de `gameFacts`; pasar `pnpm check`.
-- [ ] 3. Ampliar el test de CE-02 con la propiedad de RNF-004 de este spec tras cada acción y renombrarlo; medir cuántas veces sale cada hecho en las 1000 partidas y cuántas se detienen por el límite de acciones; pasar `pnpm check`.
+- [x] 3. Ampliar el test de CE-02 con la propiedad de RNF-004 de este spec tras cada acción y renombrarlo; medir cuántas veces sale cada hecho en las 1000 partidas y cuántas se detienen por el límite de acciones; pasar `pnpm check`. Medido en una ejecución: ninguna partida se detiene; los hechos nuevos salen en 999 (barrera de un color), 793 (mixta), 834 (movimiento descartado), 120 (salida comiendo con barrera) y 108 (premio perdido por una barrera) de las 1000 partidas.
 
 ### Pruebas y trazabilidad
 
