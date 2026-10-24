@@ -1,15 +1,20 @@
-import { Action, applyAction } from './actions';
+import { Action, applyAction, GameEvent } from './actions';
+import { Color } from './board';
 import { GameState, Piece, PieceId } from './game';
 import {
   barrierHits,
   buildGame,
   gameFacts,
+  GameSetup,
   GOAL,
   invariantViolations,
   lane,
   leftGoal,
   mixedColorSquares,
+  moveSteps,
+  thirdSixMoves,
   track,
+  unopenedBarrier,
 } from './test-utils';
 
 const yellowAndRed = (): GameState => buildGame({ players: ['yellow', 'red'], turn: 'yellow' });
@@ -232,6 +237,239 @@ describe('barrierHits', () => {
   });
 });
 
+describe('moveSteps', () => {
+  const allOut = {
+    'yellow-0': track(10),
+    'yellow-1': track(30),
+    'yellow-2': lane(3),
+    'yellow-3': track(40),
+  };
+
+  it('R-031: un 6 vale 7 si el jugador en turno no tiene fichas en casa', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      pendingRoll: 6,
+      positions: allOut,
+    });
+
+    expect(moveSteps(game)).toBe(7);
+  });
+
+  it('R-031: las fichas en meta no cuentan como fichas en casa', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      pendingRoll: 6,
+      positions: { ...allOut, 'yellow-3': GOAL },
+    });
+
+    expect(moveSteps(game)).toBe(7);
+  });
+
+  it('R-031: un 6 vale 6 si el jugador en turno tiene fichas en casa, aunque los rivales no', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'red',
+      pendingRoll: 6,
+      positions: { ...allOut, 'red-0': track(39) },
+    });
+
+    expect(moveSteps(game)).toBe(6);
+  });
+
+  it('R-031: otro valor y los premios dan sus casillas, aunque no haya fichas en casa', () => {
+    expect(
+      moveSteps(buildGame({ players: ['yellow', 'red'], pendingRoll: 4, positions: allOut })),
+    ).toBe(4);
+    expect(
+      moveSteps(buildGame({ players: ['yellow', 'red'], pendingBonus: 20, positions: allOut })),
+    ).toBe(20);
+    expect(
+      moveSteps(buildGame({ players: ['yellow', 'red'], pendingBonus: 10, positions: allOut })),
+    ).toBe(10);
+  });
+
+  it('devuelve null sin tirada ni premio pendientes', () => {
+    expect(moveSteps(yellowAndRed())).toBeNull();
+  });
+});
+
+describe('unopenedBarrier', () => {
+  const move = (pieceId: PieceId): Action => ({ type: 'move', player: 'yellow', pieceId });
+
+  const withBarrier = (setup: Partial<GameSetup> = {}): GameState =>
+    buildGame({
+      players: ['yellow', 'red'],
+      pendingRoll: 6,
+      ...setup,
+      positions: {
+        'yellow-0': track(10),
+        'yellow-1': track(10),
+        'yellow-2': track(30),
+        ...setup.positions,
+      },
+    });
+
+  it('R-062: detecta un 6 que mueve otra ficha pudiendo abrir la barrera propia', () => {
+    expect(unopenedBarrier(withBarrier(), move('yellow-2'))).toBe(true);
+  });
+
+  it('R-062: no detecta nada si el 6 mueve una ficha de la barrera', () => {
+    expect(unopenedBarrier(withBarrier(), move('yellow-0'))).toBe(false);
+  });
+
+  it('R-062: no detecta nada si una barrera delante impide mover la barrera propia', () => {
+    const game = withBarrier({ positions: { 'red-0': track(13), 'red-1': track(13) } });
+
+    expect(unopenedBarrier(game, move('yellow-2'))).toBe(false);
+  });
+
+  it('R-031, R-062: mira si la barrera puede moverse con las casillas reales del 6', () => {
+    const blockedAtSeven = { 'red-0': track(17), 'red-1': track(17) };
+    const sixIsSeven = withBarrier({ positions: { ...blockedAtSeven, 'yellow-3': track(40) } });
+    const sixIsSix = withBarrier({ positions: blockedAtSeven });
+
+    expect(unopenedBarrier(sixIsSeven, move('yellow-2'))).toBe(false);
+    expect(unopenedBarrier(sixIsSix, move('yellow-2'))).toBe(true);
+  });
+
+  it('R-062: no detecta nada si la casilla de destino del pasillo ya tiene 2 fichas', () => {
+    const game = withBarrier({
+      positions: {
+        'yellow-0': track(64),
+        'yellow-1': track(64),
+        'yellow-2': lane(3),
+        'yellow-3': lane(3),
+      },
+    });
+
+    expect(unopenedBarrier(game, move('yellow-2'))).toBe(false);
+  });
+
+  it('R-062: las barreras mixtas no cuentan', () => {
+    const game = withBarrier({
+      positions: { 'yellow-0': track(12), 'yellow-1': track(40), 'red-0': track(12) },
+    });
+
+    expect(unopenedBarrier(game, move('yellow-1'))).toBe(false);
+  });
+
+  it('R-062: no detecta nada con otro valor ni con un premio', () => {
+    expect(unopenedBarrier(withBarrier({ pendingRoll: 4 }), move('yellow-2'))).toBe(false);
+    expect(
+      unopenedBarrier(withBarrier({ pendingRoll: null, pendingBonus: 10 }), move('yellow-2')),
+    ).toBe(false);
+  });
+});
+
+describe('thirdSixMoves', () => {
+  /** An action with the state it is applied to and its events; only these matter here. */
+  interface Step {
+    readonly action: Action;
+    readonly before: GameState;
+    readonly events: readonly GameEvent[];
+  }
+
+  const played = (steps: Step[]) => ({
+    actions: steps.map(({ action }) => action),
+    states: steps.map(({ before }) => before),
+    outcomes: steps.map(({ before, events }) => ({ state: before, events })),
+  });
+
+  const rolled = (player: Color, value: number, events: GameEvent[] = []): Step => ({
+    action: { type: 'roll', player, value },
+    before: buildGame({ players: ['yellow', 'red'], turn: player }),
+    events,
+  });
+
+  const movedWith = (player: Color, value: number, events: GameEvent[] = []): Step => ({
+    action: { type: 'move', player, pieceId: `${player}-0` },
+    before: buildGame({ players: ['yellow', 'red'], turn: player, pendingRoll: value }),
+    events,
+  });
+
+  /** A roll of 6 and the move made with it. */
+  const six = (player: Color): Step[] => [
+    rolled(player, 6),
+    movedWith(player, 6, [{ type: 'roll-again', player }]),
+  ];
+
+  /** Three sixes in a row that end the turn. */
+  const threeSixes = (player: Color, next: Color): Step[] => [
+    ...six(player),
+    ...six(player),
+    rolled(player, 6, [
+      { type: 'three-sixes', player, pieceId: `${player}-0` },
+      { type: 'turn-changed', player: next },
+    ]),
+  ];
+
+  it('R-032: detecta un movimiento hecho con el tercer 6 seguido', () => {
+    expect(thirdSixMoves(played([...six('yellow'), ...six('yellow'), ...six('yellow')]))).toEqual([
+      5,
+    ]);
+  });
+
+  it('R-032: un 6 perdido también cuenta', () => {
+    const lost = rolled('yellow', 6, [
+      { type: 'roll-lost', player: 'yellow', value: 6 },
+      { type: 'roll-again', player: 'yellow' },
+    ]);
+
+    expect(thirdSixMoves(played([lost, ...six('yellow'), ...six('yellow')]))).toEqual([4]);
+  });
+
+  it('R-032: no detecta nada con dos seises seguidos', () => {
+    expect(thirdSixMoves(played([...six('yellow'), ...six('yellow')]))).toEqual([]);
+  });
+
+  it('R-032: un movimiento con premio no cuenta como hecho con el 6', () => {
+    const bonus: Step = {
+      action: { type: 'move', player: 'yellow', pieceId: 'yellow-0' },
+      before: buildGame({ players: ['yellow', 'red'], pendingBonus: 20 }),
+      events: [],
+    };
+
+    expect(thirdSixMoves(played([...six('yellow'), ...six('yellow'), bonus]))).toEqual([]);
+  });
+
+  it('R-032: una tirada de otro valor corta la cuenta', () => {
+    const four = [rolled('yellow', 4), movedWith('yellow', 4)];
+
+    expect(
+      thirdSixMoves(played([...six('yellow'), ...four, ...six('yellow'), ...six('yellow')])),
+    ).toEqual([]);
+  });
+
+  it('R-032: un cambio de turno corta la cuenta, también entre dos turnos del mismo jugador', () => {
+    const steps = [
+      ...threeSixes('yellow', 'red'),
+      ...threeSixes('red', 'yellow'),
+      ...six('yellow'),
+    ];
+
+    expect(thirdSixMoves(played(steps))).toEqual([]);
+  });
+
+  it('R-010, R-032: los seises de la tirada inicial no cuentan', () => {
+    const steps = [
+      rolled('yellow', 6, [{ type: 'initial-roll', player: 'yellow', value: 6 }]),
+      rolled('red', 6, [
+        { type: 'initial-roll', player: 'red', value: 6 },
+        { type: 'initial-roll-tie', players: ['yellow', 'red'] },
+      ]),
+      rolled('yellow', 5, [{ type: 'initial-roll', player: 'yellow', value: 5 }]),
+      rolled('red', 6, [
+        { type: 'initial-roll', player: 'red', value: 6 },
+        { type: 'first-player', player: 'red' },
+      ]),
+      ...six('red'),
+      ...six('red'),
+    ];
+
+    expect(thirdSixMoves(played(steps))).toEqual([]);
+  });
+});
+
 describe('gameFacts', () => {
   const move = (pieceId: PieceId): Action => ({ type: 'move', player: 'yellow', pieceId });
 
@@ -413,6 +651,107 @@ describe('gameFacts', () => {
       'single-color-barrier',
       'bonus-lost-to-barrier',
     ]);
+  });
+
+  it('CE-03, R-031: un 6 que vale 7 descarta un movimiento que atravesaría una barrera', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      pendingRoll: 6,
+      sixesInRow: 1,
+      positions: {
+        'yellow-0': track(10),
+        'yellow-1': track(30),
+        'yellow-2': GOAL,
+        'yellow-3': GOAL,
+        'red-0': track(16),
+        'red-1': track(16),
+      },
+    });
+
+    expect(factsOf(game, move('yellow-1'))).toEqual([
+      'single-color-barrier',
+      'move-blocked-by-barrier',
+      'roll-again',
+      'six-counts-seven',
+    ]);
+  });
+
+  it('CE-03 de SPEC 004, R-030, R-031: un 6 repite tirada y, con fichas en casa, no vale 7', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      pendingRoll: 6,
+      sixesInRow: 1,
+      positions: { 'yellow-0': track(10) },
+    });
+
+    expect(factsOf(game, move('yellow-0'))).toEqual(['roll-again']);
+  });
+
+  it('CE-03 de SPEC 004, R-031: reconoce un 6 que vale 7', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      pendingRoll: 6,
+      sixesInRow: 1,
+      positions: {
+        'yellow-0': track(10),
+        'yellow-1': track(30),
+        'yellow-2': GOAL,
+        'yellow-3': GOAL,
+      },
+    });
+
+    expect(factsOf(game, move('yellow-0'))).toEqual(['roll-again', 'six-counts-seven']);
+  });
+
+  it('CE-03 de SPEC 004, R-032: reconoce tres seises con la última ficha movida devuelta a casa', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      sixesInRow: 2,
+      lastMovedPiece: 'yellow-0',
+      positions: { 'yellow-0': track(10) },
+    });
+
+    expect(factsOf(game, { type: 'roll', player: 'yellow', value: 6 })).toEqual([
+      'three-sixes-piece-home',
+    ]);
+  });
+
+  it('CE-03 de SPEC 004, R-032: reconoce tres seises con la última ficha movida en el pasillo', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      sixesInRow: 2,
+      lastMovedPiece: 'yellow-0',
+      positions: { 'yellow-0': lane(3) },
+    });
+
+    expect(factsOf(game, { type: 'roll', player: 'yellow', value: 6 })).toEqual([
+      'three-sixes-no-piece-home',
+    ]);
+  });
+
+  it('CE-03 de SPEC 004, R-062: reconoce una barrera propia abierta con un 6', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      pendingRoll: 6,
+      sixesInRow: 1,
+      positions: { 'yellow-0': track(10), 'yellow-1': track(10), 'yellow-2': track(30) },
+    });
+
+    expect(factsOf(game, move('yellow-0'))).toEqual([
+      'single-color-barrier',
+      'roll-again',
+      'barrier-opened-by-six',
+    ]);
+  });
+
+  it('CE-03 de SPEC 004, R-010: reconoce un empate en la tirada inicial', () => {
+    const game: GameState = {
+      ...yellowAndRed(),
+      turn: 'red',
+      initialRoll: { contenders: ['yellow', 'red'], rolls: [4] },
+    };
+
+    expect(factsOf(game, { type: 'roll', player: 'red', value: 4 })).toEqual(['initial-roll-tie']);
   });
 
   it('CE-03: devuelve cada hecho de la partida una vez y en orden', () => {

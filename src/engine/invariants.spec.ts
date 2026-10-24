@@ -2,10 +2,9 @@ import fc from 'fast-check';
 
 import { Action, applyAction } from './actions';
 import { COLORS, PIECES_PER_PLAYER } from './board';
-import { PieceId } from './game';
+import { createGame, PieceId } from './game';
 import {
   barrierHits,
-  buildGame,
   deepFreeze,
   GAME_FACTS,
   GameFact,
@@ -13,9 +12,12 @@ import {
   invariantViolations,
   leftGoal,
   mixedColorSquares,
+  moveSteps,
   playRandomGame,
   seededRandom,
   seededRolls,
+  thirdSixMoves,
+  unopenedBarrier,
 } from './test-utils';
 
 const GAMES = 1000;
@@ -45,7 +47,6 @@ const anyAction: fc.Arbitrary<Action> = fc.oneof(
 
 const randomGame = fc.record({
   players: fc.shuffledSubarray([...COLORS], { minLength: 2 }),
-  firstPlayer: fc.nat(),
   rollSeed: fc.integer(),
   moveSeed: fc.integer(),
   afterEnd: fc.array(anyAction, { minLength: 1, maxLength: 5 }),
@@ -53,15 +54,19 @@ const randomGame = fc.record({
 
 describe('invariantes', () => {
   it(
-    `CE-02, CE-03: ${GAMES} partidas aleatorias de 2, 3 y 4 jugadores cumplen I-01 a I-06, RNF-004 de SPEC 002 y RNF-004 de SPEC 003 tras cada acción, y producen todos los hechos de CE-03`,
+    `CE-02, CE-03: ${GAMES} partidas aleatorias de 2, 3 y 4 jugadores desde la tirada inicial cumplen I-01 a I-06 y RNF-004 de SPEC 002, SPEC 003 y SPEC 004 tras cada acción, y producen todos los hechos de CE-03`,
     () => {
       const facts = new Set<GameFact>();
       fc.assert(
-        fc.property(randomGame, ({ players, firstPlayer, rollSeed, moveSeed, afterEnd }) => {
-          const initial = buildGame({ players, turn: players[firstPlayer % players.length] });
+        fc.property(randomGame, ({ players, rollSeed, moveSeed, afterEnd }) => {
+          const created = createGame({ players });
+          if (!created.ok) {
+            throw new Error(`Invalid players: ${created.error}`);
+          }
           const random = seededRandom(moveSeed);
 
-          const played = playRandomGame(initial, seededRolls(rollSeed), (count) =>
+          // The initial roll phase is played with the same dice (R-010).
+          const played = playRandomGame(created.value, seededRolls(rollSeed), (count) =>
             Math.floor(random() * count),
           );
 
@@ -83,11 +88,15 @@ describe('invariantes', () => {
             const piece = before.pieces.find(
               ({ id }) => action.type === 'move' && id === action.pieceId,
             );
-            const steps = before.pendingBonus ?? before.pendingRoll;
+            const steps = moveSteps(before);
             if (piece !== undefined && piece.position.kind !== 'home' && steps !== null) {
               expect(barrierHits(before, piece.id, steps)).toEqual({ passed: [], end: null });
             }
+            // RNF-004 of SPEC 004: a 6 moves a piece of an own barrier when one can move (R-062).
+            expect(unopenedBarrier(before, action)).toBe(false);
           }
+          // RNF-004 of SPEC 004: no piece moves with a third 6 in a row (R-032).
+          expect(thirdSixMoves(played)).toEqual([]);
           for (const fact of gameFacts(played)) {
             facts.add(fact);
           }

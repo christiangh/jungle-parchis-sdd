@@ -23,6 +23,8 @@ export interface Move {
 }
 
 const EXIT_ROLL = 5;
+const SIX = 6;
+const SIX_WITHOUT_PIECES_AT_HOME = 7;
 
 export function legalMoves(state: GameState): readonly Move[] {
   // R-080: a bonus is used whole by a single piece on the board; pieces at home cannot use it.
@@ -38,7 +40,34 @@ export function legalMoves(state: GameState): readonly Move[] {
   if (exit) {
     return [exit];
   }
-  return advanceMoves(state, roll);
+  const moves = advanceMoves(state, rollSteps(state, roll));
+  return roll === SIX ? openBarrier(state, moves) : moves;
+}
+
+/**
+ * R-062: with a 6, a player with a barrier of their own colour must move one of its pieces,
+ * as long as any of them can move. Mixed barriers on a safe square do not count.
+ */
+function openBarrier(state: GameState, moves: Move[]): Move[] {
+  const barrierPieces = new Set(
+    barriers(state)
+      .filter((barrier) => barrier.pieces.every((id) => colorOf(state, id) === state.turn))
+      .flatMap((barrier) => barrier.pieces),
+  );
+  const barrierMoves = moves.filter((move) => barrierPieces.has(move.pieceId));
+  return barrierMoves.length > 0 ? barrierMoves : moves;
+}
+
+function colorOf(state: GameState, id: PieceId): Color | undefined {
+  return state.pieces.find((piece) => piece.id === id)?.color;
+}
+
+/** R-031: a 6 counts as 7 when the player has no pieces at home; pieces at the goal do not count. */
+function rollSteps(state: GameState, roll: number): number {
+  const pieceAtHome = state.pieces.some(
+    (piece) => piece.color === state.turn && piece.position.kind === 'home',
+  );
+  return roll === SIX && !pieceAtHome ? SIX_WITHOUT_PIECES_AT_HOME : roll;
 }
 
 function advanceMoves(state: GameState, steps: number): Move[] {
