@@ -11,7 +11,7 @@ Parchís con temática de jungla hecho con spec-driven design, como proyecto de 
 - Los specs se crean con `/cgh-sdd:cgh-spec` y se implementan con `/cgh-sdd:cgh-spec-impl`. Cada uno vive en `specs/NNN-slug/`, con su `spec.md` y su `plan.md`.
 - En el plan, cada paso de código del motor va precedido de su paso de tests (P-07). Los tests de una regla llevan su identificador en el nombre, por ejemplo `R-050: …`.
 - El código del motor solo importa archivos del propio motor; sus tests pueden usar además `vitest` y `fast-check`. Lo comprueba ESLint.
-- En `src/app/`, las constantes exportadas van en `<dominio>.constants.ts` y los tipos e interfaces en `<dominio>.models.ts`, dentro de la carpeta de su dominio (por ejemplo `src/app/board/board.constants.ts`) si solo las usa ese dominio, o en `src/app/shared/` si las usan varios. Componentes y módulos de funciones no los declaran; solo se quedan junto a su uso las constantes privadas de un módulo.
+- En `src/app/`, cada archivo agrupa un concepto con sus tipos y constantes, como recomienda la guía de estilo de Angular; lo compartido entre dominios va en `src/app/shared/`.
 - Documentación en castellano. Código, comentarios y commits en inglés (Conventional Commits, con ámbito `spec-NNN`).
 
 ## Comandos
