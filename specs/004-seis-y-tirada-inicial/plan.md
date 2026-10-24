@@ -86,7 +86,7 @@ R-062 se resuelve solo en `legalMoves`, en `moves.ts`. Tras la salida obligatori
 ### Pasos
 
 - [x] 1. Tests de R-062 en `moves.spec.ts`: HU-05 c1-c6, barrera propia en la casilla de salida, 5 con barrera propia y otro valor con barrera propia. Sin esqueleto: no cambia ninguna firma. Deben fallar HU-05 c1, c5 y el de la casilla de salida; los demás pasan ya y quedan como guarda (con c4 no queda ninguna ficha fuera de las barreras, así que solo puede ser guarda).
-- [ ] 2. Implementar el filtro en `legalMoves`; pasar `pnpm check`.
+- [x] 2. Implementar el filtro en `legalMoves`; pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
 
