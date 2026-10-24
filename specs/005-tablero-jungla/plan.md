@@ -19,6 +19,7 @@ La paleta de la variante «claro» se define una sola vez como tokens `@theme` d
 - `src/app/app.ts`, `src/app/app.html`, `src/app/app.css`: sustituir la página de bienvenida por el contenedor del tablero, centrado y del tamaño de RNF-001.
 - `src/app/app.spec.ts`: tests del contenedor en lugar de los de la página de bienvenida.
 - `src/app/board/board-geometry.ts` (nuevo): casillas del recorrido común, pasillos, metas y casas con su rectángulo, su rotación y su tipo; cálculo puro.
+- `src/app/board/board.constants.ts`, `src/app/board/board.models.ts` (nuevos): constantes exportadas y tipos del tablero, según la convención de `CLAUDE.md`.
 - `src/app/board/board-geometry.spec.ts` (nuevo): tests de la geometría contra el motor.
 - `src/app/board/board-decor.ts` (nuevo): generador con semilla y datos de la capa decorativa y de las texturas.
 - `src/app/board/board-decor.spec.ts` (nuevo): tests de estabilidad de la decoración.
@@ -81,3 +82,4 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar los pasos 1
 - **Sí:** esquina de cada casa deducida del brazo de su `START_SQUARE`, igual que pasillo y meta con `ENTRY_SQUARE`. Del diseño solo queda la casa del brazo inferior; las demás salen de girarla.
 - **Sí:** giros de cuarto de vuelta con coordenadas enteras y rotación SVG en grados positivos (0, 90, 180, 270). Evitan los `-0` y decimales de `Math.cos`, y `rotate(270 500 500)` equivale al `rotate(-90 …)` del diseño.
 - **Sí:** los tests de componente localizan los elementos con atributos `data-*` (`data-layer`, `data-square`, `data-kind`, `data-color`, `data-lane`, `data-step`, `data-goal`, `data-home`, `data-home-slot`) y comprueban el color por la utilidad de Tailwind (`fill-team-*`, `fill-canopy-dark`). Son el contrato estable del SVG; no dependen de coordenadas ni del orden de los elementos.
+- **Sí:** constantes exportadas en `board.constants.ts` y tipos en `board.models.ts`; `board-geometry.ts` solo tiene funciones y sus constantes privadas. Convención añadida a `CLAUDE.md` a petición del usuario.

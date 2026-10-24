@@ -1,15 +1,7 @@
 import { COLORS, ENTRY_SQUARE, isSafe, LANE_LENGTH, START_SQUARE, TRACK_LENGTH } from '@engine';
-import {
-  BOARD_CENTER,
-  BOARD_SIZE,
-  goals,
-  HOME_SIZE,
-  homes,
-  laneSquares,
-  Point,
-  SQUARE_WIDTH,
-  trackSquares,
-} from './board-geometry';
+import { goals, homes, laneSquares, trackSquares } from './board-geometry';
+import { BOARD_CENTER, BOARD_SIZE, HOME_SIZE, SQUARE_WIDTH } from './board.constants';
+import { Point } from './board.models';
 
 function distance(a: Point, b: Point): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
