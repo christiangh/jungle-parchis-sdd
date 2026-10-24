@@ -1,7 +1,7 @@
 // Board geometry in SVG coordinates, ported from docs/design/tablero.
 // What each square is (safe, start, entry, lane) comes only from the engine.
 
-import { Color } from '../../engine';
+import { Color } from '@engine';
 
 export interface Point {
   readonly x: number;

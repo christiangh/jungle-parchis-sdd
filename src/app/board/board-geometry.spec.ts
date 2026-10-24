@@ -1,11 +1,4 @@
-import {
-  COLORS,
-  ENTRY_SQUARE,
-  isSafe,
-  LANE_LENGTH,
-  START_SQUARE,
-  TRACK_LENGTH,
-} from '../../engine';
+import { COLORS, ENTRY_SQUARE, isSafe, LANE_LENGTH, START_SQUARE, TRACK_LENGTH } from '@engine';
 import {
   BOARD_CENTER,
   BOARD_SIZE,

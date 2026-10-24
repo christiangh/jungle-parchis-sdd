@@ -24,11 +24,13 @@ La paleta de la variante «claro» se define una sola vez como tokens `@theme` d
 - `src/app/board/board-decor.spec.ts` (nuevo): tests de estabilidad de la decoración.
 - `src/app/board/board.ts`, `src/app/board/board.html` (nuevos): componente `jp-board` con el SVG.
 - `src/app/board/board.spec.ts` (nuevo): tests de componente del tablero pintado.
+- `tsconfig.json`, `eslint.config.js`: alias `@engine` y regla de lint que lo exige (paso 2b, añadido durante la implementación).
 
 ### Pasos
 
 - [x] 1. Paleta y contenedor: tokens `@theme static` en `styles.css` (equipos, hierba, briznas, sombra, sol, madera, veta, borde de madera, musgo, marco, borde del marco, tinta, tres tonos de copa y fondo de la página) y sus derivados con `color-mix()`; `index.html` en castellano; `app.html` sin la página de bienvenida, con un `main` centrado que reservará el sitio del tablero con lado `min(96vw, 96dvh, 900px)`; `app.spec.ts` actualizado. `pnpm check` en verde.
 - [x] 2. Tests de la geometría en `board-geometry.spec.ts` con el esqueleto de `board-geometry.ts` (tipos y funciones que devuelven vacío): 68 casillas con los números del 1 al 68 sin repetir; seguros = casillas con `isSafe`; salidas = `START_SQUARE` con su color; cada pasillo tiene `LANE_LENGTH` casillas y su primera casilla es contigua a la casilla de entrada de su color en el sentido de avance; la séptima es contigua a su triángulo de meta; casas en las esquinas del diseño; centros de las casillas 1, 5, 22, 39, 56 y 68 iguales a los del diseño. Ejecutar y ver que fallan.
+- [x] 2b. Alias `@engine` en `tsconfig.json` apuntando solo a `src/engine/index.ts`; ESLint de `src/app/` prohíbe `@engine/…` y las rutas relativas al motor; imports de la geometría con el alias. `pnpm check` en verde salvo los tests del paso 2, que siguen fallando hasta el paso 3.
 - [ ] 3. Implementar `board-geometry.ts`; `pnpm test:once` en verde.
 - [ ] 4. Tests de componente en `board.spec.ts` con el esqueleto de `jp-board` (SVG vacío con su nombre): 68 casillas pintadas con su número visible; 12 seguros, 4 de ellos de salida en el color de su equipo; 4 pasillos de 7 casillas en su color; 4 triángulos de meta; 4 casas con 4 puestos; nombre accesible «Tablero de parchís de la jungla»; capa decorativa con `aria-hidden="true"`. Ejecutar y ver que fallan.
 - [ ] 5. Implementar la capa de juego de `jp-board` (tablones, seguros, salidas, pasillos, metas, casas y números) con las utilidades de color de la paleta y montarlo en `app.html`; `pnpm test:once` en verde.
@@ -75,3 +77,4 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar los pasos 1
 - **No:** `innerHTML` con el SVG generado por el diseño. El saneado de Angular lo rompe y el motor no puede inyectar datos.
 - **Sí:** números sobre seguros y salidas con contorno opaco del tono oscuro de su casilla, en lugar del contorno negro al 45 % del diseño. Los mechones claros de la copa quedan detrás del número; el contorno opaco fija su fondo inmediato. Medición previa: blanco sobre copa oscura 10,24:1; blanco sobre salida oscura: amarillo 4,79, rojo 9,46, azul 8,91, verde 8,62.
 - **Sí:** números de los tablones con tinta opaca. Con la opacidad 0,8 del diseño dan 3,99:1 sobre la madera; opacos, 5,72:1.
+- **Sí:** alias `@engine` exacto, sin `@engine/*`, en `tsconfig.json`. Los imports no dependen de la profundidad del archivo y el alias solo llega a la puerta de entrada (P-02). La regla de lint de `src/app/` pasa a prohibir `@engine/…` y cualquier ruta relativa al motor, así que es más estricta que la anterior (P-10). Añadido como paso 2b a petición del usuario.
