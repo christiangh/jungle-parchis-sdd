@@ -177,7 +177,7 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar el paso de 
 
 ## PARTE-04: Propiedades con el seis y la tirada inicial
 
-**Estado:** En curso
+**Estado:** Hecha
 
 ### Enfoque
 
