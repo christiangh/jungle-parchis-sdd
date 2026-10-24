@@ -6,7 +6,7 @@
 
 ## PARTE-01: Colores y tablero
 
-**Estado:** En curso
+**Estado:** Hecha
 
 ### Enfoque
 
