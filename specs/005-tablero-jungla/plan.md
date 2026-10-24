@@ -14,7 +14,7 @@ La paleta de la variante «claro» se define una sola vez como tokens `@theme` d
 
 ### Archivos
 
-- `src/styles.css`: tokens `@theme static` de la paleta y fondo de la página.
+- `src/styles.css`: tokens `@theme static` de la paleta (con los del tronco del centro, paso 6) y fondo de la página.
 - `src/index.html`: `lang="es"` y título «Parchís de la jungla».
 - `src/app/app.ts`, `src/app/app.html`, `src/app/app.css`: sustituir la página de bienvenida por el contenedor del tablero, centrado y del tamaño de RNF-001.
 - `src/app/app.spec.ts`: tests del contenedor en lugar de los de la página de bienvenida.
@@ -35,7 +35,7 @@ La paleta de la variante «claro» se define una sola vez como tokens `@theme` d
 - [x] 3. Implementar `board-geometry.ts`; `pnpm test:once` en verde.
 - [x] 4. Tests de componente en `board.spec.ts` con el esqueleto de `jp-board` (SVG vacío con su nombre): 68 casillas pintadas con su número visible; 12 seguros, 4 de ellos de salida en el color de su equipo; 4 pasillos de 7 casillas en su color; 4 triángulos de meta; 4 casas con 4 puestos; nombre accesible «Tablero de parchís de la jungla»; capa decorativa con `aria-hidden="true"`. Ejecutar y ver que fallan.
 - [x] 5. Implementar la capa de juego de `jp-board` (tablones, seguros, salidas, pasillos, metas, casas y números) con las utilidades de color de la paleta y montarlo en `app.html`; `pnpm test:once` en verde.
-- [ ] 6. Tests de `board-decor.spec.ts` (misma semilla, mismos datos; número de briznas, vetas y hojas del diseño) e implementación de `board-decor.ts`; texturas de hierba y madera, ruido de luz y sombra, mechones de los seguros, hojas de las esquinas y tronco del centro en `jp-board`. `pnpm check` en verde.
+- [x] 6. Tests de `board-decor.spec.ts` (misma semilla, mismos datos; número de briznas, vetas y hojas del diseño) e implementación de `board-decor.ts`; texturas de hierba y madera, ruido de luz y sombra, mechones de los seguros, hojas de las esquinas y tronco del centro en `jp-board`. `pnpm check` en verde.
 - [ ] 7. Medir el contraste de los números (RNF-003) en tablón, seguro y salida de cada color, ajustar lo mínimo y anotar los valores en «Decisiones técnicas»; revisar en el navegador las ventanas de CE-06 con `pnpm start`. `pnpm check` en verde.
 
 ### Pruebas y trazabilidad
@@ -86,3 +86,10 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar los pasos 1
 - **Sí:** números con `system-ui, sans-serif` en lugar de Figtree. Cargar Figtree exigiría una petición a Google Fonts o una dependencia nueva (P-16, P-17); `system-ui` da una negrita legible en todas las plataformas.
 - **Sí:** sombras y brillos del diseño (`rgba(0,0,0,…)`, `#fff` con opacidad, `#1a240c`, `#14200a`) con utilidades de opacidad de Tailwind sobre negro, blanco o `grass-shade` (`fill-black/30`, `stroke-white/20`, `fill-grass-shade/40`). Valores aproximados al diseño, sin hex nuevos.
 - **Sí:** la capa decorativa del paso 5 solo tiene marco, hierba lisa y la sombra de la cruz; las texturas llegan en el paso 6.
+- **Sí:** decoración con el mismo generador (mulberry32), la misma semilla (`'claro'.length * 977 + 13`) y el mismo orden de tiradas que el diseño: briznas, vetas, nudos, matiz de cada tablón y copa de cada seguro en el orden del recorrido, y hojas. El dibujo sale igual que el de referencia y no cambia entre repintados.
+- **Sí:** tokens nuevos `log-bark`, `log-wood`, `log-ring` y `log-crack` para el tronco del centro. Sus colores no estaban en la paleta del paso 1 y RNF-005 pide los colores solo en `@theme`.
+- **Sí:** ruido de luz y sombra con `feFlood` coloreado por la variable del token (`grass-shade`, `sun`) y la máscara del ruido, en lugar de la matriz de color con los canales del hex que usa el diseño. Mismo resultado sin copiar la paleta.
+- **Sí:** hojas de las esquinas en la capa decorativa, debajo de las casas, en lugar de encima de todo como en el diseño. Encima taparían los puestos de casa donde irán las fichas (RF-005). Asoman sobre el marco y el borde de hierba.
+- **Sí:** tronco del centro en la capa de juego, justo después de las metas y con `aria-hidden`. Debajo de las metas no se vería; no tapa casillas ni los centros de meta.
+- **Sí:** patrones, filtros y recortes con `id` fijos (`jp-board-*`). Solo hay un tablero por página; si algún día hay dos, habrá que generar ids únicos.
+- **Observación:** como en el diseño, las hojas de la copa de un seguro sobresalen hasta 17 unidades por encima de su casilla y asoman sobre el tablón vecino; las más altas pueden rozar la parte baja de su número. Se revisa en el paso 7 junto al contraste.

@@ -35,6 +35,18 @@ describe('Board', () => {
     expect(root.querySelector('svg > [data-layer="game"]')).not.toBeNull();
   });
 
+  it('RF-005: la decoración tiene hierba, hojas y tronco, y no tapa la capa de juego', async () => {
+    const root = await render();
+    const decor = root.querySelector('[data-layer="decor"]')!;
+    expect(decor.querySelector('[fill="url(#jp-board-grass)"]')).not.toBeNull();
+    expect(decor.querySelectorAll('[data-decor="leaves"] > g')).toHaveLength(12);
+    const layers = Array.from(root.querySelectorAll('svg > [data-layer]'));
+    expect(layers.map((l) => l.getAttribute('data-layer'))).toEqual(['decor', 'game']);
+    const log = root.querySelector('[data-layer="game"] [data-decor="log"]');
+    expect(log?.getAttribute('aria-hidden')).toBe('true');
+    expect(log?.nextElementSibling?.hasAttribute('data-square')).toBe(true);
+  });
+
   it('RF-001: hay 68 casillas numeradas del 1 al 68', async () => {
     const squares = all(await render(), '[data-layer="game"] [data-square]');
     expect(squares).toHaveLength(TRACK_LENGTH);

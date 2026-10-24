@@ -63,6 +63,9 @@ export interface PlankView {
   readonly fill: string;
   readonly edge: string;
   readonly nail: string;
+  /** Wash over the plank: a light or dark tint on wood, painted grain on lanes. */
+  readonly overlay: string;
+  readonly overlayOpacity: number;
 }
 
 /** Canopy of a safe square, painted in the team's dark tone on start squares. */
@@ -75,6 +78,7 @@ export interface SafeView {
   readonly transform: string;
   readonly fill: string;
   readonly halo: string;
+  readonly tufts: readonly TuftView[];
 }
 
 export interface GoalView extends Goal {
@@ -83,5 +87,63 @@ export interface GoalView extends Goal {
 }
 
 export interface HomeView extends Home {
+  readonly fill: string;
+}
+
+/** Tones of a canopy, also used by leaves: the colour's dark, base and light shades. */
+export type CanopyTone = 'dark' | 'base' | 'light';
+
+/** A blade of the grass pattern; `tone` indexes the four blade colours. */
+export interface GrassBlade {
+  readonly path: string;
+  readonly tone: number;
+  readonly width: number;
+}
+
+/** A grain line of the wood pattern or of the grain painted over coloured wood. */
+export interface GrainLine {
+  readonly path: string;
+  readonly width: number;
+  readonly opacity: number;
+  /** Only for painted grain: white instead of black. */
+  readonly light: boolean;
+}
+
+/** Light or dark wash that makes each plank of the track slightly different. */
+export interface PlankTint {
+  readonly light: boolean;
+  readonly opacity: number;
+}
+
+/** A blade of a safe square's canopy, in the square's local coordinates. */
+export interface TuftBlade {
+  readonly path: string;
+  readonly tone: CanopyTone;
+}
+
+/** A corner leaf: `path` and `veins` are drawn at the origin and placed by `transform`. */
+export interface Leaf {
+  readonly length: number;
+  readonly transform: string;
+  readonly path: string;
+  readonly veins: string;
+  readonly tone: CanopyTone;
+}
+
+/** Random textures of the "claro" variant, drawn from one seed. */
+export interface BoardDecor {
+  readonly blades: readonly GrassBlade[];
+  readonly grain: readonly GrainLine[];
+  readonly paintGrain: readonly GrainLine[];
+  readonly knots: readonly Point[];
+  /** By plain track square number. */
+  readonly tints: ReadonlyMap<number, PlankTint>;
+  /** By safe or start square number. */
+  readonly tufts: ReadonlyMap<number, readonly TuftBlade[]>;
+  readonly leaves: readonly Leaf[];
+}
+
+export interface TuftView {
+  readonly path: string;
   readonly fill: string;
 }
