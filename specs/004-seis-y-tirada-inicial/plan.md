@@ -6,7 +6,7 @@
 
 ## PARTE-01: El seis
 
-**Estado:** En curso
+**Estado:** Hecha
 
 ### Enfoque
 
@@ -26,7 +26,7 @@ R-031 se resuelve en `moves.ts`: una función interna `rollSteps(state, roll)` d
 - [x] 1. Tests de R-031 en `moves.spec.ts`: HU-03 c1-c4 y revisión en su sitio de las filas de R-040, HU-06, R-070 y las tres de R-071 según la tabla del spec. Sin esqueleto: no cambia ninguna firma. Deben fallar HU-03 c1, c3 y c4 y las revisiones de R-040 y HU-06; HU-03 c2 y las de R-070 y R-071 (ficha pasada a casa) pasan ya y quedan como guarda.
 - [x] 2. Implementar `rollSteps` en `moves.ts`; pasar `pnpm check`.
 - [x] 3. Tests de R-030 y R-032 en `actions.spec.ts`: HU-02 c1-c5, HU-04 c1-c5, revisión en su sitio de la fila de R-011, 6 cuyo premio se pierde y 6 con premios encadenados. Esqueleto: campos `sixesInRow` y `lastMovedPiece` en `GameState` y `createGame`, `GameSetup` ampliado y tipos de evento nuevos, sin lógica. Ejecutar y comprobar que fallan en sus aserciones (P-07).
-- [ ] 4. Implementar en `actions.ts` la repetición, la cuenta de seises, la última ficha movida y los tres seises; pasar `pnpm check`.
+- [x] 4. Implementar en `actions.ts` la repetición, la cuenta de seises, la última ficha movida y los tres seises; pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
 

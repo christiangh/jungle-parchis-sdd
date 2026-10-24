@@ -8,6 +8,10 @@ const CAPTURE_BONUS = 20;
 
 const GOAL_BONUS = 10;
 
+const SIX = 6;
+
+const MAX_SIXES_IN_ROW = 3;
+
 export type Action =
   | { readonly type: 'roll'; readonly player: Color; readonly value: number }
   | { readonly type: 'move'; readonly player: Color; readonly pieceId: PieceId };
@@ -59,7 +63,10 @@ export function applyAction(state: GameState, action: Action): Result<ActionOutc
   return action.type === 'roll' ? roll(state, action) : move(state, action);
 }
 
-/** R-011, R-012: a roll stays pending if it has legal moves; otherwise it is lost. */
+/**
+ * R-011, R-012: a roll stays pending if it has legal moves; otherwise it is lost.
+ * R-032: the third 6 in a row is not played.
+ */
 function roll(state: GameState, action: RollAction): Result<ActionOutcome, ActionError> {
   // R-051, R-072: a bonus is used before the next roll.
   if (state.pendingBonus !== null) {
@@ -71,26 +78,54 @@ function roll(state: GameState, action: RollAction): Result<ActionOutcome, Actio
   if (!isValidRoll(action.value)) {
     return { ok: false, error: 'invalid-roll' };
   }
-  const rolled: GameState = { ...state, pendingRoll: action.value };
+  const sixesInRow = action.value === SIX ? state.sixesInRow + 1 : 0;
+  if (sixesInRow === MAX_SIXES_IN_ROW) {
+    return { ok: true, value: threeSixes(state) };
+  }
+  const rolled: GameState = { ...state, pendingRoll: action.value, sixesInRow };
   if (legalMoves(rolled).length > 0) {
     return { ok: true, value: { state: rolled, events: [] } };
   }
+  const events: GameEvent[] = [{ type: 'roll-lost', player: state.turn, value: action.value }];
+  return { ok: true, value: endRoll({ ...rolled, pendingRoll: null }, events) };
+}
+
+/**
+ * R-032: the last piece moved in the turn goes home unless it is in its lane or at the goal, and
+ * the turn ends.
+ */
+function threeSixes(state: GameState): ActionOutcome {
+  const last = state.pieces.find((piece) => piece.id === state.lastMovedPiece);
+  const sentHome = last?.position.kind === 'track' ? last.id : null;
+  const pieces = state.pieces.map((piece): Piece =>
+    piece.id === sentHome ? { ...piece, position: { kind: 'home' } } : piece,
+  );
+  const events: GameEvent[] = [{ type: 'three-sixes', player: state.turn, pieceId: sentHome }];
+  return passTurn({ ...state, pieces }, events);
+}
+
+/**
+ * R-030: once a roll and all its bonuses are resolved, a 6 rolls again (R-051, R-072, R-081);
+ * any other value passes the turn.
+ */
+function endRoll(state: GameState, events: GameEvent[]): ActionOutcome {
+  if (state.sixesInRow > 0) {
+    events.push({ type: 'roll-again', player: state.turn });
+    return { state, events };
+  }
+  return passTurn(state, events);
+}
+
+/** R-010: the next player starts the turn with no sixes in a row nor last moved piece (R-032). */
+function passTurn(state: GameState, events: GameEvent[]): ActionOutcome {
   const next = nextPlayer(state);
-  return {
-    ok: true,
-    value: {
-      state: { ...state, turn: next },
-      events: [
-        { type: 'roll-lost', player: state.turn, value: action.value },
-        { type: 'turn-changed', player: next },
-      ],
-    },
-  };
+  events.push({ type: 'turn-changed', player: next });
+  return { state: { ...state, turn: next, sixesInRow: 0, lastMovedPiece: null }, events };
 }
 
 /**
  * R-013, R-090: applies one legal move with the pending roll or bonus, then ends the game, keeps
- * the turn for a new bonus (R-051, R-072, R-081) or passes it.
+ * the turn for a new bonus (R-051, R-072, R-081) or ends the roll (R-030).
  */
 function move(state: GameState, action: MoveAction): Result<ActionOutcome, ActionError> {
   if (state.pendingRoll === null && state.pendingBonus === null) {
@@ -124,6 +159,7 @@ function move(state: GameState, action: MoveAction): Result<ActionOutcome, Actio
     pendingRoll: null,
     pendingBonus: null,
     arrivalOrder,
+    lastMovedPiece: piece.id,
   };
 
   if (hasWon(pieces, state.turn)) {
@@ -140,9 +176,7 @@ function move(state: GameState, action: MoveAction): Result<ActionOutcome, Actio
     // R-080: a bonus no piece can use is lost.
     events.push({ type: 'bonus-lost', player: state.turn, amount: bonus });
   }
-  const next = nextPlayer(state);
-  events.push({ type: 'turn-changed', player: next });
-  return { ok: true, value: { state: { ...moved, turn: next }, events } };
+  return { ok: true, value: endRoll(moved, events) };
 }
 
 /** R-051: capturing counts 20. R-072: reaching the goal counts 10, not bouncing past it (R-071). */

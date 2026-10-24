@@ -661,13 +661,13 @@ describe('applyAction: el seis', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       turn: 'yellow',
-      positions: { 'yellow-0': lane(1) },
+      positions: { 'yellow-0': lane(2) },
     });
 
     const { state, events } = play(game, roll(6), move('yellow-0'));
 
     expect(events).toEqual([
-      { type: 'piece-advanced', pieceId: 'yellow-0', from: lane(1), to: GOAL },
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: lane(2), to: GOAL },
       { type: 'piece-reached-goal', pieceId: 'yellow-0' },
       { type: 'bonus-earned', player: 'yellow', amount: 10 },
       { type: 'bonus-lost', player: 'yellow', amount: 10 },
