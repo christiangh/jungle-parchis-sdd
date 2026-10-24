@@ -15,6 +15,7 @@ Las reglas del juego están en [`specs/reglamento.md`](specs/reglamento.md). Lé
 - En `src/app/`, cada archivo agrupa un concepto con sus tipos y constantes, como recomienda la guía de estilo de Angular; lo compartido entre dominios va en `src/app/shared/`. Los componentes llevan el prefijo `jp-`.
 - La paleta se define como tokens `@theme` de Tailwind en `src/styles.css`; en `src/app/` no hay colores en hexadecimal.
 - Documentación en castellano. Código, comentarios y commits en inglés (Conventional Commits, con ámbito `spec-NNN`).
+- Los mensajes de commit son de una sola línea, sin cuerpo ni `Co-Authored-By`.
 
 ## Comandos
 
@@ -24,6 +25,7 @@ El gestor de paquetes es pnpm, nunca npm.
 - `pnpm check`: formato, lint y todos los tests, incluidos los de propiedades. Cierra cada parte de un spec.
 - `pnpm test:once`: todos los tests menos los de propiedades; tarda segundos. Es el que se usa en cada paso.
 - `pnpm test:properties`: solo los tests de propiedades (`src/engine/invariants.spec.ts`, 1000 partidas aleatorias).
+- `pnpm test:e2e`: prueba de humo en Chromium con Playwright (`e2e/`), con su propio servidor de producción en el puerto 4300. Fuera de `pnpm check`; corre en el CI. La primera vez: `pnpm exec playwright install chromium`.
 - `pnpm test:coverage`, `pnpm lint:fix`, `pnpm format`.
 
 ## Angular 22
