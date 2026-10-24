@@ -119,7 +119,7 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar el paso de 
 
 ## PARTE-03: Tirada inicial
 
-**Estado:** En curso
+**Estado:** Hecha
 
 ### Enfoque
 
