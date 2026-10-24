@@ -4,7 +4,7 @@ Parchís con temática de jungla hecho con spec-driven design, como proyecto de 
 
 @specs/constitucion.md
 
-Las reglas del juego están en [`specs/reglamento.md`](specs/reglamento.md). Léelo antes de tocar el motor o escribir un spec.
+Las reglas del juego están en [`specs/reglamento.md`](specs/reglamento.md), con identificadores `R-NNN` e invariantes `I-NN`. Los specs que tocan el motor parten de él y citan sus reglas por identificador.
 
 ## Convenciones
 
