@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { Color, GameState } from '@engine';
 import { boardDecor } from './board-decor';
 import {
@@ -9,6 +9,7 @@ import {
   HOME_SIZE,
   homes,
   laneSquares,
+  PIECE_RADIUS,
   rotation,
   SQUARE_LENGTH,
   SQUARE_WIDTH,
@@ -22,6 +23,7 @@ import {
   TEAM_DARK_STROKE,
   TEAM_FILL,
 } from './board-palette';
+import { PiecePlace, piecePlaces } from './board-pieces';
 
 /** A wooden or painted plank: plain track squares and lane squares. */
 export interface PlankView {
@@ -67,6 +69,12 @@ export interface HomeView extends Home {
   readonly fill: string;
 }
 
+/** A piece: a disc of its colour with a dark border, on a light rim. */
+export interface PieceView extends PiecePlace {
+  readonly fill: string;
+  readonly edge: string;
+}
+
 const decor = boardDecor();
 
 /** Jungle board drawn in SVG ("claro" variant of docs/design/tablero). */
@@ -85,6 +93,8 @@ export class Board {
   protected readonly decor = decor;
   protected readonly bladeStroke = BLADE_STROKE;
   protected readonly canopyFill = CANOPY_FILL;
+  protected readonly pieceRadius = PIECE_RADIUS;
+  protected readonly discRadius = PIECE_RADIUS - 4;
 
   /** Heights of the board lines painted across each home. */
   protected readonly homeBoards = [1, 2, 3, 4, 5].map(
@@ -160,4 +170,12 @@ export class Board {
     ...h,
     fill: TEAM_FILL[h.color],
   }));
+
+  protected readonly pieces = computed<readonly PieceView[]>(() =>
+    piecePlaces(this.state()).map((p) => ({
+      ...p,
+      fill: TEAM_FILL[p.color],
+      edge: TEAM_DARK_STROKE[p.color],
+    })),
+  );
 }

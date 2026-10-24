@@ -334,6 +334,26 @@
         </text>
       </g>
     }
-    <g data-pieces></g>
+    <g data-pieces>
+      @for (piece of pieces(); track piece.id) {
+        <g [attr.data-piece]="piece.id" [attr.data-color]="piece.color">
+          <circle
+            data-part="rim"
+            [attr.cx]="piece.center.x"
+            [attr.cy]="piece.center.y"
+            [attr.r]="pieceRadius"
+            class="fill-white"
+          />
+          <circle
+            data-part="disc"
+            [attr.cx]="piece.center.x"
+            [attr.cy]="piece.center.y"
+            [attr.r]="discRadius"
+            [class]="piece.fill + ' ' + piece.edge"
+            stroke-width="3"
+          />
+        </g>
+      }
+    </g>
   </g>
 </svg>
