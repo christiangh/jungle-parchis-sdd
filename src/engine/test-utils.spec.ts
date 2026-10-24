@@ -676,7 +676,7 @@ describe('gameFacts', () => {
     ]);
   });
 
-  it('CE-03 de SPEC 004: un 6 repite tirada y, con fichas en casa, no vale 7', () => {
+  it('CE-03 de SPEC 004, R-030, R-031: un 6 repite tirada y, con fichas en casa, no vale 7', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       pendingRoll: 6,
@@ -687,7 +687,7 @@ describe('gameFacts', () => {
     expect(factsOf(game, move('yellow-0'))).toEqual(['roll-again']);
   });
 
-  it('CE-03 de SPEC 004: reconoce un 6 que vale 7', () => {
+  it('CE-03 de SPEC 004, R-031: reconoce un 6 que vale 7', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       pendingRoll: 6,
@@ -703,7 +703,7 @@ describe('gameFacts', () => {
     expect(factsOf(game, move('yellow-0'))).toEqual(['roll-again', 'six-counts-seven']);
   });
 
-  it('CE-03 de SPEC 004: reconoce tres seises con la última ficha movida devuelta a casa', () => {
+  it('CE-03 de SPEC 004, R-032: reconoce tres seises con la última ficha movida devuelta a casa', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       sixesInRow: 2,
@@ -716,7 +716,7 @@ describe('gameFacts', () => {
     ]);
   });
 
-  it('CE-03 de SPEC 004: reconoce tres seises con la última ficha movida en el pasillo', () => {
+  it('CE-03 de SPEC 004, R-032: reconoce tres seises con la última ficha movida en el pasillo', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       sixesInRow: 2,
@@ -729,7 +729,7 @@ describe('gameFacts', () => {
     ]);
   });
 
-  it('CE-03 de SPEC 004: reconoce una barrera propia abierta con un 6', () => {
+  it('CE-03 de SPEC 004, R-062: reconoce una barrera propia abierta con un 6', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       pendingRoll: 6,
@@ -744,7 +744,7 @@ describe('gameFacts', () => {
     ]);
   });
 
-  it('CE-03 de SPEC 004: reconoce un empate en la tirada inicial', () => {
+  it('CE-03 de SPEC 004, R-010: reconoce un empate en la tirada inicial', () => {
     const game: GameState = {
       ...yellowAndRed(),
       turn: 'red',
