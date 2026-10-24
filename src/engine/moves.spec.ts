@@ -663,6 +663,152 @@ describe('legalMoves: el seis', () => {
   });
 });
 
+describe('legalMoves: abrir barrera con un 6', () => {
+  it('R-062: con un 6 solo se mueven las fichas de una barrera propia', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: { 'yellow-0': track(20), 'yellow-1': track(20), 'yellow-2': track(40) },
+    });
+
+    expect(legalMoves(game)).toEqual([
+      { pieceId: 'yellow-0', to: track(26) },
+      { pieceId: 'yellow-1', to: track(26) },
+    ]);
+  });
+
+  it('R-062, R-061: si ninguna ficha de la barrera puede moverse, se mueve otra', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: {
+        'yellow-0': track(20),
+        'yellow-1': track(20),
+        'yellow-2': track(40),
+        'red-0': track(24),
+        'red-1': track(24),
+      },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-2', to: track(46) }]);
+  });
+
+  it('R-062: una barrera mixta no obliga a abrirse', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: { 'yellow-0': track(12), 'red-0': track(12), 'yellow-1': track(40) },
+    });
+
+    expect(legalMoves(game)).toEqual([
+      { pieceId: 'yellow-0', to: track(18) },
+      { pieceId: 'yellow-1', to: track(46) },
+    ]);
+  });
+
+  it('R-062: con dos barreras propias se mueve cualquier ficha de ambas', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: {
+        'yellow-0': track(20),
+        'yellow-1': track(20),
+        'yellow-2': track(40),
+        'yellow-3': track(40),
+      },
+    });
+
+    expect(legalMoves(game)).toEqual([
+      { pieceId: 'yellow-0', to: track(27) },
+      { pieceId: 'yellow-1', to: track(27) },
+      { pieceId: 'yellow-2', to: track(47) },
+      { pieceId: 'yellow-3', to: track(47) },
+    ]);
+  });
+
+  it('R-062, R-031: sin fichas en casa, la barrera se abre moviendo 7', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: {
+        'yellow-0': track(20),
+        'yellow-1': track(20),
+        'yellow-2': track(40),
+        'yellow-3': GOAL,
+      },
+    });
+
+    expect(legalMoves(game)).toEqual([
+      { pieceId: 'yellow-0', to: track(27) },
+      { pieceId: 'yellow-1', to: track(27) },
+    ]);
+  });
+
+  it('R-062, R-080: un premio no obliga a abrir la barrera', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingBonus: 20,
+      positions: { 'yellow-0': track(20), 'yellow-1': track(20), 'yellow-2': track(40) },
+    });
+
+    expect(legalMoves(game)).toEqual([
+      { pieceId: 'yellow-0', to: track(40) },
+      { pieceId: 'yellow-1', to: track(40) },
+      { pieceId: 'yellow-2', to: track(60) },
+    ]);
+  });
+
+  it('R-062: una barrera propia en la casilla de salida también se abre con un 6', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: {
+        'yellow-0': track(START_SQUARE.yellow),
+        'yellow-1': track(START_SQUARE.yellow),
+        'yellow-2': track(30),
+      },
+    });
+
+    expect(legalMoves(game)).toEqual([
+      { pieceId: 'yellow-0', to: track(11) },
+      { pieceId: 'yellow-1', to: track(11) },
+    ]);
+  });
+
+  it('R-062, R-021: con un 5 manda la salida obligatoria, no la barrera', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 5,
+      positions: { 'yellow-0': track(20), 'yellow-1': track(20), 'yellow-2': track(40) },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-3', to: track(START_SQUARE.yellow) }]);
+  });
+
+  it('R-062: con otro valor una barrera propia no obliga a abrirse', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 4,
+      positions: { 'yellow-0': track(20), 'yellow-1': track(20), 'yellow-2': track(40) },
+    });
+
+    expect(legalMoves(game)).toEqual([
+      { pieceId: 'yellow-0', to: track(24) },
+      { pieceId: 'yellow-1', to: track(24) },
+      { pieceId: 'yellow-2', to: track(44) },
+    ]);
+  });
+});
+
 describe('legalMoves: consulta', () => {
   it('HU-06: devuelve cada ficha movible con su casilla de destino', () => {
     const game = buildGame({
