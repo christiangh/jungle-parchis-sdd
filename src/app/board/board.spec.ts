@@ -228,10 +228,7 @@ describe('Board', () => {
       const rim = piece.querySelector('[data-part="rim"]');
       expect(disc?.classList.contains(`fill-team-${color}`), color!).toBe(true);
       expect(Number(disc?.getAttribute('stroke-width')), color!).toBeGreaterThan(0);
-      expect(
-        Array.from(disc?.classList ?? []).some((c) => c.startsWith('stroke-')),
-        color!,
-      ).toBe(true);
+      expect(disc?.classList.contains('stroke-ink'), color!).toBe(true);
       expect(rim?.classList.contains('fill-white'), color!).toBe(true);
       expect(radiusOf(piece, 'rim'), color!).toBe(PIECE_RADIUS);
       expect(radiusOf(piece, 'disc'), color!).toBeLessThan(PIECE_RADIUS);
@@ -262,6 +259,7 @@ describe('Board', () => {
     const piece = pieceOf(root, 'yellow-0');
     expect(centerOf(piece)).toEqual(trackPlank(5).center);
     expect(paintedWith(piece, 'fill-team-yellow')).toBe(true);
+    expect(piece.querySelector('[data-part="disc"]')?.classList.contains('stroke-ink')).toBe(true);
     expect(piece.querySelector('[data-part="rim"]')?.classList.contains('fill-white')).toBe(true);
   });
 

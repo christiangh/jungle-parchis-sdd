@@ -140,7 +140,7 @@ Se reutilizan los glosarios de SPEC 001 (recorrido común, casa, casilla de sali
 - **RF-009**: Cada ficha debe pintarse como un disco en el color de su equipo tomado de la paleta del diseño, con borde oscuro y reborde claro.
 - **RF-010**: Cada ficha en casa debe ocupar un puesto de la casa de su color, distinto del de las demás fichas en esa casa.
 - **RF-011**: Una ficha sola en una casilla del recorrido común o del pasillo debe pintarse en el centro de esa casilla.
-- **RF-012**: Dos fichas en la misma casilla del recorrido común o del pasillo deben pintarse una al lado de la otra dentro del tablón, sin solaparse ni salirse de él; la que llegó antes, según el orden de llegada del estado, a la izquierda según el sentido de avance.
+- **RF-012**: Dos fichas en la misma casilla del recorrido común o del pasillo deben pintarse una al lado de la otra dentro del tablón, sin solaparse ni salirse de él; la que llegó antes, según el orden de llegada del estado, a la izquierda según el sentido de avance; en los tablones centrales (68, 17, 34 y 51), donde se avanza a lo largo del tablón, en el extremo de donde se viene.
 - **RF-013**: Las fichas en meta deben ocupar los 4 puestos fijos del triángulo de su color, por orden de llegada, sin solaparse ni salirse del triángulo.
 - **RF-014**: La traducción de una posición del motor (con su color, su casilla y su lugar en la casilla) al punto del tablero donde se pinta debe ser un cálculo puro, comprobable sin pintar el tablero: la misma entrada da siempre el mismo punto.
 - **RF-015**: El tablero debe pintar el estado que recibe y, cuando recibe uno nuevo, reflejarlo sin animación.

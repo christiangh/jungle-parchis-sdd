@@ -127,7 +127,8 @@ const GOAL_SLOTS: readonly Point[] = [440, 480, 520, 560].map((x) => ({ x, y: 64
 
 /**
  * Pair axis of a bottom arm plank in local coordinates. Pieces go up the right column
- * and the lane, and down the left column; on the middle plank they come from the left.
+ * and the lane, and down the left column; on the middle plank the axis points back to
+ * the square they come from.
  */
 function localPairAxis(x: number): Point {
   return x === LEFT_COLUMN_X ? { x: 1, y: 0 } : { x: -1, y: 0 };

@@ -101,7 +101,7 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar los pasos 1
 
 ## PARTE-02: Fichas
 
-**Estado:** En curso
+**Estado:** Hecha
 
 ### Enfoque
 
@@ -113,8 +113,7 @@ La traducción de posiciones es un módulo puro, `src/app/board/board-pieces.ts`
 - `src/app/board/board-geometry.spec.ts`: tests del eje de pareja y de los puestos de meta.
 - `src/app/board/board-pieces.ts` (nuevo): traducción pura de posiciones del motor a puntos del tablero.
 - `src/app/board/board-pieces.spec.ts` (nuevo): tests de la traducción para cada casilla, pasillo, casa y meta.
-- `src/app/board/board-palette.ts`: clases del borde y del reborde de las fichas.
-- `src/app/board/board.ts`, `src/app/board/board.html`: entrada `state` y grupo de fichas.
+- `src/app/board/board.ts`, `src/app/board/board.html`: entrada `state` y grupo de fichas, con las clases fijas del borde (`stroke-ink`) y del reborde (`fill-white`); `board-palette.ts` no cambia.
 - `src/app/board/board.spec.ts`: helper `render(state)` con `setInput` y tests de fichas con estados construidos.
 - `src/app/app.ts`, `src/app/app.html`, `src/app/app.spec.ts`: partida nueva de 4 jugadores pasada al tablero.
 
