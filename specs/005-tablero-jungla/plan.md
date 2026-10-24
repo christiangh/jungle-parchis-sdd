@@ -182,7 +182,7 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar el paso 7 y
 
 ## PARTE-03: Prueba de humo en navegador
 
-**Estado:** Aprobada
+**Estado:** Hecha
 
 ### Enfoque
 

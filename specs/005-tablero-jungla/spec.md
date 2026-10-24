@@ -1,6 +1,6 @@
 # SPEC 005 — Tablero de la jungla
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 001, SPEC 002, SPEC 003, SPEC 004
 > **Fecha:** 2026-10-24
 > **Autor:** Christian Garcia
