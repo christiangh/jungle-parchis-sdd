@@ -1,12 +1,8 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
 
 @Component({
-  imports: [RouterOutlet],
   selector: 'jp-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
 })
-export class App {
-  protected readonly title = signal('jungle-parchis-sdd');
-}
+export class App {}

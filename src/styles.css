@@ -1,3 +1,46 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
+
+/*
+ * Jungle board palette ("claro" variant of docs/design/tablero).
+ * `static` emits every variable so the SVG can use them even when no utility does.
+ * Dark and light tones mirror the design's shade(color, -0.38 / +0.38).
+ */
+@theme static {
+  --color-team-yellow: #e3b23a;
+  --color-team-blue: #3a7cb0;
+  --color-team-red: #c8452d;
+  --color-team-green: #2e8b57;
+
+  --color-team-yellow-dark: color-mix(in srgb, var(--color-team-yellow) 62%, black);
+  --color-team-blue-dark: color-mix(in srgb, var(--color-team-blue) 62%, black);
+  --color-team-red-dark: color-mix(in srgb, var(--color-team-red) 62%, black);
+  --color-team-green-dark: color-mix(in srgb, var(--color-team-green) 62%, black);
+
+  --color-team-yellow-light: color-mix(in srgb, var(--color-team-yellow) 62%, white);
+  --color-team-blue-light: color-mix(in srgb, var(--color-team-blue) 62%, white);
+  --color-team-red-light: color-mix(in srgb, var(--color-team-red) 62%, white);
+  --color-team-green-light: color-mix(in srgb, var(--color-team-green) 62%, white);
+
+  --color-grass: #5d8b36;
+  --color-blade-1: #78a845;
+  --color-blade-2: #4a7a28;
+  --color-blade-3: #86b552;
+  --color-blade-4: #557f30;
+  --color-grass-shade: #24410f;
+  --color-sun: #e4f08c;
+
+  --color-wood: #c99a62;
+  --color-wood-line: #9e6d3b;
+  --color-wood-edge: #74491f;
+  --color-moss: #8a8a48;
+
+  --color-frame: #6e4524;
+  --color-frame-edge: #47290f;
+  --color-ink: #3b2412;
+
+  --color-canopy-dark: #1f4a18;
+  --color-canopy: #33702a;
+  --color-canopy-light: #62a03d;
+
+  --color-page: #f5ead8;
+}
