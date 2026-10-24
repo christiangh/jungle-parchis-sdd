@@ -80,7 +80,7 @@ export function createGame(config: GameConfig): Result<GameState, CreateGameErro
       arrivalOrder: pieces.map((piece) => piece.id),
       sixesInRow: 0,
       lastMovedPiece: null,
-      initialRoll: null,
+      initialRoll: { contenders: turnOrder, rolls: [] },
     },
   };
 }

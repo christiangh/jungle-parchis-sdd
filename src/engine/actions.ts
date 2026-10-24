@@ -1,7 +1,7 @@
 // Game actions: the single pure transition from a state and an action to a new state and events.
 
 import { BoardPosition, Color, isValidRoll, LanePosition, TrackPosition } from './board';
-import { GameState, Piece, PieceId, Result } from './game';
+import { GameState, InitialRoll, Piece, PieceId, Result } from './game';
 import { legalMoves, Move } from './moves';
 
 const CAPTURE_BONUS = 20;
@@ -64,7 +64,47 @@ export function applyAction(state: GameState, action: Action): Result<ActionOutc
   if (action.player !== state.turn) {
     return { ok: false, error: 'not-your-turn' };
   }
+  if (state.initialRoll !== null) {
+    return action.type === 'roll'
+      ? initialRoll(state, state.initialRoll, action)
+      : { ok: false, error: 'initial-roll-pending' };
+  }
   return action.type === 'roll' ? roll(state, action) : move(state, action);
+}
+
+/**
+ * R-010: each contender rolls once per round; a single highest roll starts the game and the players
+ * tied at the highest roll again in a new round.
+ */
+function initialRoll(
+  state: GameState,
+  phase: InitialRoll,
+  action: RollAction,
+): Result<ActionOutcome, ActionError> {
+  if (!isValidRoll(action.value)) {
+    return { ok: false, error: 'invalid-roll' };
+  }
+  const rolls = [...phase.rolls, action.value];
+  const events: GameEvent[] = [
+    { type: 'initial-roll', player: action.player, value: action.value },
+  ];
+  if (rolls.length < phase.contenders.length) {
+    const next: GameState = {
+      ...state,
+      turn: phase.contenders[rolls.length],
+      initialRoll: { contenders: phase.contenders, rolls },
+    };
+    return { ok: true, value: { state: next, events } };
+  }
+  const highest = Math.max(...rolls);
+  const tied = phase.contenders.filter((_, index) => rolls[index] === highest);
+  if (tied.length === 1) {
+    events.push({ type: 'first-player', player: tied[0] });
+    return { ok: true, value: { state: { ...state, turn: tied[0], initialRoll: null }, events } };
+  }
+  events.push({ type: 'initial-roll-tie', players: tied });
+  const next: GameState = { ...state, turn: tied[0], initialRoll: { contenders: tied, rolls: [] } };
+  return { ok: true, value: { state: next, events } };
 }
 
 /**
