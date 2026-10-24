@@ -174,3 +174,75 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar el paso de 
 - **No:** `turn-changed` durante la fase. Los eventos `initial-roll`, `initial-roll-tie` y `first-player` ya dicen quién tira y quién empieza.
 - **Sí:** la fase vive en `actions.ts`, junto a `roll` y `move`. Separarla en otro archivo obligaría a mover los tipos de acción y evento para evitar una importación circular.
 - **Sí:** `buildGame` crea estados fuera de la fase. Los tests de reglas parten de una partida ya empezada; la fase se prueba con `createGame` y `applyAction`.
+
+## PARTE-04: Propiedades con el seis y la tirada inicial
+
+**Estado:** En curso
+
+### Enfoque
+
+El motor no cambia: esta parte solo amplía los tests de propiedades, como PARTE-02 de SPEC 003. Las partidas aleatorias ya juegan con el seis y con la barrera obligada desde PARTE-01 y PARTE-02, y `playRandomGame` ya sirve para la tirada inicial: sin tirada ni premio pendiente envía una tirada del jugador en turno, que durante la fase es quien tira en la ronda.
+
+Partidas desde la tirada inicial: el test de CE-02 crea cada partida con `createGame` en lugar de `buildGame`, y el arbitrario deja de elegir jugador inicial (`firstPlayer`). La fase se juega con los mismos dados de la semilla.
+
+Casillas reales: nueva ayuda `moveSteps(state)` en `test-utils.ts`, que devuelve las casillas del premio pendiente o, si no hay, de la tirada pendiente, con un 6 que vale 7 cuando el jugador en turno no tiene fichas en casa (R-031); sin nada pendiente, `null`. Calcula R-031 por su cuenta, sin `rollSteps` de `moves.ts`. Sustituye a `pendingBonus ?? pendingRoll` en la propiedad de RNF-004 de SPEC 003 y en el hecho de movimiento descartado, como anotó el plan de SPEC 003.
+
+Dos propiedades nuevas, con ayudas propias en `test-utils.ts`:
+
+- R-062, `unopenedBarrier(before, action)`: en una acción de mover con un 6 de tirada pendiente y sin premio, si el jugador en turno tiene barreras de su color con alguna ficha que pueda moverse, devuelve `true` cuando la ficha movida no es de una de ellas. "Puede moverse" se decide sin `moves.ts`: la ficha avanza las casillas reales con `stepForward`, `walkHits` no da barreras atravesadas ni de destino, y la casilla de destino del recorrido o del pasillo no tiene ya 2 fichas. Las barreras mixtas no cuentan (R-062).
+- R-032, `thirdSixMoves(played)`: índices de las acciones de mover hechas con una tirada pendiente de 6 que es el tercer 6 seguido, o posterior, del mismo turno. La cuenta sube con cada tirada de 6, movida o perdida, y vuelve a cero con una tirada de otro valor y con los eventos `turn-changed` y `first-player`. Así no se confunden dos turnos seguidos del mismo jugador en una partida de 2 (riesgo de la sección 14 del spec).
+
+`gameFacts` reconoce seis hechos nuevos de CE-03:
+
+- Repetir tirada por 6: evento `roll-again`.
+- 6 que vale 7: acción de mover con un 6 de tirada pendiente, sin premio y sin fichas del jugador en casa en el estado previo.
+- Tres seises con ficha devuelta: evento `three-sixes` con `pieceId` no nulo.
+- Tres seises sin ficha devuelta: evento `three-sixes` con `pieceId` nulo.
+- Barrera abierta por un 6: acción de mover con un 6 de tirada pendiente, sin premio, de una ficha de una barrera de su color en el estado previo.
+- Empate en la tirada inicial: evento `initial-roll-tie`.
+
+### Archivos
+
+- `src/engine/test-utils.ts`: `moveSteps`, `unopenedBarrier` y `thirdSixMoves`; los seis hechos nuevos en `GameFact`, `GAME_FACTS` y `gameFacts`; el hecho de movimiento descartado con `moveSteps`.
+- `src/engine/test-utils.spec.ts`: tests de las tres ayudas y de los hechos nuevos, con escenarios de `buildGame` y `createGame`.
+- `src/engine/invariants.spec.ts`: partidas desde `createGame`, sin `firstPlayer`; `moveSteps` en la propiedad de RNF-004 de SPEC 003; propiedades de R-062 y R-032; nombre del test con RNF-004 de este spec.
+
+### Pasos
+
+- [ ] 1. Tests en `test-utils.spec.ts`. Esqueleto: `moveSteps` devuelve `pendingBonus ?? pendingRoll`, `unopenedBarrier` devuelve `false`, `thirdSixMoves` devuelve `[]`, y los hechos nuevos entran en `GameFact` y `GAME_FACTS` sin que `gameFacts` los produzca. Ejecutar y comprobar que fallan en sus aserciones (P-07); quedan como guarda los casos que ya cumple el esqueleto. El test de CE-03 de `invariants.spec.ts` también falla hasta el paso 2.
+  - `moveSteps`: un 6 sin fichas en casa da 7; con fichas en casa, 6; las fichas en meta no cuentan como en casa; otro valor da su valor; un premio da su cantidad; sin nada pendiente, `null`.
+  - `unopenedBarrier`: mover una ficha que no es de la barrera propia, pudiendo moverse alguna de ella, da `true`; mover una de la barrera, `false`; si ninguna ficha de la barrera puede moverse (barrera delante, destino con 2 fichas), `false`; una barrera mixta no cuenta; con otro valor o con un premio, `false`.
+  - `thirdSixMoves`: detecta un movimiento con el tercer 6 seguido; no detecta dos seises seguidos; un 6 perdido cuenta; otro valor corta la cuenta; un cambio de turno también, incluso entre dos turnos del mismo jugador en una partida de 2.
+  - `gameFacts`: un caso por hecho nuevo, y un 6 con fichas en casa, que no da el hecho de 6 que vale 7.
+- [ ] 2. Implementar `moveSteps`, `unopenedBarrier`, `thirdSixMoves` y los hechos nuevos de `gameFacts`, con `moveSteps` en el hecho de movimiento descartado. En `invariants.spec.ts`, crear las partidas con `createGame`, sin `firstPlayer`. Pasar `pnpm check`.
+- [ ] 3. Ampliar el test de CE-02 con `moveSteps` en la propiedad de RNF-004 de SPEC 003 y con las propiedades de R-062 y R-032 tras cada acción, y renombrarlo. Medir cuántas veces sale cada hecho nuevo en las 1000 partidas, cuántas se detienen por el límite de acciones y cuánto tarda. Pasar `pnpm check`.
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+|----------|------|--------|
+| RNF-004 (casillas reales) | 1-3 | Tests de `moveSteps`; `moveSteps` en la propiedad de RNF-004 de SPEC 003 y en el hecho de movimiento descartado |
+| RNF-004 (R-062) | 1-3 | Tests de `unopenedBarrier`; en el test de CE-02, `unopenedBarrier` es `false` en cada acción |
+| RNF-004 (R-032) | 1-3 | Tests de `thirdSixMoves`; en el test de CE-02, `thirdSixMoves` es `[]` en cada partida |
+| RNF-004 (tirada inicial) | 2, 3 | Partidas de 2, 3 y 4 jugadores desde `createGame` |
+| RNF-004 / CE-02 | 3 | «CE-02, CE-03: 1000 partidas aleatorias de 2, 3 y 4 jugadores desde la tirada inicial cumplen I-01 a I-06 y RNF-004 de SPEC 002, SPEC 003 y SPEC 004 tras cada acción, y producen todos los hechos de CE-03» |
+| CE-03 | 1-3 | Tests de los hechos nuevos de `gameFacts` y, en el test de CE-02, los 18 hechos producidos al menos una vez |
+| CE-01 | — | Cubierto en PARTE-01 a PARTE-03; se comprueba al cerrar el spec |
+| CE-04 | 2 | `invariants.spec.ts` deja de usar `firstPlayer`; ningún test crea una partida con jugador inicial |
+| Riesgo: límite de acciones | 3 | `played.stopped` es `null` en las 1000 partidas |
+| Hecho cuando | 3 | CE-01 a CE-04 cumplidos; `pnpm check` en verde |
+
+Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso de código y la parte.
+
+### Skills y agentes
+
+- `caveman:cavecrew-reviewer`: revisión del diff al cerrar la parte.
+
+### Decisiones técnicas
+
+- **Sí:** `moveSteps` y la movilidad de `unopenedBarrier` se calculan por su cuenta, sin `moves.ts`. Si la propiedad usara el cálculo del motor, no detectaría sus errores. Usan `stepForward`, `barriers` y `walkHits`, que tienen sus propios tests.
+- **Sí:** la movilidad de `unopenedBarrier` solo mira barreras y ocupación. Una ficha de barrera está en el recorrido común y avanza como mucho 7 casillas, así que no llega a rebotar; si no encuentra barrera ni un destino con 2 fichas, puede moverse, coma o no.
+- **Sí:** la propiedad de R-032 cuenta los seises con las acciones y los eventos en lugar de leer `sixesInRow`. Leer el campo del motor lo comprobaría consigo mismo.
+- **Sí:** los hechos nuevos se cuentan en las mismas 1000 partidas de CE-02, como en SPEC 002 y SPEC 003.
+- **No:** un hecho propio de empate a 4 en la tirada inicial. CE-03 pide un empate, sin número de jugadores.
+- **Sí:** si algún hecho no sale o alguna partida se detiene por el límite de acciones, se para y se consulta al usuario. Se ajusta la elección de movimientos, las tiradas o el límite, nunca la comprobación (riesgos de la sección 14 del spec).
