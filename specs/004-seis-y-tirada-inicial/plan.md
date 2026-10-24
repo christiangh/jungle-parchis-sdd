@@ -116,3 +116,61 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar el paso de 
 - **Sí:** filtrar los movimientos ya calculados. Que una ficha "pueda moverse" queda definido por las mismas reglas de avance, barreras y ocupación, sin duplicarlas.
 - **No:** un evento o un error propio para la barrera obligada. El spec lo descarta: los movimientos legales ya lo reflejan.
 - **No:** tests en `actions.spec.ts`. `move` valida contra `legalMoves`, que es donde vive la regla.
+
+## PARTE-03: Tirada inicial
+
+**Estado:** En curso
+
+### Enfoque
+
+La fase de tirada inicial es un campo nuevo de `GameState`, `initialRoll: InitialRoll | null`, con los jugadores que siguen optando a empezar (`contenders`, en el orden de R-010) y los valores de la ronda en curso (`rolls`, en ese mismo orden). `createGame` deja de recibir `firstPlayer`: crea la partida con todos los participantes optando, sin tiradas, y con `turn` en el primero de ellos (RF-001). Durante la fase, `turn` es siempre el jugador al que le toca tirar en la ronda, así que I-05 se sigue cumpliendo y `applyAction` rechaza con `not-your-turn`, como hasta ahora, la acción de otro jugador o de un color que no participa. Tras esa comprobación, si hay fase de tirada inicial, `applyAction` la resuelve aparte: la tirada usa la misma acción `roll`, con su validación de 1 a 6 (`invalid-roll`), y cualquier movimiento se rechaza con un error nuevo, `initial-roll-pending` (RF-002). Cada tirada inicial produce `initial-roll`. Al completar la ronda, si el valor más alto es único, la fase termina (`initialRoll: null`), el turno pasa al ganador sin tirada pendiente y se produce `first-player` (RF-003, RF-004); si no, empieza una ronda solo con los empatados en el valor más alto, el turno pasa al primero de ellos y se produce `initial-roll-tie` con esos jugadores (RF-003, RF-014). La tirada inicial no mueve fichas ni toca los seises seguidos.
+
+`buildGame` en `test-utils.ts` crea los estados a medida de los tests de reglas ya fuera de la fase (`initialRoll: null`), con el turno que indiquen; así los tests de SPEC 001 a SPEC 003 y los de propiedades no cambian en esta parte. Las partidas de propiedades desde la tirada inicial son de PARTE-04.
+
+### Archivos
+
+- `src/engine/game.ts`: tipo `InitialRoll`, campo `initialRoll` en `GameState`; `GameConfig` sin `firstPlayer` y `CreateGameError` sin `first-player-not-playing`; `createGame` en fase de tirada inicial.
+- `src/engine/actions.ts`: error `initial-roll-pending`; eventos `initial-roll`, `initial-roll-tie` y `first-player`; resolución de la fase en `applyAction`.
+- `src/engine/test-utils.ts`: `buildGame` sin `firstPlayer`, con `turn` e `initialRoll: null`.
+- `src/engine/game.spec.ts`: revisión de las dos filas de creación de la tabla del spec, HU-01 c1 y creación sin jugador inicial en el resto.
+- `src/engine/actions.spec.ts`: tests de R-010 de la fase de tirada inicial.
+
+### Pasos
+
+- [ ] 1. Tests de R-010 en `game.spec.ts` y `actions.spec.ts`: HU-01 c1-c5, revisión en su sitio de las dos filas de creación de la tabla del spec, empate de todos, empate que no es el más alto, tirada inicial no válida y primer turno del ganador. Esqueleto: tipo `InitialRoll` y campo `initialRoll` (siempre `null`), `createGame` sin `firstPlayer` con `turn` en el primero en el orden de turno, `CreateGameError` sin `first-player-not-playing`, error y eventos nuevos sin lógica, y `buildGame` ajustado. El resto de tests de creación solo dejan de pasar `firstPlayer`. Ejecutar y comprobar que fallan en sus aserciones (P-07); quedan como guarda los que ya se cumplen con `not-your-turn` e `invalid-roll`.
+- [ ] 2. Implementar la fase en `createGame` y en `applyAction`; pasar `pnpm check`.
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+|----------|------|--------|
+| HU-01 c1 / RF-001 | 1, 2 | «R-010: una partida nueva empieza en fase de tirada inicial con todos optando y tira primero el primero en el orden de turno» (colores pasados como azul, rojo, amarillo; tira amarillo) |
+| RNF-003 / tabla del spec (creación) | 1, 2 | «R-010: crea una partida de amarillo y rojo en fase de tirada inicial, empezando a tirar amarillo», revisión de «HU-01: crea una partida de amarillo y rojo con turno de amarillo» |
+| RNF-003 / tabla del spec (creación) | 1 | «R-010: rechaza la tirada inicial de un color que no participa», revisión de «HU-01: rechaza un jugador inicial que no participa» (azul y verde; tirada de rojo rechazada con `not-your-turn`, estado congelado) |
+| HU-01 c2 / RF-003, RF-004, RF-014 | 1, 2 | «R-010: empieza quien saca el valor más alto de la ronda» (3, 5, 2: turno de azul, sin fase ni tirada pendiente; eventos `initial-roll` y `first-player`) |
+| HU-01 c3 / RF-003, RF-014 | 1, 2 | «R-010: los empatados en el valor más alto repiten en una nueva ronda» (6, 2, 6: amarillo y rojo optando, turno de amarillo; evento `initial-roll-tie`) |
+| HU-01 c4 / RF-003 | 1, 2 | «R-010: en la nueva ronda solo cuentan las tiradas de los empatados» (después, 1 y 4: empieza rojo) |
+| HU-01 c5 / RF-002 | 1, 2 | «R-010: en la tirada inicial solo se acepta la tirada del jugador al que le toca» (turno de azul: tirada de amarillo y de verde con `not-your-turn`, movimiento de azul con `initial-roll-pending`; estado congelado) |
+| RF-002 (valor) | 1 | «R-002, R-010: una tirada inicial fuera de 1 a 6 se rechaza» (`invalid-roll`) |
+| Caso límite: todos empatan | 1, 2 | «R-010: si empatan todos, repiten todos» |
+| Caso límite: empate bajo | 1, 2 | «R-010: un empate que no es el valor más alto no cuenta» (2, 2, 5: empieza rojo) |
+| RF-004 | 1, 2 | «R-010: quien gana la tirada inicial empieza su turno tirando, con las fichas en casa» (tras ganar azul, su 5 saca ficha) |
+| CE-04 | 1 | `GameConfig` sin `firstPlayer`: ningún test puede crear una partida con jugador inicial (lo comprueba el compilador) |
+| RNF-001 | 1, 2 | Solo imports del motor (lint); tests de rechazo con estado congelado (`deepFreeze`) |
+| RNF-002 | 1 | Nombres con R-010; fallo visto antes del paso 2 |
+| Hecho cuando | 2 | HU-01 en verde; filas de creación de la tabla del spec revisadas; `pnpm check` en verde |
+
+Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar el paso de código y la parte.
+
+### Skills y agentes
+
+- `caveman:cavecrew-reviewer`: revisión del diff al cerrar la parte.
+
+### Decisiones técnicas
+
+- **Sí:** la tirada inicial usa la acción `roll`. La presentación envía lo mismo en ambos casos y `applyAction` sabe en qué fase está; una acción propia solo añadiría un rechazo más.
+- **Sí:** durante la fase, `turn` es quien tira en la ronda. Reutiliza `not-your-turn` y mantiene I-05 sin casos especiales.
+- **Sí:** error propio `initial-roll-pending` para mover en la fase. `no-pending-roll` diría que falta tirar, no que la partida aún no ha empezado.
+- **No:** `turn-changed` durante la fase. Los eventos `initial-roll`, `initial-roll-tie` y `first-player` ya dicen quién tira y quién empieza.
+- **Sí:** la fase vive en `actions.ts`, junto a `roll` y `move`. Separarla en otro archivo obligaría a mover los tipos de acción y evento para evitar una importación circular.
+- **Sí:** `buildGame` crea estados fuera de la fase. Los tests de reglas parten de una partida ya empezada; la fase se prueba con `createGame` y `applyAction`.
