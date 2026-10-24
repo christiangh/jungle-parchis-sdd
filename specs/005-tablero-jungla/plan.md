@@ -201,7 +201,7 @@ Playwright abre la aplicación en Chromium y comprueba lo mínimo que solo se ve
 ### Pasos
 
 - [x] 1. Añadir `@playwright/test` 1.64.1 como dependencia de desarrollo, instalar Chromium (`pnpm exec playwright install chromium`), crear `playwright.config.ts` y el script `test:e2e`; ignorar sus salidas en git y Prettier y meter los archivos nuevos en el lint. `pnpm lint` y `pnpm test:once` en verde.
-- [ ] 2. Escribir la prueba de humo en `e2e/board.spec.ts`; `pnpm test:e2e` en verde. Comprobar que no pasa en falso: cambiar en local el nombre accesible del tablero y ver que falla; deshacer el cambio.
+- [x] 2. Escribir la prueba de humo en `e2e/board.spec.ts`; `pnpm test:e2e` en verde. Comprobar que no pasa en falso: cambiar en local el nombre accesible del tablero y ver que falla; deshacer el cambio.
 - [ ] 3. Añadir el trabajo `smoke` al CI: instalación con `--frozen-lockfile`, `pnpm exec playwright install --with-deps chromium`, `pnpm test:e2e` y, si falla, subir el informe como artefacto. Añadir el comando a `CLAUDE.md`. `pnpm check` en verde.
 
 ### Pruebas y trazabilidad
