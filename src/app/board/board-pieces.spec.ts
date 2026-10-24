@@ -1,8 +1,6 @@
 import {
   Color,
   COLORS,
-  createGame,
-  GameState,
   LANE_LENGTH,
   PieceId,
   PIECES_PER_PLAYER,
@@ -20,28 +18,7 @@ import {
   trackSquares,
 } from './board-geometry';
 import { pieceCenter, PiecePlace, piecePlaces } from './board-pieces';
-
-const newGame = createGame({ players: COLORS });
-if (!newGame.ok) {
-  throw new Error(newGame.error);
-}
-const NEW_GAME = newGame.value;
-
-/** New game with the given pieces moved, in order of arrival: the last one arrived last. */
-function stateWith(moved: readonly (readonly [PieceId, Position])[]): GameState {
-  const positions = new Map(moved);
-  return {
-    ...NEW_GAME,
-    pieces: NEW_GAME.pieces.map((piece) => {
-      const position = positions.get(piece.id);
-      return position ? { ...piece, position } : piece;
-    }),
-    arrivalOrder: [
-      ...NEW_GAME.arrivalOrder.filter((id) => !positions.has(id)),
-      ...moved.map(([id]) => id),
-    ],
-  };
-}
+import { NEW_GAME, stateWith } from './board-test-utils';
 
 function centerOf(places: readonly PiecePlace[], id: PieceId): Point {
   const place = places.find((p) => p.id === id);

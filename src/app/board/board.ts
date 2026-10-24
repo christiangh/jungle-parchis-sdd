@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { Color } from '@engine';
+import { Component, input } from '@angular/core';
+import { Color, GameState } from '@engine';
 import { boardDecor } from './board-decor';
 import {
   Goal,
@@ -76,6 +76,8 @@ const decor = boardDecor();
   host: { class: 'block size-full' },
 })
 export class Board {
+  readonly state = input.required<GameState>();
+
   protected readonly width = SQUARE_LENGTH;
   protected readonly height = SQUARE_WIDTH;
   protected readonly homeSize = HOME_SIZE;
