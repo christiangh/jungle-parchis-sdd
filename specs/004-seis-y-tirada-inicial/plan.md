@@ -69,3 +69,50 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 - **Sí:** `sixesInRow` se pone a 0 con cualquier tirada que no sea 6. Así `sixesInRow > 0` indica que la tirada en curso es un 6 y basta para decidir la repetición tras resolver premios.
 - **Sí:** el tercer 6 no produce `roll-lost`, solo `three-sixes` y `turn-changed`. No es una tirada sin movimientos, sino una penalización.
 - **Sí:** las propiedades de SPEC 003 siguen calculando con el valor de la tirada hasta PARTE-04. Con un 6 que vale 7 recorren una casilla de menos: comprueban de menos, pero no dan falsos positivos, porque el motor nunca atraviesa la sexta casilla si es barrera.
+
+## PARTE-02: Abrir barrera con un 6
+
+**Estado:** En curso
+
+### Enfoque
+
+R-062 se resuelve solo en `legalMoves`, en `moves.ts`. Tras la salida obligatoria, que con un 6 nunca aplica, se calculan los avances con las casillas de la tirada como hasta ahora. Si la tirada es un 6, se filtran a los de las fichas que están en barreras de un color del jugador en turno, obtenidas con `barriers(state)`. Si el filtro deja algún movimiento, esos son los legales; si no, siguen siéndolo todos los avances (RF-012). Las barreras mixtas no entran en el filtro porque sus fichas son de colores distintos, y los premios no pasan por esta rama porque `legalMoves` los resuelve antes (RF-013). Como el filtro trabaja sobre movimientos ya calculados, una ficha de la barrera que no puede moverse no cuenta, y una que abre una barrera para formar otra es legal. `actions.ts` no cambia: `move` ya rechaza con `illegal-move` lo que no está en `legalMoves`.
+
+### Archivos
+
+- `src/engine/moves.ts`: filtro de R-062 en `legalMoves`.
+- `src/engine/moves.spec.ts`: tests de R-062.
+
+### Pasos
+
+- [ ] 1. Tests de R-062 en `moves.spec.ts`: HU-05 c1-c6, barrera propia en la casilla de salida, 5 con barrera propia y otro valor con barrera propia. Sin esqueleto: no cambia ninguna firma. Deben fallar HU-05 c1, c5 y el de la casilla de salida; los demás pasan ya y quedan como guarda (con c4 no queda ninguna ficha fuera de las barreras, así que solo puede ser guarda).
+- [ ] 2. Implementar el filtro en `legalMoves`; pasar `pnpm check`.
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+|----------|------|--------|
+| HU-05 c1 / RF-012 | 1, 2 | «R-062: con un 6 solo se mueven las fichas de una barrera propia» (dos en la 20, una en la 40, una en casa) |
+| HU-05 c2 / RF-012 | 1 | «R-062, R-061: si ninguna ficha de la barrera puede moverse, se mueve otra» (dos rojas en la 24) |
+| HU-05 c3 / RF-013 | 1 | «R-062: una barrera mixta no obliga a abrirse» (amarilla y roja en la 12) |
+| HU-05 c4 / RF-012 | 1 | «R-062: con dos barreras propias se mueve cualquier ficha de ambas» (20 y 40) |
+| HU-05 c5 / RF-012 | 1, 2 | «R-062, R-031: sin fichas en casa, la barrera se abre moviendo 7» (dos en la 20, una en la 40, una en meta) |
+| HU-05 c6 / RF-013 | 1 | «R-062, R-080: un premio no obliga a abrir la barrera» |
+| Caso límite: salida | 1, 2 | «R-062: una barrera propia en la casilla de salida también se abre con un 6» |
+| Caso límite: 5 | 1 | «R-062, R-021: con un 5 manda la salida obligatoria, no la barrera» |
+| RF-012 (solo con 6) | 1 | «R-062: con otro valor una barrera propia no obliga a abrirse» |
+| RNF-001 | 1, 2 | Solo imports del motor (lint) |
+| RNF-002 | 1 | Nombres con R-062; fallo visto antes del paso 2 |
+| Hecho cuando | 2 | HU-05 en verde; `pnpm check` en verde |
+
+Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar el paso de código y la parte.
+
+### Skills y agentes
+
+- `caveman:cavecrew-reviewer`: revisión del diff al cerrar la parte.
+
+### Decisiones técnicas
+
+- **Sí:** filtrar los movimientos ya calculados. Que una ficha "pueda moverse" queda definido por las mismas reglas de avance, barreras y ocupación, sin duplicarlas.
+- **No:** un evento o un error propio para la barrera obligada. El spec lo descarta: los movimientos legales ya lo reflejan.
+- **No:** tests en `actions.spec.ts`. `move` valida contra `legalMoves`, que es donde vive la regla.
