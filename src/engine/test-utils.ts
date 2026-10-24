@@ -219,7 +219,36 @@ function pieceOf(state: GameState, pieceId: PieceId): Piece {
   return piece;
 }
 
-/** Facts that random games must produce at least once (CE-03 of SPEC 002 and SPEC 003). */
+/**
+ * Squares to move with the pending bonus or, if there is none, the pending roll, with a 6 that
+ * counts as 7 if the player in turn has no pieces at home (R-031); null if nothing is pending.
+ */
+export function moveSteps(state: GameState): number | null {
+  return state.pendingBonus ?? state.pendingRoll;
+}
+
+/**
+ * R-062: whether `action` moves, with a pending 6, a piece that is not from a barrier of the
+ * player's color while a piece of one of those barriers could move. Mixed barriers do not count.
+ */
+export function unopenedBarrier(before: GameState, action: Action): boolean {
+  void before;
+  void action;
+  return false;
+}
+
+/**
+ * R-032: indexes of the moves made with a pending roll that is the third 6 in a row, or a later one,
+ * of the same turn. Lost sixes count too.
+ */
+export function thirdSixMoves(
+  played: Pick<PlayedGame, 'states' | 'actions' | 'outcomes'>,
+): number[] {
+  void played;
+  return [];
+}
+
+/** Facts that random games must produce at least once (CE-03 of SPEC 002, SPEC 003 and SPEC 004). */
 export type GameFact =
   | 'capture-on-track'
   | 'capture-on-exit'
@@ -233,7 +262,14 @@ export type GameFact =
   | 'mixed-barrier'
   | 'move-blocked-by-barrier'
   | 'capture-on-exit-with-barrier'
-  | 'bonus-lost-to-barrier';
+  | 'bonus-lost-to-barrier'
+  // CE-03 of SPEC 004.
+  | 'roll-again'
+  | 'six-counts-seven'
+  | 'three-sixes-piece-home'
+  | 'three-sixes-no-piece-home'
+  | 'barrier-opened-by-six'
+  | 'initial-roll-tie';
 
 /** Returns the facts produced by the actions of `played`, without repeats and in type order. */
 export function gameFacts(played: Pick<PlayedGame, 'states' | 'actions' | 'outcomes'>): GameFact[] {
@@ -259,6 +295,12 @@ export const GAME_FACTS: readonly GameFact[] = [
   'move-blocked-by-barrier',
   'capture-on-exit-with-barrier',
   'bonus-lost-to-barrier',
+  'roll-again',
+  'six-counts-seven',
+  'three-sixes-piece-home',
+  'three-sixes-no-piece-home',
+  'barrier-opened-by-six',
+  'initial-roll-tie',
 ];
 
 const CAPTURE_BONUS = 20;

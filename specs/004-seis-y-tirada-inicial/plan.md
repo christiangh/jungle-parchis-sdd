@@ -209,7 +209,7 @@ Dos propiedades nuevas, con ayudas propias en `test-utils.ts`:
 
 ### Pasos
 
-- [ ] 1. Tests en `test-utils.spec.ts`. Esqueleto: `moveSteps` devuelve `pendingBonus ?? pendingRoll`, `unopenedBarrier` devuelve `false`, `thirdSixMoves` devuelve `[]`, y los hechos nuevos entran en `GameFact` y `GAME_FACTS` sin que `gameFacts` los produzca. Ejecutar y comprobar que fallan en sus aserciones (P-07); quedan como guarda los casos que ya cumple el esqueleto. El test de CE-03 de `invariants.spec.ts` también falla hasta el paso 2.
+- [x] 1. Tests en `test-utils.spec.ts`. Esqueleto: `moveSteps` devuelve `pendingBonus ?? pendingRoll`, `unopenedBarrier` devuelve `false`, `thirdSixMoves` devuelve `[]`, y los hechos nuevos entran en `GameFact` y `GAME_FACTS` sin que `gameFacts` los produzca. Ejecutar y comprobar que fallan en sus aserciones (P-07); quedan como guarda los casos que ya cumple el esqueleto. El test de CE-03 de `invariants.spec.ts` también falla hasta el paso 2.
   - `moveSteps`: un 6 sin fichas en casa da 7; con fichas en casa, 6; las fichas en meta no cuentan como en casa; otro valor da su valor; un premio da su cantidad; sin nada pendiente, `null`.
   - `unopenedBarrier`: mover una ficha que no es de la barrera propia, pudiendo moverse alguna de ella, da `true`; mover una de la barrera, `false`; si ninguna ficha de la barrera puede moverse (barrera delante, destino con 2 fichas), `false`; una barrera mixta no cuenta; con otro valor o con un premio, `false`.
   - `thirdSixMoves`: detecta un movimiento con el tercer 6 seguido; no detecta dos seises seguidos; un 6 perdido cuenta; otro valor corta la cuenta; un cambio de turno también, incluso entre dos turnos del mismo jugador en una partida de 2.
