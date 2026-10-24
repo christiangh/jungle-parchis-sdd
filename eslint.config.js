@@ -84,7 +84,7 @@ module.exports = defineConfig([
     },
   },
   {
-    // La app solo usa el motor a través de su puerta de entrada.
+    // La app solo usa el motor a través de su puerta de entrada, con el alias @engine.
     files: ['src/app/**/*.ts'],
     rules: {
       'no-restricted-imports': [
@@ -92,8 +92,12 @@ module.exports = defineConfig([
         {
           patterns: [
             {
-              regex: '(^|/)engine/(?!index$).+',
-              message: 'P-02: importa el motor solo desde src/engine/index.ts.',
+              regex: '^@engine/',
+              message: 'P-02: importa el motor solo desde @engine (src/engine/index.ts).',
+            },
+            {
+              regex: '^\\.{1,2}/(.*/)?engine(/|$)',
+              message: 'P-02: importa el motor con el alias @engine, no con una ruta relativa.',
             },
           ],
         },

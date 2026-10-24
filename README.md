@@ -28,6 +28,7 @@ La documentación está en castellano. El código y los mensajes de commit, en i
 
 - `src/engine/`: motor de reglas en TypeScript puro, sin dependencias de Angular. Se importa solo desde `src/engine/index.ts`.
 - `src/app/`: capa Angular que solo presenta el estado y envía las acciones del jugador al motor.
+- `docs/design/`: diseño de referencia del tablero, del que la aplicación toma el aspecto y las coordenadas.
 
 El lint hace cumplir esa frontera.
 
@@ -40,8 +41,11 @@ pnpm i               # instalar dependencias
 pnpm start           # servidor de desarrollo en http://localhost:4200/
 pnpm check           # formato, lint y todos los tests: lo que comprueba el CI
 pnpm test            # tests unitarios (Vitest) en modo watch, sin los de propiedades
+pnpm test:once       # tests unitarios una sola vez, sin los de propiedades
 pnpm test:properties # tests de propiedades: 1000 partidas aleatorias
 pnpm test:coverage   # tests con informe de cobertura
+pnpm lint:fix        # lint con correcciones automáticas
+pnpm format          # formatear con Prettier
 pnpm build           # build de producción en dist/
 ```
 

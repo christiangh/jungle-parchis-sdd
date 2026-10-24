@@ -1,0 +1,359 @@
+<svg
+  viewBox="-40 -40 1080 1080"
+  role="img"
+  aria-label="Tablero de parchís de la jungla"
+  class="block size-full"
+>
+  <defs>
+    <pattern id="jp-board-grass" patternUnits="userSpaceOnUse" width="110" height="110">
+      <rect width="110" height="110" class="fill-grass" />
+      <g fill="none" stroke-linecap="round" opacity=".9">
+        @for (blade of decor.blades; track $index) {
+          <path
+            [attr.d]="blade.path"
+            [attr.stroke-width]="blade.width"
+            [class]="bladeStroke[blade.tone]"
+          />
+        }
+      </g>
+    </pattern>
+    <pattern id="jp-board-wood" patternUnits="userSpaceOnUse" width="360" height="120">
+      <rect width="360" height="120" class="fill-wood" />
+      <g fill="none" class="stroke-wood-line">
+        @for (line of decor.grain; track $index) {
+          <path
+            [attr.d]="line.path"
+            [attr.stroke-width]="line.width"
+            [attr.opacity]="line.opacity"
+          />
+        }
+        @for (knot of decor.knots; track $index) {
+          <ellipse [attr.cx]="knot.x" [attr.cy]="knot.y" rx="7" ry="2.6" />
+          <ellipse [attr.cx]="knot.x" [attr.cy]="knot.y" rx="12" ry="4.6" opacity=".5" />
+        }
+      </g>
+    </pattern>
+    <pattern id="jp-board-grain" patternUnits="userSpaceOnUse" width="360" height="120">
+      <g fill="none">
+        @for (line of decor.paintGrain; track $index) {
+          <path
+            [attr.d]="line.path"
+            [attr.stroke-width]="line.width"
+            [attr.opacity]="line.opacity"
+            [class]="line.light ? 'stroke-white' : 'stroke-black'"
+          />
+        }
+      </g>
+    </pattern>
+    <filter id="jp-board-shade" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.009" numOctaves="3" seed="4" />
+      <feColorMatrix
+        type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 2.2 -0.9"
+        result="noise"
+      />
+      <feFlood class="[flood-color:var(--color-grass-shade)]" />
+      <feComposite in2="noise" operator="in" />
+    </filter>
+    <filter id="jp-board-light" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.014" numOctaves="2" seed="11" />
+      <feColorMatrix
+        type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 2.4 -1.15"
+        result="noise"
+      />
+      <feFlood class="[flood-color:var(--color-sun)]" />
+      <feComposite in2="noise" operator="in" />
+    </filter>
+    <clipPath id="jp-board-field">
+      <rect width="1000" height="1000" rx="22" />
+    </clipPath>
+  </defs>
+
+  <g data-layer="decor" aria-hidden="true">
+    <rect
+      x="-30"
+      y="-30"
+      width="1060"
+      height="1060"
+      rx="46"
+      class="fill-frame stroke-frame-edge"
+      stroke-width="3"
+    />
+    <rect
+      x="-30"
+      y="-30"
+      width="1060"
+      height="1060"
+      rx="46"
+      fill="url(#jp-board-grain)"
+      opacity=".9"
+    />
+    <g clip-path="url(#jp-board-field)">
+      <rect width="1000" height="1000" fill="url(#jp-board-grass)" />
+      <rect width="1000" height="1000" filter="url(#jp-board-shade)" opacity=".55" />
+      <rect width="1000" height="1000" filter="url(#jp-board-light)" opacity=".35" />
+      <path d="M312 0H688V312H1000V688H688V1000H312V688H0V312H312Z" class="fill-black/15" />
+    </g>
+    <g data-decor="leaves" class="drop-shadow-[0_4px_4px_rgb(0_0_0/0.35)]">
+      @for (leaf of decor.leaves; track $index) {
+        <g [attr.transform]="leaf.transform">
+          <path [attr.d]="leaf.path" [class]="canopyFill[leaf.tone]" />
+          <path
+            [attr.d]="leaf.veins"
+            class="fill-none stroke-canopy-dark"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            opacity=".55"
+          />
+        </g>
+      }
+    </g>
+  </g>
+
+  <g data-layer="game">
+    @for (home of homes; track home.color) {
+      <g [attr.data-home]="home.color">
+        <clipPath [attr.id]="'jp-board-home-' + home.color">
+          <rect
+            [attr.x]="home.x + homeInset"
+            [attr.y]="home.y + homeInset"
+            [attr.width]="homeSize - 2 * homeInset"
+            [attr.height]="homeSize - 2 * homeInset"
+            rx="54"
+          />
+        </clipPath>
+        <rect
+          [attr.x]="home.x + homeInset + 3"
+          [attr.y]="home.y + homeInset + 7"
+          [attr.width]="homeSize - 2 * homeInset"
+          [attr.height]="homeSize - 2 * homeInset"
+          rx="54"
+          class="fill-grass-shade/40"
+        />
+        <rect
+          [attr.x]="home.x + homeInset"
+          [attr.y]="home.y + homeInset"
+          [attr.width]="homeSize - 2 * homeInset"
+          [attr.height]="homeSize - 2 * homeInset"
+          rx="54"
+          [class]="home.fill"
+        />
+        <g [attr.clip-path]="'url(#jp-board-home-' + home.color + ')'">
+          <rect
+            [attr.x]="home.x"
+            [attr.y]="home.y"
+            [attr.width]="homeSize"
+            [attr.height]="homeSize"
+            fill="url(#jp-board-grain)"
+          />
+          @for (board of homeBoards; track board) {
+            <path
+              [attr.d]="'M' + home.x + ' ' + (home.y + board) + 'H' + (home.x + homeSize)"
+              class="stroke-black/20"
+              stroke-width="2"
+            />
+            <path
+              [attr.d]="'M' + home.x + ' ' + (home.y + board + 2) + 'H' + (home.x + homeSize)"
+              class="stroke-white/10"
+              stroke-width="1"
+            />
+          }
+        </g>
+        <rect
+          [attr.x]="home.x + homeInset"
+          [attr.y]="home.y + homeInset"
+          [attr.width]="homeSize - 2 * homeInset"
+          [attr.height]="homeSize - 2 * homeInset"
+          rx="54"
+          class="fill-none stroke-black/30"
+          stroke-width="4"
+        />
+        <rect
+          [attr.x]="home.x + homeInset + 6"
+          [attr.y]="home.y + homeInset + 6"
+          [attr.width]="homeSize - 2 * homeInset - 12"
+          [attr.height]="homeSize - 2 * homeInset - 12"
+          rx="48"
+          class="fill-none stroke-white/20"
+          stroke-width="2"
+        />
+        @for (slot of home.slots; track $index) {
+          <g data-home-slot>
+            <circle [attr.cx]="slot.x" [attr.cy]="slot.y" r="37" class="fill-white/20" />
+            <circle [attr.cx]="slot.x" [attr.cy]="slot.y - 1.5" r="34" class="fill-black/30" />
+            <circle [attr.cx]="slot.x" [attr.cy]="slot.y + 2" r="31" [class]="home.fill" />
+            <circle [attr.cx]="slot.x" [attr.cy]="slot.y + 2" r="31" class="fill-black/10" />
+          </g>
+        }
+      </g>
+    }
+
+    @for (goal of goals; track goal.color) {
+      <g [attr.data-goal]="goal.color" [attr.transform]="goal.transform">
+        <path
+          [attr.d]="goal.path"
+          [class]="goal.fill + ' stroke-black/30'"
+          stroke-width="2"
+          stroke-linejoin="round"
+        />
+        <path [attr.d]="goal.path" fill="url(#jp-board-grain)" />
+      </g>
+    }
+
+    <g data-decor="log" aria-hidden="true">
+      <circle cx="503" cy="506" r="44" class="fill-black/40" />
+      <circle cx="500" cy="500" r="44" class="fill-log-bark" />
+      <circle cx="500" cy="500" r="37" class="fill-log-wood" />
+      <g class="fill-none stroke-log-ring" stroke-width="1.3">
+        <circle cx="500" cy="500" r="30.8" />
+        <circle cx="500" cy="500" r="24.6" />
+        <circle cx="500" cy="500" r="18.4" />
+        <circle cx="500" cy="500" r="12.2" />
+        <circle cx="500" cy="500" r="6" />
+      </g>
+      <path
+        d="M500 500 L530 478"
+        class="stroke-log-crack"
+        stroke-width="1.5"
+        stroke-linecap="round"
+      />
+    </g>
+
+    @for (plank of planks; track plank.key) {
+      <g
+        [attr.data-square]="plank.square"
+        [attr.data-kind]="plank.square === null ? null : 'plain'"
+        [attr.data-lane]="plank.lane"
+        [attr.data-step]="plank.step"
+        [attr.transform]="plank.transform"
+      >
+        <rect
+          [attr.x]="plank.x + 4"
+          [attr.y]="plank.y + 5.5"
+          [attr.width]="width - 6"
+          [attr.height]="height - 5"
+          rx="6"
+          class="fill-grass-shade/40"
+        />
+        <rect
+          [attr.x]="plank.x + 3"
+          [attr.y]="plank.y + 2.5"
+          [attr.width]="width - 6"
+          [attr.height]="height - 5"
+          rx="6"
+          [class]="plank.fill + ' ' + plank.edge"
+          stroke-width="1.5"
+        />
+        <rect
+          [attr.x]="plank.x + 3"
+          [attr.y]="plank.y + 2.5"
+          [attr.width]="width - 6"
+          [attr.height]="height - 5"
+          rx="6"
+          [class]="plank.overlay"
+          [attr.opacity]="plank.overlayOpacity"
+        />
+        <rect
+          [attr.x]="plank.x + 5"
+          [attr.y]="plank.y + 4"
+          [attr.width]="width - 10"
+          [attr.height]="height - 8"
+          rx="4"
+          class="fill-none stroke-white/20"
+          stroke-width="1.2"
+        />
+        <circle
+          [attr.cx]="plank.x + 11"
+          [attr.cy]="plank.y + height / 2"
+          r="1.9"
+          [class]="plank.nail"
+        />
+        <circle
+          [attr.cx]="plank.x + width - 11"
+          [attr.cy]="plank.y + height / 2"
+          r="1.9"
+          [class]="plank.nail"
+        />
+        @if (plank.square !== null) {
+          <text
+            [attr.x]="plank.x + 24"
+            [attr.y]="plank.y + height / 2 + 4.5"
+            text-anchor="middle"
+            font-family="system-ui, sans-serif"
+            font-weight="700"
+            font-size="13"
+            stroke-width="2.4"
+            paint-order="stroke"
+            class="fill-ink stroke-wood"
+          >
+            {{ plank.square }}
+          </text>
+        }
+      </g>
+    }
+
+    @for (safe of safes; track safe.square) {
+      <g
+        [attr.data-square]="safe.square"
+        [attr.data-kind]="safe.kind"
+        [attr.data-color]="safe.color"
+        [attr.transform]="safe.transform"
+      >
+        <rect
+          [attr.x]="safe.x + 3"
+          [attr.y]="safe.y + 2.5"
+          [attr.width]="width - 6"
+          [attr.height]="height - 5"
+          rx="6"
+          [class]="safe.fill + ' stroke-black/35'"
+          stroke-width="1.5"
+        />
+        <ellipse
+          [attr.cx]="safe.x + width / 2"
+          [attr.cy]="safe.y + height - 6"
+          [attr.rx]="width / 2 - 8"
+          ry="5"
+          class="fill-black/25"
+        />
+        @for (tuft of safe.tufts; track $index) {
+          <path [attr.d]="tuft.path" [class]="tuft.fill" />
+        }
+        <text
+          [attr.x]="safe.x + 24"
+          [attr.y]="safe.y + height / 2 + 4.5"
+          text-anchor="middle"
+          font-family="system-ui, sans-serif"
+          font-weight="700"
+          font-size="13"
+          stroke-width="2.4"
+          paint-order="stroke"
+          [class]="'fill-white ' + safe.halo"
+        >
+          {{ safe.square }}
+        </text>
+      </g>
+    }
+    <g data-pieces>
+      @for (piece of pieces(); track piece.id) {
+        <g [attr.data-piece]="piece.id" [attr.data-color]="piece.color">
+          <circle
+            data-part="rim"
+            [attr.cx]="piece.center.x"
+            [attr.cy]="piece.center.y"
+            [attr.r]="pieceRadius"
+            class="fill-white"
+          />
+          <circle
+            data-part="disc"
+            [attr.cx]="piece.center.x"
+            [attr.cy]="piece.center.y"
+            [attr.r]="discRadius"
+            [class]="piece.fill + ' stroke-ink'"
+            stroke-width="3"
+          />
+        </g>
+      }
+    </g>
+  </g>
+</svg>
