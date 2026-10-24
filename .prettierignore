@@ -2,3 +2,6 @@ pnpm-lock.yaml
 
 # Markdown: los specs se leen como texto plano y Prettier rellena las tablas hasta hacerlas ilegibles.
 *.md
+
+# Referencias exportadas de Claude Design: se guardan tal cual, sin reformatear.
+docs/design/
