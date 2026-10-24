@@ -137,7 +137,7 @@ La fase de tirada inicial es un campo nuevo de `GameState`, `initialRoll: Initia
 
 ### Pasos
 
-- [ ] 1. Tests de R-010 en `game.spec.ts` y `actions.spec.ts`: HU-01 c1-c5, revisión en su sitio de las dos filas de creación de la tabla del spec, empate de todos, empate que no es el más alto, tirada inicial no válida y primer turno del ganador. Esqueleto: tipo `InitialRoll` y campo `initialRoll` (siempre `null`), `createGame` sin `firstPlayer` con `turn` en el primero en el orden de turno, `CreateGameError` sin `first-player-not-playing`, error y eventos nuevos sin lógica, y `buildGame` ajustado. El resto de tests de creación solo dejan de pasar `firstPlayer`. Ejecutar y comprobar que fallan en sus aserciones (P-07); quedan como guarda los que ya se cumplen con `not-your-turn` e `invalid-roll`.
+- [x] 1. Tests de R-010 en `game.spec.ts` y `actions.spec.ts`: HU-01 c1-c5, revisión en su sitio de las dos filas de creación de la tabla del spec, empate de todos, empate que no es el más alto, tirada inicial no válida y primer turno del ganador. Esqueleto: tipo `InitialRoll` y campo `initialRoll` (siempre `null`), `createGame` sin `firstPlayer` con `turn` en el primero en el orden de turno, `CreateGameError` sin `first-player-not-playing`, error y eventos nuevos sin lógica, y `buildGame` ajustado. El resto de tests de creación solo dejan de pasar `firstPlayer`. Ejecutar y comprobar que fallan en sus aserciones (P-07); quedan como guarda los que ya se cumplen con `not-your-turn` e `invalid-roll`.
 - [ ] 2. Implementar la fase en `createGame` y en `applyAction`; pasar `pnpm check`.
 
 ### Pruebas y trazabilidad

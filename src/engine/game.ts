@@ -10,10 +10,19 @@ export interface Piece {
   readonly position: Position;
 }
 
+/** Initial roll phase that decides who starts (R-010). */
+export interface InitialRoll {
+  /** Players still competing to start, in turn order. */
+  readonly contenders: readonly Color[];
+  /** Values rolled in the current round, in the order of `contenders`. */
+  readonly rolls: readonly number[];
+}
+
 export interface GameState {
   /** Participating colors, in turn order (R-010). */
   readonly players: readonly Color[];
   readonly pieces: readonly Piece[];
+  /** Player to move or, during the initial roll phase, to roll in the current round. */
   readonly turn: Color;
   readonly pendingRoll: number | null;
   /** Squares the player in turn must move with one piece before rolling again (R-051, R-072). */
@@ -25,17 +34,17 @@ export interface GameState {
   readonly sixesInRow: number;
   /** Piece of the last move in the current turn, with a roll or a bonus (R-032). */
   readonly lastMovedPiece: PieceId | null;
+  /** Initial roll phase, until a single player rolls the highest value of a round (R-010). */
+  readonly initialRoll: InitialRoll | null;
 }
 
 export type Result<T, E> =
   { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: E };
 
-export type CreateGameError =
-  'invalid-player-count' | 'duplicate-color' | 'first-player-not-playing';
+export type CreateGameError = 'invalid-player-count' | 'duplicate-color';
 
 export interface GameConfig {
   readonly players: readonly Color[];
-  readonly firstPlayer: Color;
 }
 
 const MIN_PLAYERS = 2;
@@ -43,15 +52,12 @@ const MIN_PLAYERS = 2;
 const PIECE_INDEXES = [0, 1, 2, 3] as const;
 
 export function createGame(config: GameConfig): Result<GameState, CreateGameError> {
-  const { players, firstPlayer } = config;
+  const { players } = config;
   if (players.length < MIN_PLAYERS || players.length > COLORS.length) {
     return { ok: false, error: 'invalid-player-count' };
   }
   if (new Set(players).size !== players.length) {
     return { ok: false, error: 'duplicate-color' };
-  }
-  if (!players.includes(firstPlayer)) {
-    return { ok: false, error: 'first-player-not-playing' };
   }
 
   const turnOrder = COLORS.filter((color) => players.includes(color));
@@ -67,13 +73,14 @@ export function createGame(config: GameConfig): Result<GameState, CreateGameErro
     value: {
       players: turnOrder,
       pieces,
-      turn: firstPlayer,
+      turn: turnOrder[0],
       pendingRoll: null,
       pendingBonus: null,
       winner: null,
       arrivalOrder: pieces.map((piece) => piece.id),
       sixesInRow: 0,
       lastMovedPiece: null,
+      initialRoll: null,
     },
   };
 }

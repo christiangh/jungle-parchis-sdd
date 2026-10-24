@@ -1,6 +1,6 @@
 import { Action, ActionError, ActionOutcome, applyAction, GameEvent } from './actions';
 import { Color, COLORS } from './board';
-import { GameState, PieceId } from './game';
+import { createGame, GameState, PieceId } from './game';
 import { legalMoves } from './moves';
 import {
   buildGame,
@@ -822,6 +822,145 @@ describe('applyAction: el seis', () => {
     expect(events).toContainEqual({ type: 'turn-changed', player: 'red' });
     expect(state.sixesInRow).toBe(0);
     expect(state.lastMovedPiece).toBeNull();
+  });
+});
+
+describe('applyAction: tirada inicial', () => {
+  function newGame(...players: Color[]): GameState {
+    const result = createGame({ players });
+    if (!result.ok) {
+      return expect.unreachable(`game rejected: ${result.error}`);
+    }
+    return result.value;
+  }
+
+  const roll = (player: Color, value: number): Action => ({ type: 'roll', player, value });
+
+  function play(game: GameState, ...actions: Action[]): ActionOutcome {
+    return actions.reduce<ActionOutcome>((outcome, action) => applyOk(outcome.state, action), {
+      state: game,
+      events: [],
+    });
+  }
+
+  it('R-010: empieza quien saca el valor más alto de la ronda', () => {
+    const game = newGame('yellow', 'blue', 'red');
+
+    const afterYellow = applyOk(game, roll('yellow', 3));
+    expect(afterYellow.events).toEqual([{ type: 'initial-roll', player: 'yellow', value: 3 }]);
+    expect(afterYellow.state.turn).toBe('blue');
+    expect(afterYellow.state.initialRoll).toEqual({
+      contenders: ['yellow', 'blue', 'red'],
+      rolls: [3],
+    });
+
+    const { state, events } = play(afterYellow.state, roll('blue', 5), roll('red', 2));
+
+    expect(events).toEqual([
+      { type: 'initial-roll', player: 'red', value: 2 },
+      { type: 'first-player', player: 'blue' },
+    ]);
+    expect(state.initialRoll).toBeNull();
+    expect(state.turn).toBe('blue');
+    expect(state.pendingRoll).toBeNull();
+    expect(state.pieces).toEqual(game.pieces);
+  });
+
+  it('R-010: los empatados en el valor más alto repiten en una nueva ronda', () => {
+    const game = newGame('yellow', 'blue', 'red');
+
+    const { state, events } = play(game, roll('yellow', 6), roll('blue', 2), roll('red', 6));
+
+    expect(events).toEqual([
+      { type: 'initial-roll', player: 'red', value: 6 },
+      { type: 'initial-roll-tie', players: ['yellow', 'red'] },
+    ]);
+    expect(state.initialRoll).toEqual({ contenders: ['yellow', 'red'], rolls: [] });
+    expect(state.turn).toBe('yellow');
+    expect(state.sixesInRow).toBe(0);
+  });
+
+  it('R-010: en la nueva ronda solo cuentan las tiradas de los empatados', () => {
+    const tied = play(
+      newGame('yellow', 'blue', 'red'),
+      roll('yellow', 6),
+      roll('blue', 2),
+      roll('red', 6),
+    );
+
+    const afterYellow = applyOk(tied.state, roll('yellow', 1));
+    expect(afterYellow.state.turn).toBe('red');
+
+    const { state, events } = applyOk(afterYellow.state, roll('red', 4));
+
+    expect(events).toEqual([
+      { type: 'initial-roll', player: 'red', value: 4 },
+      { type: 'first-player', player: 'red' },
+    ]);
+    expect(state.initialRoll).toBeNull();
+    expect(state.turn).toBe('red');
+  });
+
+  it('R-010: en la tirada inicial solo se acepta la tirada del jugador al que le toca', () => {
+    const { state } = applyOk(newGame('yellow', 'blue', 'red'), roll('yellow', 3));
+
+    expectRejected(state, roll('yellow', 4), 'not-your-turn');
+    expectRejected(state, { type: 'move', player: 'yellow', pieceId: 'yellow-0' }, 'not-your-turn');
+    expectRejected(state, roll('green', 4), 'not-your-turn');
+    expectRejected(
+      state,
+      { type: 'move', player: 'blue', pieceId: 'blue-0' },
+      'initial-roll-pending',
+    );
+  });
+
+  it('R-002, R-010: una tirada inicial fuera de 1 a 6 se rechaza', () => {
+    const game = newGame('yellow', 'red');
+
+    expectRejected(game, roll('yellow', 0), 'invalid-roll');
+    expectRejected(game, roll('yellow', 7), 'invalid-roll');
+  });
+
+  it('R-010: si empatan todos, repiten todos', () => {
+    const { state, events } = play(
+      newGame('yellow', 'blue', 'red'),
+      roll('yellow', 4),
+      roll('blue', 4),
+      roll('red', 4),
+    );
+
+    expect(events).toEqual([
+      { type: 'initial-roll', player: 'red', value: 4 },
+      { type: 'initial-roll-tie', players: ['yellow', 'blue', 'red'] },
+    ]);
+    expect(state.initialRoll).toEqual({ contenders: ['yellow', 'blue', 'red'], rolls: [] });
+    expect(state.turn).toBe('yellow');
+  });
+
+  it('R-010: un empate que no es el valor más alto no cuenta', () => {
+    const { state, events } = play(
+      newGame('yellow', 'blue', 'red'),
+      roll('yellow', 2),
+      roll('blue', 2),
+      roll('red', 5),
+    );
+
+    expect(events).toEqual([
+      { type: 'initial-roll', player: 'red', value: 5 },
+      { type: 'first-player', player: 'red' },
+    ]);
+    expect(state.initialRoll).toBeNull();
+    expect(state.turn).toBe('red');
+  });
+
+  it('R-010: quien gana la tirada inicial empieza su turno tirando, con las fichas en casa', () => {
+    const started = play(newGame('yellow', 'blue'), roll('yellow', 2), roll('blue', 5));
+
+    const { state, events } = applyOk(started.state, roll('blue', 5));
+
+    expect(events).toEqual([]);
+    expect(state.pendingRoll).toBe(5);
+    expect(legalMoves(state)).toEqual([{ pieceId: 'blue-0', to: track(22) }]);
   });
 });
 

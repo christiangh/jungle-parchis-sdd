@@ -23,9 +23,13 @@ export type ActionError =
   | 'bonus-pending'
   | 'invalid-roll'
   | 'no-pending-roll'
-  | 'illegal-move';
+  | 'illegal-move'
+  | 'initial-roll-pending';
 
 export type GameEvent =
+  | { readonly type: 'initial-roll'; readonly player: Color; readonly value: number }
+  | { readonly type: 'initial-roll-tie'; readonly players: readonly Color[] }
+  | { readonly type: 'first-player'; readonly player: Color }
   | { readonly type: 'piece-left-home'; readonly pieceId: PieceId; readonly to: TrackPosition }
   | {
       readonly type: 'piece-advanced';

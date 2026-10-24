@@ -44,10 +44,7 @@ export interface GameSetup {
 }
 
 export function buildGame(setup: GameSetup): GameState {
-  const result = createGame({
-    players: setup.players,
-    firstPlayer: setup.turn ?? setup.players[0],
-  });
+  const result = createGame({ players: setup.players });
   if (!result.ok) {
     throw new Error(`Invalid game setup: ${result.error}`);
   }
@@ -55,6 +52,8 @@ export function buildGame(setup: GameSetup): GameState {
   const listed = Object.keys(positions) as PieceId[];
   return {
     ...result.value,
+    turn: setup.turn ?? setup.players[0],
+    initialRoll: null,
     pendingRoll: setup.pendingRoll ?? null,
     pendingBonus: setup.pendingBonus ?? null,
     sixesInRow: setup.sixesInRow ?? 0,
