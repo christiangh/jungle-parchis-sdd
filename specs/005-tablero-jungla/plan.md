@@ -121,7 +121,7 @@ La traducción de posiciones es un módulo puro, `src/app/board/board-pieces.ts`
 ### Pasos
 
 - [x] 1. Tests de geometría en `board-geometry.spec.ts` con el esqueleto (eje `{ x: 0, y: 0 }` y metas sin puestos): en cada casilla del recorrido y del pasillo, el eje es unitario y paralelo al lado largo del tablón; en los tablones de columna apunta a la izquierda según el sentido de avance (de la casilla anterior a la siguiente); en los tablones centrales (68, 17, 34, 51) apunta a la casilla anterior; cada meta tiene 4 puestos dentro del triángulo, sin solaparse, en fila paralela a la base, y el primero a la izquierda según el avance del pasillo. Ejecutar y ver que fallan.
-- [ ] 2. Implementar el eje de pareja y los puestos de meta en `board-geometry.ts`; `pnpm test:once` en verde.
+- [x] 2. Implementar el eje de pareja y los puestos de meta en `board-geometry.ts`; `pnpm test:once` en verde.
 - [ ] 3. Tests de `board-pieces.spec.ts` con el esqueleto (devuelve vacío): para cada casilla del recorrido y de cada pasillo, una ficha sola cae en su centro y una pareja queda dentro del tablón sin solaparse, la que llegó antes según `arrivalOrder` del lado del eje (CE-02); fichas en casa en el puesto de su número; fichas en meta en los puestos por orden de llegada; misma entrada, mismo punto. Ejecutar y ver que fallan.
 - [ ] 4. Implementar `board-pieces.ts`; `pnpm test:once` en verde.
 - [ ] 5. Tests de componente en `board.spec.ts` con el esqueleto de la entrada `state` (grupo de fichas vacío): `render(state)` con `setInput`; los tests de PARTE-01 pasan una partida nueva; escenarios de HU-02, HU-03 y HU-04 y casos límite (2 jugadores, estado nuevo tras otro). Localizan cada ficha por `data-piece` y comprueban su centro, su color y su borde. Ejecutar y ver que fallan.
@@ -166,6 +166,8 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar el paso 7 y
 - **Sí:** en los tablones de columna, la ficha que llegó antes a la izquierda según el sentido de avance (RF-012). En los tablones centrales (68, 17, 34 y 51), donde se avanza a lo largo del tablón, la que llegó antes en el extremo de donde se viene. Decisión del usuario.
 - **Sí:** un solo disco en casa, recorrido, pasillo y meta, de radio 17 con borde y reborde. Cabe en el tablón de 40 con margen. Decisión del usuario.
 - **Sí:** 4 puestos de meta en fila paralela a la base del triángulo, cerca del final del pasillo, el primero a la izquierda según el avance. Decisión del usuario.
+- **Sí (paso 2):** puestos de meta en coordenadas locales `x` = 440, 480, 520 y 560, `y` = 645: 38 unidades sobre la base, 55,9 de cada lado y 40 entre centros, todo por encima del radio 17 y del doble del radio. Quedan lejos del tronco del centro (radio 44). El triángulo pasa a definirse por sus esquinas y su trazado SVG sale de ellas, el mismo de antes.
+- **Sí (paso 2):** eje de pareja en coordenadas locales del brazo inferior (hacia `+x` en la columna izquierda; hacia `−x` en la derecha, en el tablón central y en el pasillo) y girado con el brazo, igual que las casillas. Una sola regla para las 68 casillas y los 4 pasillos.
 - **Sí:** orden de llegada leído de `arrivalOrder` del estado. Es el orden del motor (R-023), sin copia en la aplicación.
 - **Sí:** fichas en un grupo propio al final de la capa de juego. Quedan encima de casillas, seguros y metas (RF-005).
 - **Sí:** el estado entra al tablero con `input.required<GameState>()` y las fichas salen de un `computed()`. Sin animaciones ni transiciones (RF-015).

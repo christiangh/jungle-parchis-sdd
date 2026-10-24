@@ -163,7 +163,9 @@ describe('board geometry', () => {
       const previous = trackCenter(((square.number + TRACK_LENGTH - 2) % TRACK_LENGTH) + 1)!;
       const next = trackCenter((square.number % TRACK_LENGTH) + 1)!;
       const label = `casilla ${square.number}`;
-      expect(dot(minus(next, previous), leftOf(longSide(square.rotation))), label).toBe(0);
+      expect(Math.abs(dot(minus(next, previous), leftOf(longSide(square.rotation)))), label).toBe(
+        0,
+      );
       expectPairAxis(square.pairAxis, square.rotation, label);
       expect(dot(square.pairAxis, minus(previous, square.center)), label).toBeGreaterThan(0);
     }

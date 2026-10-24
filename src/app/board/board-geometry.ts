@@ -93,6 +93,9 @@ const SQUARES_PER_ARM = TRACK_LENGTH / ARMS.length;
 
 const HOME_SLOT_OFFSET = 62;
 
+/** Left edge of the bottom arm's left column, where pieces go down the board. */
+const LEFT_COLUMN_X = 320;
+
 /** Track squares of the bottom arm in local coordinates, numbered as in the design. */
 const LOCAL_TRACK: readonly { number: number; x: number; y: number }[] = [
   ...Array.from({ length: 8 }, (_, i) => ({
@@ -102,7 +105,7 @@ const LOCAL_TRACK: readonly { number: number; x: number; y: number }[] = [
   })),
   ...Array.from({ length: 8 }, (_, i) => ({
     number: 60 + i,
-    x: 320,
+    x: LEFT_COLUMN_X,
     y: 680 + i * SQUARE_WIDTH,
   })),
   { number: 68, x: 440, y: 680 + 7 * SQUARE_WIDTH },
@@ -110,7 +113,31 @@ const LOCAL_TRACK: readonly { number: number; x: number; y: number }[] = [
 
 const LANE_X = 440;
 
-const GOAL_PATH = 'M323 683 L677 683 L500 506Z';
+/** Goal triangle in local coordinates: both ends of the base, then the apex. */
+const GOAL_CORNERS: readonly Point[] = [
+  { x: 323, y: 683 },
+  { x: 677, y: 683 },
+  { x: 500, y: 506 },
+];
+
+const GOAL_PATH = `M${GOAL_CORNERS.map((c) => `${c.x} ${c.y}`).join(' L')}Z`;
+
+/** Goal slots in local coordinates: a row along the base, left to right as pieces arrive. */
+const GOAL_SLOTS: readonly Point[] = [440, 480, 520, 560].map((x) => ({ x, y: 645 }));
+
+/**
+ * Pair axis of a bottom arm plank in local coordinates. Pieces go up the right column
+ * and the lane, and down the left column; on the middle plank they come from the left.
+ */
+function localPairAxis(x: number): Point {
+  return x === LEFT_COLUMN_X ? { x: 1, y: 0 } : { x: -1, y: 0 };
+}
+
+/** Turns a direction of the bottom arm into board coordinates of the given arm. */
+function rotateVector(vector: Point, arm: number): Point {
+  const end = rotate({ x: BOARD_CENTER.x + vector.x, y: BOARD_CENTER.y + vector.y }, arm);
+  return { x: end.x - BOARD_CENTER.x, y: end.y - BOARD_CENTER.y };
+}
 
 /** SVG rotation of an arm around the board centre, in degrees. */
 function rotationOf(arm: number): number {
@@ -153,7 +180,7 @@ export function trackSquares(): readonly TrackSquare[] {
         y,
         rotation: rotationOf(arm),
         center: rotate(squareCenter(x, y), arm),
-        pairAxis: { x: 0, y: 0 },
+        pairAxis: rotateVector(localPairAxis(x), arm),
       };
     }),
   );
@@ -172,7 +199,7 @@ export function laneSquares(): readonly LaneSquare[] {
         y,
         rotation: rotationOf(arm),
         center: rotate(squareCenter(LANE_X, y), arm),
-        pairAxis: { x: 0, y: 0 },
+        pairAxis: rotateVector(localPairAxis(LANE_X), arm),
       };
     });
   });
@@ -187,8 +214,8 @@ export function goals(): readonly Goal[] {
       rotation: rotationOf(arm),
       entry: rotate({ x: 500, y: 683 }, arm),
       center: rotate({ x: 500, y: 620 }, arm),
-      corners: [],
-      slots: [],
+      corners: GOAL_CORNERS.map((corner) => rotate(corner, arm)),
+      slots: GOAL_SLOTS.map((slot) => rotate(slot, arm)),
     };
   });
 }
