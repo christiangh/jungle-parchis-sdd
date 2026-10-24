@@ -126,7 +126,7 @@ La traducción de posiciones es un módulo puro, `src/app/board/board-pieces.ts`
 - [x] 4. Implementar `board-pieces.ts`; `pnpm test:once` en verde.
 - [x] 5. Tests de componente en `board.spec.ts` con el esqueleto de la entrada `state` (grupo de fichas vacío): `render(state)` con `setInput`; los tests de PARTE-01 pasan una partida nueva; escenarios de HU-02, HU-03 y HU-04 y casos límite (2 jugadores, estado nuevo tras otro). Localizan cada ficha por `data-piece` y comprueban su centro, su color y su borde. Ejecutar y ver que fallan.
 - [x] 6. Implementar las fichas en `jp-board` (disco del color con borde oscuro y reborde claro) y la partida nueva en `App`; `app.spec.ts` con 16 fichas en casa. `pnpm test:once` en verde.
-- [ ] 7. Medir el contraste del borde de la ficha (RNF-004) sobre madera, seguro, salida, pasillo, casa y meta de cada color, ajustar lo mínimo y anotar los valores en «Decisiones técnicas»; revisar en el navegador con `pnpm start`. `pnpm check` en verde.
+- [x] 7. Medir el contraste del borde de la ficha (RNF-004) sobre madera, seguro, salida, pasillo, casa y meta de cada color, ajustar lo mínimo y anotar los valores en «Decisiones técnicas»; revisar en el navegador con `pnpm start`. `pnpm check` en verde.
 
 ### Pruebas y trazabilidad
 
