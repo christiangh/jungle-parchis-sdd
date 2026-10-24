@@ -72,7 +72,7 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar cada paso d
 
 ## PARTE-02: Abrir barrera con un 6
 
-**Estado:** En curso
+**Estado:** Hecha
 
 ### Enfoque
 
