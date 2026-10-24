@@ -3,4 +3,179 @@
   role="img"
   aria-label="Tablero de parchís de la jungla"
   class="block size-full"
-></svg>
+>
+  <g data-layer="decor" aria-hidden="true">
+    <rect
+      x="-30"
+      y="-30"
+      width="1060"
+      height="1060"
+      rx="46"
+      class="fill-frame stroke-frame-edge"
+      stroke-width="3"
+    />
+    <rect width="1000" height="1000" rx="22" class="fill-grass" />
+    <path d="M312 0H688V312H1000V688H688V1000H312V688H0V312H312Z" class="fill-black/15" />
+  </g>
+
+  <g data-layer="game">
+    @for (home of homes; track home.color) {
+      <g [attr.data-home]="home.color">
+        <rect
+          [attr.x]="home.x + homeInset + 3"
+          [attr.y]="home.y + homeInset + 7"
+          [attr.width]="homeSize - 2 * homeInset"
+          [attr.height]="homeSize - 2 * homeInset"
+          rx="54"
+          class="fill-grass-shade/40"
+        />
+        <rect
+          [attr.x]="home.x + homeInset"
+          [attr.y]="home.y + homeInset"
+          [attr.width]="homeSize - 2 * homeInset"
+          [attr.height]="homeSize - 2 * homeInset"
+          rx="54"
+          [class]="home.fill"
+        />
+        <rect
+          [attr.x]="home.x + homeInset"
+          [attr.y]="home.y + homeInset"
+          [attr.width]="homeSize - 2 * homeInset"
+          [attr.height]="homeSize - 2 * homeInset"
+          rx="54"
+          class="fill-none stroke-black/30"
+          stroke-width="4"
+        />
+        <rect
+          [attr.x]="home.x + homeInset + 6"
+          [attr.y]="home.y + homeInset + 6"
+          [attr.width]="homeSize - 2 * homeInset - 12"
+          [attr.height]="homeSize - 2 * homeInset - 12"
+          rx="48"
+          class="fill-none stroke-white/20"
+          stroke-width="2"
+        />
+        @for (slot of home.slots; track $index) {
+          <g data-home-slot>
+            <circle [attr.cx]="slot.x" [attr.cy]="slot.y" r="37" class="fill-white/20" />
+            <circle [attr.cx]="slot.x" [attr.cy]="slot.y - 1.5" r="34" class="fill-black/30" />
+            <circle [attr.cx]="slot.x" [attr.cy]="slot.y + 2" r="31" [class]="home.fill" />
+            <circle [attr.cx]="slot.x" [attr.cy]="slot.y + 2" r="31" class="fill-black/10" />
+          </g>
+        }
+      </g>
+    }
+
+    @for (goal of goals; track goal.color) {
+      <path
+        [attr.data-goal]="goal.color"
+        [attr.d]="goal.path"
+        [attr.transform]="goal.transform"
+        [class]="goal.fill + ' stroke-black/30'"
+        stroke-width="2"
+        stroke-linejoin="round"
+      />
+    }
+
+    @for (plank of planks; track plank.key) {
+      <g
+        [attr.data-square]="plank.square"
+        [attr.data-kind]="plank.square === null ? null : 'plain'"
+        [attr.data-lane]="plank.lane"
+        [attr.data-step]="plank.step"
+        [attr.transform]="plank.transform"
+      >
+        <rect
+          [attr.x]="plank.x + 4"
+          [attr.y]="plank.y + 5.5"
+          [attr.width]="width - 6"
+          [attr.height]="height - 5"
+          rx="6"
+          class="fill-grass-shade/40"
+        />
+        <rect
+          [attr.x]="plank.x + 3"
+          [attr.y]="plank.y + 2.5"
+          [attr.width]="width - 6"
+          [attr.height]="height - 5"
+          rx="6"
+          [class]="plank.fill + ' ' + plank.edge"
+          stroke-width="1.5"
+        />
+        <rect
+          [attr.x]="plank.x + 5"
+          [attr.y]="plank.y + 4"
+          [attr.width]="width - 10"
+          [attr.height]="height - 8"
+          rx="4"
+          class="fill-none stroke-white/20"
+          stroke-width="1.2"
+        />
+        <circle
+          [attr.cx]="plank.x + 11"
+          [attr.cy]="plank.y + height / 2"
+          r="1.9"
+          [class]="plank.nail"
+        />
+        <circle
+          [attr.cx]="plank.x + width - 11"
+          [attr.cy]="plank.y + height / 2"
+          r="1.9"
+          [class]="plank.nail"
+        />
+        @if (plank.square !== null) {
+          <text
+            [attr.x]="plank.x + 24"
+            [attr.y]="plank.y + height / 2 + 4.5"
+            text-anchor="middle"
+            font-family="system-ui, sans-serif"
+            font-weight="700"
+            font-size="13"
+            class="fill-ink"
+          >
+            {{ plank.square }}
+          </text>
+        }
+      </g>
+    }
+
+    @for (safe of safes; track safe.square) {
+      <g
+        [attr.data-square]="safe.square"
+        [attr.data-kind]="safe.kind"
+        [attr.data-color]="safe.color"
+        [attr.transform]="safe.transform"
+      >
+        <rect
+          [attr.x]="safe.x + 3"
+          [attr.y]="safe.y + 2.5"
+          [attr.width]="width - 6"
+          [attr.height]="height - 5"
+          rx="6"
+          [class]="safe.fill + ' stroke-black/35'"
+          stroke-width="1.5"
+        />
+        <ellipse
+          [attr.cx]="safe.x + width / 2"
+          [attr.cy]="safe.y + height - 6"
+          [attr.rx]="width / 2 - 8"
+          ry="5"
+          class="fill-black/25"
+        />
+        <text
+          [attr.x]="safe.x + 24"
+          [attr.y]="safe.y + height / 2 + 4.5"
+          text-anchor="middle"
+          font-family="system-ui, sans-serif"
+          font-weight="700"
+          font-size="13"
+          stroke-width="2.4"
+          paint-order="stroke"
+          [class]="'fill-white ' + safe.halo"
+        >
+          {{ safe.square }}
+        </text>
+      </g>
+    }
+  </g>
+</svg>

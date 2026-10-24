@@ -136,3 +136,8 @@ export function homes(): readonly Home[] {
     return { color, x, y, slots };
   });
 }
+
+/** SVG transform that turns an arm around the board centre. */
+export function rotation(degrees: number): string {
+  return `rotate(${degrees} ${BOARD_CENTER.x} ${BOARD_CENTER.y})`;
+}

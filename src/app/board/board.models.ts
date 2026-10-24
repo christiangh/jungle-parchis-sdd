@@ -1,4 +1,4 @@
-// Types of the jungle board geometry.
+// Types of the jungle board geometry and of its view.
 
 import { Color } from '@engine';
 
@@ -49,4 +49,39 @@ export interface Home {
   readonly x: number;
   readonly y: number;
   readonly slots: readonly Point[];
+}
+
+/** A wooden or painted plank: plain track squares and lane squares. */
+export interface PlankView {
+  readonly key: string;
+  readonly square: number | null;
+  readonly lane: Color | null;
+  readonly step: number | null;
+  readonly x: number;
+  readonly y: number;
+  readonly transform: string;
+  readonly fill: string;
+  readonly edge: string;
+  readonly nail: string;
+}
+
+/** Canopy of a safe square, painted in the team's dark tone on start squares. */
+export interface SafeView {
+  readonly square: number;
+  readonly kind: 'safe' | 'start';
+  readonly color: Color | null;
+  readonly x: number;
+  readonly y: number;
+  readonly transform: string;
+  readonly fill: string;
+  readonly halo: string;
+}
+
+export interface GoalView extends Goal {
+  readonly transform: string;
+  readonly fill: string;
+}
+
+export interface HomeView extends Home {
+  readonly fill: string;
 }

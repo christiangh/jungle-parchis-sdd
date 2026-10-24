@@ -14,11 +14,11 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('RNF-001: reserves the board area inside the main landmark', async () => {
+  it('RNF-001: shows the board inside the main landmark', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('main [data-board-slot]')).not.toBeNull();
+    expect(compiled.querySelector('main [data-board-slot] jp-board svg')).not.toBeNull();
     expect(compiled.querySelector('h1')).toBeNull();
   });
 });

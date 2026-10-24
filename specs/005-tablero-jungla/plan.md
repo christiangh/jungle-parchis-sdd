@@ -19,7 +19,7 @@ La paleta de la variante «claro» se define una sola vez como tokens `@theme` d
 - `src/app/app.ts`, `src/app/app.html`, `src/app/app.css`: sustituir la página de bienvenida por el contenedor del tablero, centrado y del tamaño de RNF-001.
 - `src/app/app.spec.ts`: tests del contenedor en lugar de los de la página de bienvenida.
 - `src/app/board/board-geometry.ts` (nuevo): casillas del recorrido común, pasillos, metas y casas con su rectángulo, su rotación y su tipo; cálculo puro.
-- `src/app/board/board.constants.ts`, `src/app/board/board.models.ts` (nuevos): constantes exportadas y tipos del tablero, según la convención de `CLAUDE.md`.
+- `src/app/board/board.constants.ts`, `src/app/board/board.models.ts` (nuevos): constantes exportadas (medidas y clases de Tailwind por color) y tipos del tablero y de su vista, según la convención de `CLAUDE.md`.
 - `src/app/board/board-geometry.spec.ts` (nuevo): tests de la geometría contra el motor.
 - `src/app/board/board-decor.ts` (nuevo): generador con semilla y datos de la capa decorativa y de las texturas.
 - `src/app/board/board-decor.spec.ts` (nuevo): tests de estabilidad de la decoración.
@@ -34,7 +34,7 @@ La paleta de la variante «claro» se define una sola vez como tokens `@theme` d
 - [x] 2b. Alias `@engine` en `tsconfig.json` apuntando solo a `src/engine/index.ts`; ESLint de `src/app/` prohíbe `@engine/…` y las rutas relativas al motor; imports de la geometría con el alias. `pnpm check` en verde salvo los tests del paso 2, que siguen fallando hasta el paso 3.
 - [x] 3. Implementar `board-geometry.ts`; `pnpm test:once` en verde.
 - [x] 4. Tests de componente en `board.spec.ts` con el esqueleto de `jp-board` (SVG vacío con su nombre): 68 casillas pintadas con su número visible; 12 seguros, 4 de ellos de salida en el color de su equipo; 4 pasillos de 7 casillas en su color; 4 triángulos de meta; 4 casas con 4 puestos; nombre accesible «Tablero de parchís de la jungla»; capa decorativa con `aria-hidden="true"`. Ejecutar y ver que fallan.
-- [ ] 5. Implementar la capa de juego de `jp-board` (tablones, seguros, salidas, pasillos, metas, casas y números) con las utilidades de color de la paleta y montarlo en `app.html`; `pnpm test:once` en verde.
+- [x] 5. Implementar la capa de juego de `jp-board` (tablones, seguros, salidas, pasillos, metas, casas y números) con las utilidades de color de la paleta y montarlo en `app.html`; `pnpm test:once` en verde.
 - [ ] 6. Tests de `board-decor.spec.ts` (misma semilla, mismos datos; número de briznas, vetas y hojas del diseño) e implementación de `board-decor.ts`; texturas de hierba y madera, ruido de luz y sombra, mechones de los seguros, hojas de las esquinas y tronco del centro en `jp-board`. `pnpm check` en verde.
 - [ ] 7. Medir el contraste de los números (RNF-003) en tablón, seguro y salida de cada color, ajustar lo mínimo y anotar los valores en «Decisiones técnicas»; revisar en el navegador las ventanas de CE-06 con `pnpm start`. `pnpm check` en verde.
 
@@ -83,3 +83,6 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar los pasos 1
 - **Sí:** giros de cuarto de vuelta con coordenadas enteras y rotación SVG en grados positivos (0, 90, 180, 270). Evitan los `-0` y decimales de `Math.cos`, y `rotate(270 500 500)` equivale al `rotate(-90 …)` del diseño.
 - **Sí:** los tests de componente localizan los elementos con atributos `data-*` (`data-layer`, `data-square`, `data-kind`, `data-color`, `data-lane`, `data-step`, `data-goal`, `data-home`, `data-home-slot`) y comprueban el color por la utilidad de Tailwind (`fill-team-*`, `fill-canopy-dark`). Son el contrato estable del SVG; no dependen de coordenadas ni del orden de los elementos.
 - **Sí:** constantes exportadas en `board.constants.ts` y tipos en `board.models.ts`; `board-geometry.ts` solo tiene funciones y sus constantes privadas. Convención añadida a `CLAUDE.md` a petición del usuario.
+- **Sí:** números con `system-ui, sans-serif` en lugar de Figtree. Cargar Figtree exigiría una petición a Google Fonts o una dependencia nueva (P-16, P-17); `system-ui` da una negrita legible en todas las plataformas.
+- **Sí:** sombras y brillos del diseño (`rgba(0,0,0,…)`, `#fff` con opacidad, `#1a240c`, `#14200a`) con utilidades de opacidad de Tailwind sobre negro, blanco o `grass-shade` (`fill-black/30`, `stroke-white/20`, `fill-grass-shade/40`). Valores aproximados al diseño, sin hex nuevos.
+- **Sí:** la capa decorativa del paso 5 solo tiene marco, hierba lisa y la sombra de la cruz; las texturas llegan en el paso 6.
