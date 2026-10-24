@@ -69,10 +69,12 @@ export interface HomeView extends Home {
   readonly fill: string;
 }
 
-/** A piece: a disc of its colour with a dark border, on a light rim. */
+/**
+ * A piece: a disc of its colour with an ink border, on a white rim. Ink and white
+ * are 14.5:1 apart, so one of them reaches 3:1 on any background (RNF-004).
+ */
 export interface PieceView extends PiecePlace {
   readonly fill: string;
-  readonly edge: string;
 }
 
 const decor = boardDecor();
@@ -175,7 +177,6 @@ export class Board {
     piecePlaces(this.state()).map((p) => ({
       ...p,
       fill: TEAM_FILL[p.color],
-      edge: TEAM_DARK_STROKE[p.color],
     })),
   );
 }
