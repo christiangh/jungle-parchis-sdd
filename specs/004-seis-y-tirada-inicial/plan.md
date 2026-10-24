@@ -215,7 +215,7 @@ Dos propiedades nuevas, con ayudas propias en `test-utils.ts`:
   - `thirdSixMoves`: detecta un movimiento con el tercer 6 seguido; no detecta dos seises seguidos; un 6 perdido cuenta; otro valor corta la cuenta; un cambio de turno también, incluso entre dos turnos del mismo jugador en una partida de 2.
   - `gameFacts`: un caso por hecho nuevo, y un 6 con fichas en casa, que no da el hecho de 6 que vale 7.
 - [x] 2. Implementar `moveSteps`, `unopenedBarrier`, `thirdSixMoves` y los hechos nuevos de `gameFacts`, con `moveSteps` en el hecho de movimiento descartado. En `invariants.spec.ts`, crear las partidas con `createGame`, sin `firstPlayer`. Pasar `pnpm check`.
-- [ ] 3. Ampliar el test de CE-02 con `moveSteps` en la propiedad de RNF-004 de SPEC 003 y con las propiedades de R-062 y R-032 tras cada acción, y renombrarlo. Medir cuántas veces sale cada hecho nuevo en las 1000 partidas, cuántas se detienen por el límite de acciones y cuánto tarda. Pasar `pnpm check`.
+- [x] 3. Ampliar el test de CE-02 con `moveSteps` en la propiedad de RNF-004 de SPEC 003 y con las propiedades de R-062 y R-032 tras cada acción, y renombrarlo. Medir cuántas veces sale cada hecho nuevo en las 1000 partidas, cuántas se detienen por el límite de acciones y cuánto tarda. Pasar `pnpm check`.
 
 ### Pruebas y trazabilidad
 

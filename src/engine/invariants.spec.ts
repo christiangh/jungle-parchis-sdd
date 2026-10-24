@@ -12,9 +12,12 @@ import {
   invariantViolations,
   leftGoal,
   mixedColorSquares,
+  moveSteps,
   playRandomGame,
   seededRandom,
   seededRolls,
+  thirdSixMoves,
+  unopenedBarrier,
 } from './test-utils';
 
 const GAMES = 1000;
@@ -51,7 +54,7 @@ const randomGame = fc.record({
 
 describe('invariantes', () => {
   it(
-    `CE-02, CE-03: ${GAMES} partidas aleatorias de 2, 3 y 4 jugadores cumplen I-01 a I-06, RNF-004 de SPEC 002 y RNF-004 de SPEC 003 tras cada acción, y producen todos los hechos de CE-03`,
+    `CE-02, CE-03: ${GAMES} partidas aleatorias de 2, 3 y 4 jugadores desde la tirada inicial cumplen I-01 a I-06 y RNF-004 de SPEC 002, SPEC 003 y SPEC 004 tras cada acción, y producen todos los hechos de CE-03`,
     () => {
       const facts = new Set<GameFact>();
       fc.assert(
@@ -85,11 +88,15 @@ describe('invariantes', () => {
             const piece = before.pieces.find(
               ({ id }) => action.type === 'move' && id === action.pieceId,
             );
-            const steps = before.pendingBonus ?? before.pendingRoll;
+            const steps = moveSteps(before);
             if (piece !== undefined && piece.position.kind !== 'home' && steps !== null) {
               expect(barrierHits(before, piece.id, steps)).toEqual({ passed: [], end: null });
             }
+            // RNF-004 of SPEC 004: a 6 moves a piece of an own barrier when one can move (R-062).
+            expect(unopenedBarrier(before, action)).toBe(false);
           }
+          // RNF-004 of SPEC 004: no piece moves with a third 6 in a row (R-032).
+          expect(thirdSixMoves(played)).toEqual([]);
           for (const fact of gameFacts(played)) {
             facts.add(fact);
           }
