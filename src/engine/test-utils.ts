@@ -48,6 +48,9 @@ export function buildGame(setup: GameSetup): GameState {
   if (!result.ok) {
     throw new Error(`Invalid game setup: ${result.error}`);
   }
+  if (setup.turn !== undefined && !setup.players.includes(setup.turn)) {
+    throw new Error(`Invalid game setup: ${setup.turn} does not play`);
+  }
   const positions = setup.positions ?? {};
   const listed = Object.keys(positions) as PieceId[];
   return {
