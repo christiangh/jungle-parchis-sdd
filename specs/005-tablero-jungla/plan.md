@@ -179,3 +179,55 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar el paso 7 y
 - **Sí:** orden de llegada leído de `arrivalOrder` del estado. Es el orden del motor (R-023), sin copia en la aplicación.
 - **Sí:** fichas en un grupo propio al final de la capa de juego. Quedan encima de casillas, seguros y metas (RF-005).
 - **Sí:** el estado entra al tablero con `input.required<GameState>()` y las fichas salen de un `computed()`. Sin animaciones ni transiciones (RF-015).
+
+## PARTE-03: Prueba de humo en navegador
+
+**Estado:** Aprobada
+
+### Enfoque
+
+Playwright abre la aplicación en Chromium y comprueba lo mínimo que solo se ve en un navegador real: que carga, que el tablero es visible con su nombre accesible y que pinta 16 fichas, cada una dentro de la casa de su color (RF-016). Las posiciones ya las cubren los tests unitarios y de componente, así que la prueba es una sola. Playwright levanta su propio servidor con la configuración de producción en el puerto 4300, para no chocar con `pnpm start` ni usar un servidor desactualizado. Comando propio `pnpm test:e2e`, fuera de `pnpm check`, y un trabajo propio en el CI cuyo fallo hace fallar el pull request (HU-05).
+
+### Archivos
+
+- `package.json`, `pnpm-lock.yaml`: dependencia de desarrollo `@playwright/test` y script `test:e2e`.
+- `playwright.config.ts` (nuevo): carpeta `e2e`, solo Chromium, servidor propio, sin reintentos, `forbidOnly` en el CI.
+- `e2e/board.spec.ts` (nuevo): prueba de humo.
+- `angular.json`: `e2e/**/*.ts` y `playwright.config.ts` en el lint.
+- `.gitignore`, `.prettierignore`: `test-results/` y `playwright-report/`.
+- `.github/workflows/ci.yml`: trabajo `smoke`.
+- `CLAUDE.md`: comando `pnpm test:e2e` en «Comandos».
+
+### Pasos
+
+- [ ] 1. Añadir `@playwright/test` 1.64.1 como dependencia de desarrollo, instalar Chromium (`pnpm exec playwright install chromium`), crear `playwright.config.ts` y el script `test:e2e`; ignorar sus salidas en git y Prettier y meter los archivos nuevos en el lint. `pnpm lint` y `pnpm test:once` en verde.
+- [ ] 2. Escribir la prueba de humo en `e2e/board.spec.ts`; `pnpm test:e2e` en verde. Comprobar que no pasa en falso: cambiar en local el nombre accesible del tablero y ver que falla; deshacer el cambio.
+- [ ] 3. Añadir el trabajo `smoke` al CI: instalación con `--frozen-lockfile`, `pnpm exec playwright install --with-deps chromium`, `pnpm test:e2e` y, si falla, subir el informe como artefacto. Añadir el comando a `CLAUDE.md`. `pnpm check` en verde.
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+|----------|------|--------|
+| HU-05 c1 / RF-016 | 1, 2 | «RF-016: la aplicación carga y pinta el tablero con 16 fichas en sus casas» (`e2e/board.spec.ts`): tablero visible por su rol y nombre accesible; 16 `data-piece`, cada una dentro de la caja de `data-home` de su color |
+| HU-05 c2 / RF-016 | 3 | Trabajo `smoke` del CI, sin `continue-on-error` |
+| RNF-007 | 1 | Única dependencia nueva, justificada abajo |
+| CE-07 | 2, 3 | `pnpm test:e2e` en local; trabajo `smoke` en verde en el pull request; `pnpm check` sin cambios en el motor |
+| Hecho cuando | 3 | HU-05 y CE-07 |
+
+Comandos: `pnpm test:e2e` en los pasos 2 y 3, `pnpm check` al cerrar la parte. El verde del CI se ve en el pull request, que abre una persona.
+
+### Skills y agentes
+
+- `context7`: configuración de Playwright (`webServer`, `projects`) y su instalación en GitHub Actions.
+- `caveman:cavecrew-reviewer`: revisión del diff al cerrar la parte.
+
+### Decisiones técnicas
+
+- **Sí (P-17, RNF-007):** `@playwright/test` como dependencia de desarrollo, fijada a 1.64.1, la última estable. Es el ejecutor de pruebas en navegador real que pide RF-016; trae su propio ejecutor, aserciones con espera automática y el servidor de la aplicación (`webServer`), sin más paquetes. No va a producción. No tiene scripts de instalación, así que `allowBuilds` no cambia; los navegadores se instalan aparte, con un comando explícito.
+- **Sí:** solo Chromium. Para una prueba de humo basta un motor; Firefox y WebKit triplican la descarga y el tiempo del CI.
+- **Sí:** servidor propio con `ng serve --configuration production --port 4300`, sin reutilizar uno abierto. Prueba el mismo empaquetado que producción y no depende de lo que haya en el 4200.
+- **Sí:** las fichas se comprueban dentro de la caja de su casa con `boundingBox()`. Es la parte que solo se ve en un navegador: que el SVG se escala y se pinta donde toca.
+- **Sí:** sin reintentos ni en local ni en el CI. Un reintento escondería una prueba inestable (P-09).
+- **Sí:** trabajo `smoke` aparte del de `check` en el CI, en paralelo. Si falla, se ve cuál de los dos ha fallado.
+- **No:** caché de los navegadores en el CI. `--with-deps` instala igualmente las librerías del sistema y la descarga de Chromium es corta; la caché añade una clave por versión que mantener.
+- **No (pregunta abierta del spec):** AXE en la prueba de humo. Necesita otra dependencia y RNF-007 dice que Playwright es la única nueva en este spec. Queda para el spec de accesibilidad.
