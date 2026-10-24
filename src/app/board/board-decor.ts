@@ -2,18 +2,61 @@
 // The generator and the order of its draws follow the design, so one seed always gives
 // the same drawing.
 
-import { trackSquares } from './board-geometry';
-import { DECOR_SEED, SQUARE_LENGTH, SQUARE_WIDTH } from './board.constants';
-import {
-  BoardDecor,
-  CanopyTone,
-  GrainLine,
-  GrassBlade,
-  Leaf,
-  PlankTint,
-  Point,
-  TuftBlade,
-} from './board.models';
+import { Point, SQUARE_LENGTH, SQUARE_WIDTH, trackSquares } from './board-geometry';
+import { CanopyTone } from './board-palette';
+
+/** A blade of the grass pattern; `tone` indexes the four blade colours. */
+export interface GrassBlade {
+  readonly path: string;
+  readonly tone: number;
+  readonly width: number;
+}
+
+/** A grain line of the wood pattern or of the grain painted over coloured wood. */
+export interface GrainLine {
+  readonly path: string;
+  readonly width: number;
+  readonly opacity: number;
+  /** Only for painted grain: white instead of black. */
+  readonly light: boolean;
+}
+
+/** Light or dark wash that makes each plank of the track slightly different. */
+export interface PlankTint {
+  readonly light: boolean;
+  readonly opacity: number;
+}
+
+/** A blade of a safe square's canopy, in the square's local coordinates. */
+export interface TuftBlade {
+  readonly path: string;
+  readonly tone: CanopyTone;
+}
+
+/** A corner leaf: `path` and `veins` are drawn at the origin and placed by `transform`. */
+export interface Leaf {
+  readonly length: number;
+  readonly transform: string;
+  readonly path: string;
+  readonly veins: string;
+  readonly tone: CanopyTone;
+}
+
+/** Random textures of the "claro" variant, drawn from one seed. */
+export interface BoardDecor {
+  readonly blades: readonly GrassBlade[];
+  readonly grain: readonly GrainLine[];
+  readonly paintGrain: readonly GrainLine[];
+  readonly knots: readonly Point[];
+  /** By plain track square number. */
+  readonly tints: ReadonlyMap<number, PlankTint>;
+  /** By safe or start square number. */
+  readonly tufts: ReadonlyMap<number, readonly TuftBlade[]>;
+  readonly leaves: readonly Leaf[];
+}
+
+/** Seed of the design's generator for the "claro" variant: 'claro'.length * 977 + 13. */
+export const DECOR_SEED = 4898;
 
 const BLADE_COUNT = 90;
 const BLADE_TONES = 4;

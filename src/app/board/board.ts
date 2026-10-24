@@ -1,19 +1,71 @@
 import { Component } from '@angular/core';
+import { Color } from '@engine';
 import { boardDecor } from './board-decor';
-import { goals, homes, laneSquares, rotation, trackSquares } from './board-geometry';
+import {
+  Goal,
+  goals,
+  Home,
+  HOME_INSET,
+  HOME_SIZE,
+  homes,
+  laneSquares,
+  rotation,
+  SQUARE_LENGTH,
+  SQUARE_WIDTH,
+  trackSquares,
+} from './board-geometry';
 import {
   BLADE_STROKE,
   CANOPY_FILL,
-  HOME_INSET,
-  HOME_SIZE,
-  SQUARE_LENGTH,
-  SQUARE_WIDTH,
   TEAM_CANOPY_FILL,
   TEAM_DARK_FILL,
   TEAM_DARK_STROKE,
   TEAM_FILL,
-} from './board.constants';
-import { GoalView, HomeView, PlankView, SafeView } from './board.models';
+} from './board-palette';
+
+/** A wooden or painted plank: plain track squares and lane squares. */
+export interface PlankView {
+  readonly key: string;
+  readonly square: number | null;
+  readonly lane: Color | null;
+  readonly step: number | null;
+  readonly x: number;
+  readonly y: number;
+  readonly transform: string;
+  readonly fill: string;
+  readonly edge: string;
+  readonly nail: string;
+  /** Wash over the plank: a light or dark tint on wood, painted grain on lanes. */
+  readonly overlay: string;
+  readonly overlayOpacity: number;
+}
+
+export interface TuftView {
+  readonly path: string;
+  readonly fill: string;
+}
+
+/** Canopy of a safe square, painted in the team's dark tone on start squares. */
+export interface SafeView {
+  readonly square: number;
+  readonly kind: 'safe' | 'start';
+  readonly color: Color | null;
+  readonly x: number;
+  readonly y: number;
+  readonly transform: string;
+  readonly fill: string;
+  readonly halo: string;
+  readonly tufts: readonly TuftView[];
+}
+
+export interface GoalView extends Goal {
+  readonly transform: string;
+  readonly fill: string;
+}
+
+export interface HomeView extends Home {
+  readonly fill: string;
+}
 
 const decor = boardDecor();
 

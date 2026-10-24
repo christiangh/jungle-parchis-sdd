@@ -1,6 +1,5 @@
 import { isSafe, TRACK_LENGTH } from '@engine';
-import { boardDecor } from './board-decor';
-import { DECOR_SEED } from './board.constants';
+import { boardDecor, DECOR_SEED } from './board-decor';
 
 const SQUARES = Array.from({ length: TRACK_LENGTH }, (_, i) => i + 1);
 

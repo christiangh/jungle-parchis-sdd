@@ -1,24 +1,11 @@
-// Measures and Tailwind classes of the jungle board, from docs/design/tablero.
+// Tailwind classes of the jungle board palette, from the tokens in src/styles.css.
+// Full class names, so Tailwind finds them in the source.
 
 import { Color } from '@engine';
-import { CanopyTone, Point } from './board.models';
 
-/** Long side of a track or lane square. */
-export const SQUARE_LENGTH = 120;
+/** Tones of a canopy, also used by leaves: the colour's dark, base and light shades. */
+export type CanopyTone = 'dark' | 'base' | 'light';
 
-/** Short side of a track or lane square. */
-export const SQUARE_WIDTH = 40;
-
-export const BOARD_SIZE = 1000;
-
-export const BOARD_CENTER: Point = { x: BOARD_SIZE / 2, y: BOARD_SIZE / 2 };
-
-export const HOME_SIZE = 320;
-
-/** Gap between a home's corner and its painted square. */
-export const HOME_INSET = 30;
-
-// Full class names, so Tailwind finds them in the source.
 export const TEAM_FILL: Readonly<Record<Color, string>> = {
   yellow: 'fill-team-yellow',
   blue: 'fill-team-blue',
@@ -68,6 +55,3 @@ export const BLADE_STROKE: readonly string[] = [
   'stroke-blade-3',
   'stroke-blade-4',
 ];
-
-/** Seed of the design's generator for the "claro" variant: 'claro'.length * 977 + 13. */
-export const DECOR_SEED = 4898;

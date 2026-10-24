@@ -19,7 +19,7 @@ La paleta de la variante «claro» se define una sola vez como tokens `@theme` d
 - `src/app/app.ts`, `src/app/app.html`, `src/app/app.css`: sustituir la página de bienvenida por el contenedor del tablero, centrado y del tamaño de RNF-001.
 - `src/app/app.spec.ts`: tests del contenedor en lugar de los de la página de bienvenida.
 - `src/app/board/board-geometry.ts` (nuevo): casillas del recorrido común, pasillos, metas y casas con su rectángulo, su rotación y su tipo; cálculo puro.
-- `src/app/board/board.constants.ts`, `src/app/board/board.models.ts` (nuevos): constantes exportadas (medidas y clases de Tailwind por color) y tipos del tablero y de su vista, según la convención de `CLAUDE.md`.
+- `src/app/board/board-palette.ts` (nuevo): clases de Tailwind de la paleta por color y tono. Medidas y tipos de cada concepto viven en su propio archivo (`board-geometry.ts`, `board-decor.ts`, `board.ts`); ver «Decisiones técnicas».
 - `src/app/board/board-geometry.spec.ts` (nuevo): tests de la geometría contra el motor.
 - `src/app/board/board-decor.ts` (nuevo): generador con semilla y datos de la capa decorativa y de las texturas.
 - `src/app/board/board-decor.spec.ts` (nuevo): tests de estabilidad de la decoración.
@@ -82,7 +82,8 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar los pasos 1
 - **Sí:** esquina de cada casa deducida del brazo de su `START_SQUARE`, igual que pasillo y meta con `ENTRY_SQUARE`. Del diseño solo queda la casa del brazo inferior; las demás salen de girarla.
 - **Sí:** giros de cuarto de vuelta con coordenadas enteras y rotación SVG en grados positivos (0, 90, 180, 270). Evitan los `-0` y decimales de `Math.cos`, y `rotate(270 500 500)` equivale al `rotate(-90 …)` del diseño.
 - **Sí:** los tests de componente localizan los elementos con atributos `data-*` (`data-layer`, `data-square`, `data-kind`, `data-color`, `data-lane`, `data-step`, `data-goal`, `data-home`, `data-home-slot`) y comprueban el color por la utilidad de Tailwind (`fill-team-*`, `fill-canopy-dark`). Son el contrato estable del SVG; no dependen de coordenadas ni del orden de los elementos.
-- **Sí:** constantes exportadas en `board.constants.ts` y tipos en `board.models.ts`; `board-geometry.ts` solo tiene funciones y sus constantes privadas. Convención añadida a `CLAUDE.md` a petición del usuario.
+- **No (revertida):** constantes exportadas en `board.constants.ts` y tipos en `board.models.ts`. Se adoptó tras el paso 3 y se deshizo después del paso 6 a petición del usuario.
+- **Sí:** archivos de `src/app/board/` organizados por concepto, como recomienda la guía de estilo de Angular: medidas y tipos geométricos en `board-geometry.ts`; tipos de la decoración y `DECOR_SEED` en `board-decor.ts`; clases de la paleta y `CanopyTone` en `board-palette.ts`; tipos de vista (`PlankView`, `SafeView`, `TuftView`, `GoalView`, `HomeView`) en `board.ts`. Cada archivo reúne lo que cambia junto. Sin cambios de comportamiento: mismos tests y mismo CSS generado. Decisión del usuario.
 - **Sí:** números con `system-ui, sans-serif` en lugar de Figtree. Cargar Figtree exigiría una petición a Google Fonts o una dependencia nueva (P-16, P-17); `system-ui` da una negrita legible en todas las plataformas.
 - **Sí:** sombras y brillos del diseño (`rgba(0,0,0,…)`, `#fff` con opacidad, `#1a240c`, `#14200a`) con utilidades de opacidad de Tailwind sobre negro, blanco o `grass-shade` (`fill-black/30`, `stroke-white/20`, `fill-grass-shade/40`). Valores aproximados al diseño, sin hex nuevos.
 - **Sí:** la capa decorativa del paso 5 solo tiene marco, hierba lisa y la sombra de la cruz; las texturas llegan en el paso 6.
