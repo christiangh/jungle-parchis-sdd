@@ -23,6 +23,8 @@ export interface Move {
 }
 
 const EXIT_ROLL = 5;
+const SIX = 6;
+const SIX_WITHOUT_PIECES_AT_HOME = 7;
 
 export function legalMoves(state: GameState): readonly Move[] {
   // R-080: a bonus is used whole by a single piece on the board; pieces at home cannot use it.
@@ -38,7 +40,15 @@ export function legalMoves(state: GameState): readonly Move[] {
   if (exit) {
     return [exit];
   }
-  return advanceMoves(state, roll);
+  return advanceMoves(state, rollSteps(state, roll));
+}
+
+/** R-031: a 6 counts as 7 when the player has no pieces at home; pieces at the goal do not count. */
+function rollSteps(state: GameState, roll: number): number {
+  const pieceAtHome = state.pieces.some(
+    (piece) => piece.color === state.turn && piece.position.kind === 'home',
+  );
+  return roll === SIX && !pieceAtHome ? SIX_WITHOUT_PIECES_AT_HOME : roll;
 }
 
 function advanceMoves(state: GameState, steps: number): Move[] {
