@@ -1,5 +1,9 @@
 pnpm-lock.yaml
 
+# Salidas de Playwright.
+test-results/
+playwright-report/
+
 # Markdown: los specs se leen como texto plano y Prettier rellena las tablas hasta hacerlas ilegibles.
 *.md
 
