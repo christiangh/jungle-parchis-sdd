@@ -31,6 +31,8 @@ export interface TrackSquare {
   readonly y: number;
   readonly rotation: number;
   readonly center: Point;
+  /** Unit vector along the long side, towards the piece of a pair that arrived first. */
+  readonly pairAxis: Point;
 }
 
 export interface LaneSquare {
@@ -41,6 +43,8 @@ export interface LaneSquare {
   readonly y: number;
   readonly rotation: number;
   readonly center: Point;
+  /** Unit vector along the long side, towards the piece of a pair that arrived first. */
+  readonly pairAxis: Point;
 }
 
 export interface Goal {
@@ -51,6 +55,10 @@ export interface Goal {
   /** Midpoint of the triangle's base, where the lane ends. */
   readonly entry: Point;
   readonly center: Point;
+  /** Triangle corners in board coordinates: both ends of the base, then the apex. */
+  readonly corners: readonly Point[];
+  /** Places for the pieces in the goal, in order of arrival. */
+  readonly slots: readonly Point[];
 }
 
 export interface Home {
@@ -71,6 +79,9 @@ export const BOARD_SIZE = 1000;
 export const BOARD_CENTER: Point = { x: BOARD_SIZE / 2, y: BOARD_SIZE / 2 };
 
 export const HOME_SIZE = 320;
+
+/** Radius of a piece, rim included. */
+export const PIECE_RADIUS = 17;
 
 /** Gap between a home's corner and its painted square. */
 export const HOME_INSET = 30;
@@ -142,6 +153,7 @@ export function trackSquares(): readonly TrackSquare[] {
         y,
         rotation: rotationOf(arm),
         center: rotate(squareCenter(x, y), arm),
+        pairAxis: { x: 0, y: 0 },
       };
     }),
   );
@@ -160,6 +172,7 @@ export function laneSquares(): readonly LaneSquare[] {
         y,
         rotation: rotationOf(arm),
         center: rotate(squareCenter(LANE_X, y), arm),
+        pairAxis: { x: 0, y: 0 },
       };
     });
   });
@@ -174,6 +187,8 @@ export function goals(): readonly Goal[] {
       rotation: rotationOf(arm),
       entry: rotate({ x: 500, y: 683 }, arm),
       center: rotate({ x: 500, y: 620 }, arm),
+      corners: [],
+      slots: [],
     };
   });
 }

@@ -6,6 +6,7 @@ import {
   HOME_SIZE,
   homes,
   laneSquares,
+  PIECE_RADIUS,
   Point,
   SQUARE_WIDTH,
   trackSquares,
@@ -13,6 +14,36 @@ import {
 
 function distance(a: Point, b: Point): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function minus(a: Point, b: Point): Point {
+  return { x: a.x - b.x, y: a.y - b.y };
+}
+
+function dot(a: Point, b: Point): number {
+  return a.x * b.x + a.y * b.y;
+}
+
+/** Left of a piece facing `direction`, with the SVG y axis pointing down. */
+function leftOf(direction: Point): Point {
+  return { x: direction.y, y: -direction.x };
+}
+
+/** Direction of a plank's long side for its SVG rotation. */
+function longSide(rotation: number): Point {
+  return rotation % 180 === 0 ? { x: 1, y: 0 } : { x: 0, y: 1 };
+}
+
+/** Distance from a point to the line through `a` and `b`, positive on the side of `inside`. */
+function signedDistance(point: Point, a: Point, b: Point, inside: Point): number {
+  const normal = leftOf(minus(b, a));
+  const side = Math.sign(dot(minus(inside, a), normal));
+  return (side * dot(minus(point, a), normal)) / Math.hypot(normal.x, normal.y);
+}
+
+function expectPairAxis(axis: Point, rotation: number, label: string): void {
+  expect(Math.hypot(axis.x, axis.y), label).toBe(1);
+  expect(Math.abs(dot(axis, longSide(rotation))), label).toBe(1);
 }
 
 function trackCenter(square: number): Point | undefined {
@@ -110,6 +141,94 @@ describe('board geometry', () => {
       expect(nearest?.step, goal.color).toBe(LANE_LENGTH);
       expect(distance(nearest.center, goal.entry), goal.color).toBeLessThan(SQUARE_WIDTH);
       expect(nearest.rotation, goal.color).toBe(goal.rotation);
+    }
+  });
+
+  it('RF-012: en los tablones de columna, la pareja empieza a la izquierda según el avance', () => {
+    const columns = trackSquares().filter((s) => !Object.values(ENTRY_SQUARE).includes(s.number));
+    expect(columns).toHaveLength(TRACK_LENGTH - COLORS.length);
+    for (const square of columns) {
+      const previous = trackCenter(((square.number + TRACK_LENGTH - 2) % TRACK_LENGTH) + 1)!;
+      const next = trackCenter((square.number % TRACK_LENGTH) + 1)!;
+      const label = `casilla ${square.number}`;
+      expectPairAxis(square.pairAxis, square.rotation, label);
+      expect(dot(square.pairAxis, leftOf(minus(next, previous))), label).toBeGreaterThan(0);
+    }
+  });
+
+  it('RF-012: en los tablones centrales se avanza a lo largo y la pareja empieza atrás', () => {
+    const middles = trackSquares().filter((s) => Object.values(ENTRY_SQUARE).includes(s.number));
+    expect(middles).toHaveLength(COLORS.length);
+    for (const square of middles) {
+      const previous = trackCenter(((square.number + TRACK_LENGTH - 2) % TRACK_LENGTH) + 1)!;
+      const next = trackCenter((square.number % TRACK_LENGTH) + 1)!;
+      const label = `casilla ${square.number}`;
+      expect(dot(minus(next, previous), leftOf(longSide(square.rotation))), label).toBe(0);
+      expectPairAxis(square.pairAxis, square.rotation, label);
+      expect(dot(square.pairAxis, minus(previous, square.center)), label).toBeGreaterThan(0);
+    }
+  });
+
+  it('RF-012: en el pasillo, la pareja empieza a la izquierda según el avance', () => {
+    for (const color of COLORS) {
+      const lane = laneSquares()
+        .filter((s) => s.color === color)
+        .sort((a, b) => a.step - b.step);
+      const goal = goals().find((g) => g.color === color)!;
+      const path = [trackCenter(ENTRY_SQUARE[color])!, ...lane.map((s) => s.center), goal.entry];
+      lane.forEach((square, i) => {
+        const label = `${color} ${square.step}`;
+        expectPairAxis(square.pairAxis, square.rotation, label);
+        expect(dot(square.pairAxis, leftOf(minus(path[i + 2], path[i]))), label).toBeGreaterThan(0);
+      });
+    }
+  });
+
+  it('RF-013: cada meta tiene 4 puestos dentro de su triángulo, sin solaparse', () => {
+    for (const goal of goals()) {
+      expect(goal.corners, goal.color).toHaveLength(3);
+      const [left, right, apex] = goal.corners;
+      expect(goal.entry, goal.color).toEqual({
+        x: (left.x + right.x) / 2,
+        y: (left.y + right.y) / 2,
+      });
+      expect(goal.slots, goal.color).toHaveLength(4);
+      for (const slot of goal.slots) {
+        for (const [a, b, inside] of [
+          [left, right, apex],
+          [right, apex, left],
+          [apex, left, right],
+        ]) {
+          expect(signedDistance(slot, a, b, inside), goal.color).toBeGreaterThanOrEqual(
+            PIECE_RADIUS,
+          );
+        }
+      }
+      for (let i = 0; i < goal.slots.length; i++) {
+        for (let j = i + 1; j < goal.slots.length; j++) {
+          expect(distance(goal.slots[i], goal.slots[j]), goal.color).toBeGreaterThanOrEqual(
+            2 * PIECE_RADIUS,
+          );
+        }
+      }
+    }
+  });
+
+  it('RF-013: los puestos de meta van en fila junto a la base, el primero a la izquierda', () => {
+    for (const goal of goals()) {
+      expect(goal.corners, goal.color).toHaveLength(3);
+      expect(goal.slots, goal.color).toHaveLength(4);
+      const [left, right, apex] = goal.corners;
+      const last = laneSquares().find((s) => s.color === goal.color && s.step === LANE_LENGTH)!;
+      const toLeft = leftOf(minus(goal.entry, last.center));
+      const heights = goal.slots.map((slot) => signedDistance(slot, left, right, apex));
+      expect(new Set(heights).size, goal.color).toBe(1);
+      expect(heights[0], goal.color).toBeLessThan(signedDistance(goal.center, left, right, apex));
+      for (let i = 1; i < goal.slots.length; i++) {
+        expect(dot(goal.slots[i - 1], toLeft), goal.color).toBeGreaterThan(
+          dot(goal.slots[i], toLeft),
+        );
+      }
     }
   });
 

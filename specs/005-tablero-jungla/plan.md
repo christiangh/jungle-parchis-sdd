@@ -98,3 +98,74 @@ Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar los pasos 1
 - **Medido (paso 7):** las puntas más altas de la copa de los seguros 5 y 63, y de sus equivalentes en cada brazo, llegan como mucho a 1 unidad por encima de la línea base del número del tablón vecino (6 y 64, y así en cada brazo). Son puntas sin grosor que no tapan el número; se deja como en el diseño.
 - **Sí (paso 7, CE-06):** revisión con Chrome headless y emulación de pantalla por el protocolo de DevTools (Chrome no baja de 504 px de ancho de ventana sin emulación). En 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080 el tamaño de desplazamiento del documento es igual al de la ventana (sin scroll) y el tablero queda entero dentro: 308, 308, 738 y 900 px de lado. Aspecto «claro» comprobado en las capturas.
 - **Observación:** a 320 px de ancho los números miden unos 4 px de alto. El contraste se cumple, pero la legibilidad a ese tamaño depende del zoom; queda para el SPEC de accesibilidad.
+
+## PARTE-02: Fichas
+
+**Estado:** En curso
+
+### Enfoque
+
+La traducción de posiciones es un módulo puro, `src/app/board/board-pieces.ts`, que recibe el estado del motor y devuelve, para cada ficha, su color y el punto del tablero donde se pinta (RF-014). Se apoya en la geometría de PARTE-01, que se amplía con dos datos: el eje de pareja de cada tablón (vector unitario hacia el lado de la ficha que llegó antes) y los 4 puestos de cada meta. El orden dentro de una casilla y en la meta sale de `arrivalOrder` del estado; en casa, del número de la ficha. `jp-board` recibe el estado con `input.required<GameState>()` y pinta las fichas en un grupo propio al final de la capa de juego, encima de todo, con un `computed()` que se recalcula al recibir un estado nuevo, sin animación (RF-015). `App` crea la partida nueva de 4 jugadores con `createGame` y se la pasa al tablero (RF-008).
+
+### Archivos
+
+- `src/app/board/board-geometry.ts`: eje de pareja en `TrackSquare` y `LaneSquare`, puestos en `Goal`, radio de ficha y separación de pareja.
+- `src/app/board/board-geometry.spec.ts`: tests del eje de pareja y de los puestos de meta.
+- `src/app/board/board-pieces.ts` (nuevo): traducción pura de posiciones del motor a puntos del tablero.
+- `src/app/board/board-pieces.spec.ts` (nuevo): tests de la traducción para cada casilla, pasillo, casa y meta.
+- `src/app/board/board-palette.ts`: clases del borde y del reborde de las fichas.
+- `src/app/board/board.ts`, `src/app/board/board.html`: entrada `state` y grupo de fichas.
+- `src/app/board/board.spec.ts`: helper `render(state)` con `setInput` y tests de fichas con estados construidos.
+- `src/app/app.ts`, `src/app/app.html`, `src/app/app.spec.ts`: partida nueva de 4 jugadores pasada al tablero.
+
+### Pasos
+
+- [x] 1. Tests de geometría en `board-geometry.spec.ts` con el esqueleto (eje `{ x: 0, y: 0 }` y metas sin puestos): en cada casilla del recorrido y del pasillo, el eje es unitario y paralelo al lado largo del tablón; en los tablones de columna apunta a la izquierda según el sentido de avance (de la casilla anterior a la siguiente); en los tablones centrales (68, 17, 34, 51) apunta a la casilla anterior; cada meta tiene 4 puestos dentro del triángulo, sin solaparse, en fila paralela a la base, y el primero a la izquierda según el avance del pasillo. Ejecutar y ver que fallan.
+- [ ] 2. Implementar el eje de pareja y los puestos de meta en `board-geometry.ts`; `pnpm test:once` en verde.
+- [ ] 3. Tests de `board-pieces.spec.ts` con el esqueleto (devuelve vacío): para cada casilla del recorrido y de cada pasillo, una ficha sola cae en su centro y una pareja queda dentro del tablón sin solaparse, la que llegó antes según `arrivalOrder` del lado del eje (CE-02); fichas en casa en el puesto de su número; fichas en meta en los puestos por orden de llegada; misma entrada, mismo punto. Ejecutar y ver que fallan.
+- [ ] 4. Implementar `board-pieces.ts`; `pnpm test:once` en verde.
+- [ ] 5. Tests de componente en `board.spec.ts` con el esqueleto de la entrada `state` (grupo de fichas vacío): `render(state)` con `setInput`; los tests de PARTE-01 pasan una partida nueva; escenarios de HU-02, HU-03 y HU-04 y casos límite (2 jugadores, estado nuevo tras otro). Localizan cada ficha por `data-piece` y comprueban su centro, su color y su borde. Ejecutar y ver que fallan.
+- [ ] 6. Implementar las fichas en `jp-board` (disco del color con borde oscuro y reborde claro) y la partida nueva en `App`; `app.spec.ts` con 16 fichas en casa. `pnpm test:once` en verde.
+- [ ] 7. Medir el contraste del borde de la ficha (RNF-004) sobre madera, seguro, salida, pasillo, casa y meta de cada color, ajustar lo mínimo y anotar los valores en «Decisiones técnicas»; revisar en el navegador con `pnpm start`. `pnpm check` en verde.
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+|----------|------|--------|
+| HU-02 c1 / RF-008 / RF-010 | 3-6 | «RF-008: la aplicación muestra una partida nueva de 4 jugadores» (`app.spec.ts`: 16 fichas, 4 por casa, puestos distintos); «RF-010: cada ficha en casa ocupa el puesto de su número» |
+| HU-02 c2 / RF-011 | 3-6 | «RF-011: una ficha sola cae en el centro de su casilla» (todas las casillas); componente: ficha roja sola en la 30, en el centro de la 30 |
+| HU-02 c3 / RF-011 | 3-6 | «RF-011: una ficha en el pasillo cae en el centro de su casilla»; componente: ficha azul en el paso 3 de su pasillo, en el centro del tercer tablón azul desde la entrada |
+| HU-02 c4 / RF-009 / RNF-004 | 5-7 | Componente: ficha amarilla en la 5 pintada con `fill-team-yellow`, borde oscuro y reborde claro; medición del paso 7 |
+| HU-02 c5 / RF-015 | 5, 6 | «RF-015: al recibir un estado nuevo la ficha aparece en su nueva posición» (`setInput` dos veces; sin animaciones ni transiciones) |
+| HU-03 c1 / RF-012 | 1-6 | «RF-012: una pareja queda dentro del tablón sin solaparse» (todas las casillas); componente: dos verdes en la 40 |
+| HU-03 c2 / RF-012 | 1-6 | «RF-012: la ficha que llegó antes va a la izquierda según el avance»; componente: roja y azul en el seguro 29, completas dentro del tablón y la que llegó antes del lado del eje |
+| HU-03 c3 / RF-012 | 1-6 | Unitario de pareja en cada casilla de cada pasillo; componente: dos amarillas en la misma casilla de su pasillo |
+| HU-04 c1 / RF-013 | 1-6 | «RF-013: hasta 4 fichas en meta, en puestos fijos, sin solaparse y dentro del triángulo»; componente: 4 azules en meta |
+| HU-04 c2 / RF-013 | 3-6 | «RF-013: la primera ficha en llegar ocupa el primer puesto»; componente: 1 roja en meta, en el primer puesto |
+| RF-009 | 5, 6 | Componente: cada ficha con la utilidad de su color, borde oscuro y reborde claro |
+| RF-014 | 3, 4 | «RF-014: la misma posición da siempre el mismo punto»; `board-pieces.ts` sin Angular |
+| RF-007 (caso límite) | 5, 6 | Componente: partida de 2 jugadores, casas de los ausentes vacías |
+| RNF-004 / CE-05 | 7 | Medición del contraste del borde con cada fondo, anotada en «Decisiones técnicas» |
+| RNF-006 | 1-7 | Lint de la frontera; diff sin cambios en `src/engine/` |
+| CE-02 | 3, 4 | Tests unitarios de ficha sola y pareja en cada casilla del recorrido y de cada pasillo |
+| CE-03 | 5, 6 | Tests de componente en casa, recorrido, pasillo, meta y pareja |
+| Hecho cuando | 7 | HU-02, HU-03 y HU-04 en verde; CE-02, CE-03 y CE-05 |
+
+Comandos: `pnpm test:once` durante cada paso, `pnpm check` al cerrar el paso 7 y la parte.
+
+### Skills y agentes
+
+- `frontend-design`: aspecto del disco, coherente con el diseño de referencia.
+- `run` / navegador: revisión del tablero con las fichas en el paso 7.
+- `context7`: documentación de `input()` y `setInput` en Angular 22 al escribir los pasos 5 y 6.
+- `caveman:cavecrew-reviewer`: revisión del diff al cerrar la parte.
+
+### Decisiones técnicas
+
+- **Sí:** pareja a lo largo del lado largo del tablón (120), con el eje de pareja calculado en la geometría. En el lado corto (40) no caben dos discos.
+- **Sí:** en los tablones de columna, la ficha que llegó antes a la izquierda según el sentido de avance (RF-012). En los tablones centrales (68, 17, 34 y 51), donde se avanza a lo largo del tablón, la que llegó antes en el extremo de donde se viene. Decisión del usuario.
+- **Sí:** un solo disco en casa, recorrido, pasillo y meta, de radio 17 con borde y reborde. Cabe en el tablón de 40 con margen. Decisión del usuario.
+- **Sí:** 4 puestos de meta en fila paralela a la base del triángulo, cerca del final del pasillo, el primero a la izquierda según el avance. Decisión del usuario.
+- **Sí:** orden de llegada leído de `arrivalOrder` del estado. Es el orden del motor (R-023), sin copia en la aplicación.
+- **Sí:** fichas en un grupo propio al final de la capa de juego. Quedan encima de casillas, seguros y metas (RF-005).
+- **Sí:** el estado entra al tablero con `input.required<GameState>()` y las fichas salen de un `computed()`. Sin animaciones ni transiciones (RF-015).
