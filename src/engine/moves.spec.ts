@@ -140,8 +140,9 @@ describe('legalMoves: avance', () => {
     expect(legalMoves(game)).toEqual([{ pieceId: 'blue-0', to: track(2) }]);
   });
 
-  it('R-040: avanza siempre hacia delante el número exacto de casillas', () => {
+  it('R-040, R-031: avanza siempre hacia delante las casillas de la tirada', () => {
     for (const roll of [1, 2, 3, 4, 5, 6]) {
+      const steps = roll === 6 ? 7 : roll;
       const game = buildGame({
         players: ['yellow', 'red'],
         turn: 'yellow',
@@ -149,7 +150,7 @@ describe('legalMoves: avance', () => {
         positions: { 'yellow-0': track(10), 'yellow-1': GOAL, 'yellow-2': GOAL, 'yellow-3': GOAL },
       });
 
-      expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(10 + roll) }]);
+      expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(10 + steps) }]);
     }
   });
 
@@ -304,7 +305,7 @@ describe('legalMoves: meta y rebote', () => {
       players: ['yellow', 'red'],
       turn: 'yellow',
       pendingRoll: 6,
-      positions: { 'yellow-0': lane(2), 'yellow-1': GOAL, 'yellow-2': GOAL, 'yellow-3': GOAL },
+      positions: { 'yellow-0': lane(2), 'yellow-1': GOAL, 'yellow-2': GOAL },
     });
 
     expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: GOAL }]);
@@ -328,7 +329,7 @@ describe('legalMoves: meta y rebote', () => {
       players: ['yellow', 'red'],
       turn: 'yellow',
       pendingRoll: 6,
-      positions: { 'yellow-0': lane(5), 'yellow-1': GOAL, 'yellow-2': GOAL, 'yellow-3': GOAL },
+      positions: { 'yellow-0': lane(5), 'yellow-1': GOAL, 'yellow-2': GOAL },
     });
 
     expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: lane(5) }]);
@@ -339,7 +340,7 @@ describe('legalMoves: meta y rebote', () => {
       players: ['yellow', 'red'],
       turn: 'yellow',
       pendingRoll: 6,
-      positions: { 'yellow-0': lane(7), 'yellow-1': GOAL, 'yellow-2': GOAL, 'yellow-3': GOAL },
+      positions: { 'yellow-0': lane(7), 'yellow-1': GOAL, 'yellow-2': GOAL },
     });
 
     expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: lane(3) }]);
@@ -354,7 +355,6 @@ describe('legalMoves: meta y rebote', () => {
         'yellow-0': lane(7),
         'yellow-1': lane(3),
         'yellow-2': lane(3),
-        'yellow-3': GOAL,
       },
     });
 
@@ -601,6 +601,68 @@ describe('legalMoves: barreras', () => {
   });
 });
 
+describe('legalMoves: el seis', () => {
+  it('R-031: sin fichas en casa, un 6 mueve 7 casillas', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: {
+        'yellow-0': track(10),
+        'yellow-1': track(30),
+        'yellow-2': track(40),
+        'yellow-3': GOAL,
+      },
+    });
+
+    expect(legalMoves(game)).toEqual([
+      { pieceId: 'yellow-0', to: track(17) },
+      { pieceId: 'yellow-1', to: track(37) },
+      { pieceId: 'yellow-2', to: track(47) },
+    ]);
+  });
+
+  it('R-031: con una ficha en casa, un 6 mueve 6 casillas', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: { 'yellow-0': track(10), 'yellow-2': GOAL, 'yellow-3': GOAL },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: track(16) }]);
+  });
+
+  it('R-031, R-061: un 6 que vale 7 no termina en una barrera', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: {
+        'yellow-0': track(10),
+        'yellow-1': GOAL,
+        'yellow-2': GOAL,
+        'yellow-3': GOAL,
+        'red-0': track(17),
+        'red-1': track(17),
+      },
+    });
+
+    expect(legalMoves(game)).toEqual([]);
+  });
+
+  it('R-031, R-071: desde la segunda casilla del pasillo, un 6 que vale 7 rebota a la séptima', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      pendingRoll: 6,
+      positions: { 'yellow-0': lane(2), 'yellow-1': GOAL, 'yellow-2': GOAL, 'yellow-3': GOAL },
+    });
+
+    expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-0', to: lane(7) }]);
+  });
+});
+
 describe('legalMoves: consulta', () => {
   it('HU-06: devuelve cada ficha movible con su casilla de destino', () => {
     const game = buildGame({
@@ -618,6 +680,7 @@ describe('legalMoves: consulta', () => {
 
   it('HU-06: una ficha en meta nunca aparece entre los movimientos legales', () => {
     for (const roll of [1, 2, 3, 4, 5, 6]) {
+      const steps = roll === 6 ? 7 : roll;
       const game = buildGame({
         players: ['yellow', 'red'],
         turn: 'yellow',
@@ -625,7 +688,7 @@ describe('legalMoves: consulta', () => {
         positions: { 'yellow-0': GOAL, 'yellow-1': track(20), 'yellow-2': GOAL, 'yellow-3': GOAL },
       });
 
-      expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-1', to: track(20 + roll) }]);
+      expect(legalMoves(game)).toEqual([{ pieceId: 'yellow-1', to: track(20 + steps) }]);
     }
   });
 
