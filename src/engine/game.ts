@@ -21,6 +21,10 @@ export interface GameState {
   readonly winner: Color | null;
   /** Ids of all pieces, from the one that moved longest ago to the last one to move (R-023). */
   readonly arrivalOrder: readonly PieceId[];
+  /** Sixes rolled one after another in the current turn, whether they moved or not (R-032). */
+  readonly sixesInRow: number;
+  /** Piece of the last move in the current turn, with a roll or a bonus (R-032). */
+  readonly lastMovedPiece: PieceId | null;
 }
 
 export type Result<T, E> =
@@ -68,6 +72,8 @@ export function createGame(config: GameConfig): Result<GameState, CreateGameErro
       pendingBonus: null,
       winner: null,
       arrivalOrder: pieces.map((piece) => piece.id),
+      sixesInRow: 0,
+      lastMovedPiece: null,
     },
   };
 }

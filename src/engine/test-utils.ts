@@ -34,6 +34,8 @@ export interface GameSetup {
   readonly turn?: Color;
   readonly pendingRoll?: number | null;
   readonly pendingBonus?: number | null;
+  readonly sixesInRow?: number;
+  readonly lastMovedPiece?: PieceId | null;
   /**
    * Pieces not listed stay at home. Listed pieces arrive in the order they are listed, after the
    * ones not listed (R-023).
@@ -55,6 +57,8 @@ export function buildGame(setup: GameSetup): GameState {
     ...result.value,
     pendingRoll: setup.pendingRoll ?? null,
     pendingBonus: setup.pendingBonus ?? null,
+    sixesInRow: setup.sixesInRow ?? 0,
+    lastMovedPiece: setup.lastMovedPiece ?? null,
     pieces: result.value.pieces.map((piece) => {
       const position = positions[piece.id];
       return position ? { ...piece, position } : piece;

@@ -34,6 +34,8 @@ export type GameEvent =
   | { readonly type: 'bonus-earned'; readonly player: Color; readonly amount: number }
   | { readonly type: 'bonus-lost'; readonly player: Color; readonly amount: number }
   | { readonly type: 'roll-lost'; readonly player: Color; readonly value: number }
+  | { readonly type: 'roll-again'; readonly player: Color }
+  | { readonly type: 'three-sixes'; readonly player: Color; readonly pieceId: PieceId | null }
   | { readonly type: 'turn-changed'; readonly player: Color }
   | { readonly type: 'game-over'; readonly winner: Color };
 

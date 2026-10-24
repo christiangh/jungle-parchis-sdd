@@ -152,18 +152,25 @@ describe('applyAction: mover', () => {
     expect(state.turn).toBe('blue');
   });
 
-  it('R-011: con un 6 se mueve 6 y el turno pasa como con cualquier valor', () => {
+  it('R-030: con un 6 se mueve 6 y se vuelve a tirar', () => {
     const game = buildGame({
       players: ['yellow', 'red'],
       turn: 'yellow',
-      pendingRoll: 6,
       positions: { 'yellow-0': track(10) },
     });
+    const rolled = applyOk(game, { type: 'roll', player: 'yellow', value: 6 }).state;
 
-    const { state } = applyOk(game, { type: 'move', player: 'yellow', pieceId: 'yellow-0' });
+    const { state, events } = applyOk(rolled, {
+      type: 'move',
+      player: 'yellow',
+      pieceId: 'yellow-0',
+    });
 
-    expect(state.pieces.find((piece) => piece.id === 'yellow-0')?.position).toEqual(track(16));
-    expect(state.turn).toBe('red');
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: track(10), to: track(16) },
+      { type: 'roll-again', player: 'yellow' },
+    ]);
+    expect(state.turn).toBe('yellow');
     expect(state.pendingRoll).toBeNull();
   });
 
@@ -603,6 +610,218 @@ describe('applyAction: premios', () => {
       { type: 'turn-changed', player: 'red' },
     ]);
     expect(state.pendingBonus).toBeNull();
+  });
+});
+
+describe('applyAction: el seis', () => {
+  const roll = (value: number): Action => ({ type: 'roll', player: 'yellow', value });
+  const move = (pieceId: PieceId): Action => ({ type: 'move', player: 'yellow', pieceId });
+  const positionOf = (state: GameState, pieceId: PieceId) =>
+    state.pieces.find((piece) => piece.id === pieceId)?.position;
+  /** Applies the actions in order and returns the outcome of the last one. */
+  const play = (game: GameState, ...actions: Action[]): ActionOutcome =>
+    actions.reduce<ActionOutcome>((outcome, action) => applyOk(outcome.state, action), {
+      state: game,
+      events: [],
+    });
+
+  it('R-030: un 6 sin movimiento legal se pierde y se vuelve a tirar', () => {
+    const game = buildGame({ players: ['yellow', 'red'], turn: 'yellow' });
+
+    const { state, events } = play(game, roll(6));
+
+    expect(events).toEqual([
+      { type: 'roll-lost', player: 'yellow', value: 6 },
+      { type: 'roll-again', player: 'yellow' },
+    ]);
+    expect(state.turn).toBe('yellow');
+    expect(state.pendingRoll).toBeNull();
+  });
+
+  it('R-030: un 6 que come vuelve a tirar después de usar el premio', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      positions: { 'yellow-0': track(10), 'red-0': track(16), 'yellow-1': track(30) },
+    });
+    const captured = play(game, roll(6), move('yellow-0')).state;
+
+    expectRejected(captured, roll(3), 'bonus-pending');
+    const { state, events } = play(captured, move('yellow-1'));
+
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-1', from: track(30), to: track(50) },
+      { type: 'roll-again', player: 'yellow' },
+    ]);
+    expect(state.turn).toBe('yellow');
+    expect(state.pendingBonus).toBeNull();
+  });
+
+  it('R-030: un 6 cuyo premio se pierde vuelve a tirar', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      positions: { 'yellow-0': lane(1) },
+    });
+
+    const { state, events } = play(game, roll(6), move('yellow-0'));
+
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: lane(1), to: GOAL },
+      { type: 'piece-reached-goal', pieceId: 'yellow-0' },
+      { type: 'bonus-earned', player: 'yellow', amount: 10 },
+      { type: 'bonus-lost', player: 'yellow', amount: 10 },
+      { type: 'roll-again', player: 'yellow' },
+    ]);
+    expect(state.turn).toBe('yellow');
+  });
+
+  it('R-030, R-081: tras un 6 se usan todos los premios encadenados antes de repetir', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      positions: {
+        'yellow-0': track(10),
+        'red-0': track(16),
+        'yellow-1': track(30),
+        'red-1': track(50),
+      },
+    });
+    const chained = play(game, roll(6), move('yellow-0'), move('yellow-1'));
+
+    expect(chained.events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-1', from: track(30), to: track(50) },
+      { type: 'piece-captured', pieceId: 'red-1', at: track(50) },
+      { type: 'bonus-earned', player: 'yellow', amount: 20 },
+    ]);
+    const { state, events } = play(chained.state, move('yellow-0'));
+
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: track(16), to: track(36) },
+      { type: 'roll-again', player: 'yellow' },
+    ]);
+    expect(state.turn).toBe('yellow');
+  });
+
+  it('R-090: un 6 que mete la cuarta ficha termina la partida sin repetir', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      positions: { 'yellow-0': lane(1), 'yellow-1': GOAL, 'yellow-2': GOAL, 'yellow-3': GOAL },
+    });
+
+    const { state, events } = play(game, roll(6), move('yellow-0'));
+
+    expect(events).toEqual([
+      { type: 'piece-advanced', pieceId: 'yellow-0', from: lane(1), to: GOAL },
+      { type: 'piece-reached-goal', pieceId: 'yellow-0' },
+      { type: 'game-over', winner: 'yellow' },
+    ]);
+    expect(state.winner).toBe('yellow');
+  });
+
+  it('R-021: tras repetir por un 6, un 5 obliga a salir de casa', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      positions: { 'yellow-0': track(10) },
+    });
+
+    const { state } = play(game, roll(6), move('yellow-0'), roll(5));
+
+    expect(legalMoves(state)).toEqual([{ pieceId: 'yellow-1', to: track(5) }]);
+  });
+
+  it('R-032: el tercer 6 devuelve a casa la última ficha movida y pasa el turno', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      sixesInRow: 2,
+      lastMovedPiece: 'yellow-0',
+      positions: { 'yellow-0': track(30), 'yellow-1': track(10) },
+    });
+
+    const { state, events } = play(game, roll(6));
+
+    expect(events).toEqual([
+      { type: 'three-sixes', player: 'yellow', pieceId: 'yellow-0' },
+      { type: 'turn-changed', player: 'red' },
+    ]);
+    expect(positionOf(state, 'yellow-0')).toEqual(HOME);
+    expect(positionOf(state, 'yellow-1')).toEqual(track(10));
+    expect(state.turn).toBe('red');
+    expect(state.pendingRoll).toBeNull();
+  });
+
+  it('R-032: la última ficha movida puede ser la de un premio', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      sixesInRow: 1,
+      positions: { 'yellow-0': track(10), 'red-0': track(16), 'yellow-1': track(30) },
+    });
+
+    const { state, events } = play(game, roll(6), move('yellow-0'), move('yellow-1'), roll(6));
+
+    expect(events).toEqual([
+      { type: 'three-sixes', player: 'yellow', pieceId: 'yellow-1' },
+      { type: 'turn-changed', player: 'red' },
+    ]);
+    expect(positionOf(state, 'yellow-1')).toEqual(HOME);
+    expect(positionOf(state, 'yellow-0')).toEqual(track(16));
+  });
+
+  it('R-032: la última ficha movida en el pasillo o en meta no vuelve a casa', () => {
+    for (const position of [lane(3), GOAL]) {
+      const game = buildGame({
+        players: ['yellow', 'red'],
+        turn: 'yellow',
+        sixesInRow: 2,
+        lastMovedPiece: 'yellow-0',
+        positions: { 'yellow-0': position, 'yellow-1': track(10) },
+      });
+
+      const { state, events } = play(game, roll(6));
+
+      expect(events).toEqual([
+        { type: 'three-sixes', player: 'yellow', pieceId: null },
+        { type: 'turn-changed', player: 'red' },
+      ]);
+      expect(positionOf(state, 'yellow-0')).toEqual(position);
+      expect(state.turn).toBe('red');
+    }
+  });
+
+  it('R-032: sin ficha movida en el turno, el tercer 6 solo pasa el turno', () => {
+    const game = buildGame({ players: ['yellow', 'red'], turn: 'yellow' });
+
+    const { state, events } = play(game, roll(6), roll(6), roll(6));
+
+    expect(events).toEqual([
+      { type: 'three-sixes', player: 'yellow', pieceId: null },
+      { type: 'turn-changed', player: 'red' },
+    ]);
+    expect(state.turn).toBe('red');
+  });
+
+  it('R-032: los seises seguidos se reinician con otro valor y al cambiar el turno', () => {
+    const game = buildGame({
+      players: ['yellow', 'red'],
+      turn: 'yellow',
+      positions: { 'yellow-0': track(10) },
+    });
+    const sixes = play(game, roll(6), move('yellow-0'), roll(6), move('yellow-0')).state;
+
+    expect(sixes.sixesInRow).toBe(2);
+    expect(sixes.lastMovedPiece).toBe('yellow-0');
+    const four = play(sixes, roll(4)).state;
+
+    expect(four.sixesInRow).toBe(0);
+    const { state, events } = play(four, move('yellow-0'));
+
+    expect(events).toContainEqual({ type: 'turn-changed', player: 'red' });
+    expect(state.sixesInRow).toBe(0);
+    expect(state.lastMovedPiece).toBeNull();
   });
 });
 
