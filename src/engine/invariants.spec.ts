@@ -2,10 +2,9 @@ import fc from 'fast-check';
 
 import { Action, applyAction } from './actions';
 import { COLORS, PIECES_PER_PLAYER } from './board';
-import { PieceId } from './game';
+import { createGame, PieceId } from './game';
 import {
   barrierHits,
-  buildGame,
   deepFreeze,
   GAME_FACTS,
   GameFact,
@@ -45,7 +44,6 @@ const anyAction: fc.Arbitrary<Action> = fc.oneof(
 
 const randomGame = fc.record({
   players: fc.shuffledSubarray([...COLORS], { minLength: 2 }),
-  firstPlayer: fc.nat(),
   rollSeed: fc.integer(),
   moveSeed: fc.integer(),
   afterEnd: fc.array(anyAction, { minLength: 1, maxLength: 5 }),
@@ -57,11 +55,15 @@ describe('invariantes', () => {
     () => {
       const facts = new Set<GameFact>();
       fc.assert(
-        fc.property(randomGame, ({ players, firstPlayer, rollSeed, moveSeed, afterEnd }) => {
-          const initial = buildGame({ players, turn: players[firstPlayer % players.length] });
+        fc.property(randomGame, ({ players, rollSeed, moveSeed, afterEnd }) => {
+          const created = createGame({ players });
+          if (!created.ok) {
+            throw new Error(`Invalid players: ${created.error}`);
+          }
           const random = seededRandom(moveSeed);
 
-          const played = playRandomGame(initial, seededRolls(rollSeed), (count) =>
+          // The initial roll phase is played with the same dice (R-010).
+          const played = playRandomGame(created.value, seededRolls(rollSeed), (count) =>
             Math.floor(random() * count),
           );
 

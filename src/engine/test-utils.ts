@@ -1,7 +1,7 @@
 // Helpers to build game states in engine tests. Pure TypeScript, not exported from index.ts.
 
 import { Action, ActionError, ActionOutcome, applyAction, GameEvent } from './actions';
-import { barriers } from './barriers';
+import { Barrier, barriers } from './barriers';
 import {
   Color,
   DIE_FACES,
@@ -224,7 +224,32 @@ function pieceOf(state: GameState, pieceId: PieceId): Piece {
  * counts as 7 if the player in turn has no pieces at home (R-031); null if nothing is pending.
  */
 export function moveSteps(state: GameState): number | null {
-  return state.pendingBonus ?? state.pendingRoll;
+  if (state.pendingBonus !== null) {
+    return state.pendingBonus;
+  }
+  return state.pendingRoll === SIX ? sixSteps(state) : state.pendingRoll;
+}
+
+const SIX = 6;
+
+const SIX_WITHOUT_HOME = 7;
+
+const MAX_SIXES_IN_ROW = 3;
+
+/** R-031, computed on its own instead of with moves.ts, so the properties do not share its mistakes. */
+function sixSteps(state: GameState): number {
+  const atHome = ownPieces(state, state.turn).some(({ position }) => position.kind === 'home');
+  return atHome ? SIX : SIX_WITHOUT_HOME;
+}
+
+/** Whether the next move uses a pending 6 roll, not a bonus. */
+function movesWithSix(state: GameState): boolean {
+  return state.pendingBonus === null && state.pendingRoll === SIX;
+}
+
+/** R-062: mixed barriers on a safe square do not belong to anyone. */
+function isOwnBarrier(state: GameState, barrier: Barrier): boolean {
+  return barrier.pieces.every((id) => pieceOf(state, id).color === state.turn);
 }
 
 /**
@@ -232,9 +257,45 @@ export function moveSteps(state: GameState): number | null {
  * player's color while a piece of one of those barriers could move. Mixed barriers do not count.
  */
 export function unopenedBarrier(before: GameState, action: Action): boolean {
-  void before;
-  void action;
-  return false;
+  if (action.type !== 'move' || !movesWithSix(before)) {
+    return false;
+  }
+  const all = barriers(before);
+  const blocked = new Set(all.map(({ square }) => square));
+  const steps = sixSteps(before);
+  const movable = all.filter(
+    (barrier) =>
+      isOwnBarrier(before, barrier) &&
+      canMove(before, blocked, pieceOf(before, barrier.pieces[0]), steps),
+  );
+  return movable.length > 0 && !movable.some(({ pieces }) => pieces.includes(action.pieceId));
+}
+
+/**
+ * R-041, R-042: a piece of a barrier is on the common track and moves at most 7 squares, so it
+ * never bounces (R-071) and only a barrier on its way or a full square can stop it.
+ */
+function canMove(
+  state: GameState,
+  blocked: ReadonlySet<number>,
+  piece: Piece,
+  steps: number,
+): boolean {
+  const hits = walkHits(blocked, piece, steps);
+  if (hits.passed.length > 0 || hits.end !== null) {
+    return false;
+  }
+  let position: Position = piece.position;
+  for (
+    let step = 1;
+    step <= steps && (position.kind === 'track' || position.kind === 'lane');
+    step++
+  ) {
+    position = stepForward(piece.color, position);
+  }
+  const key = squareKey(piece.color, position);
+  const occupants = state.pieces.filter((other) => squareKey(other.color, other.position) === key);
+  return key === null || occupants.length < MAX_PIECES_PER_SQUARE;
 }
 
 /**
@@ -244,8 +305,25 @@ export function unopenedBarrier(before: GameState, action: Action): boolean {
 export function thirdSixMoves(
   played: Pick<PlayedGame, 'states' | 'actions' | 'outcomes'>,
 ): number[] {
-  void played;
-  return [];
+  const moves: number[] = [];
+  // Counted from actions and events instead of read from sixesInRow, not to check the engine with
+  // itself.
+  let sixes = 0;
+  played.actions.forEach((action, index) => {
+    if (action.type === 'roll') {
+      sixes = action.value === SIX ? sixes + 1 : 0;
+    } else if (sixes >= MAX_SIXES_IN_ROW && movesWithSix(played.states[index])) {
+      moves.push(index);
+    }
+    // A new turn starts counting again, even if the same player keeps playing.
+    const newTurn = played.outcomes[index].events.some(
+      ({ type }) => type === 'turn-changed' || type === 'first-player',
+    );
+    if (newTurn) {
+      sixes = 0;
+    }
+  });
+  return moves;
 }
 
 /** Facts that random games must produce at least once (CE-03 of SPEC 002, SPEC 003 and SPEC 004). */
@@ -342,6 +420,12 @@ function actionFacts(
       if (blocked) {
         facts.push('bonus-lost-to-barrier');
       }
+    } else if (event.type === 'roll-again') {
+      facts.push('roll-again');
+    } else if (event.type === 'three-sixes') {
+      facts.push(event.pieceId === null ? 'three-sixes-no-piece-home' : 'three-sixes-piece-home');
+    } else if (event.type === 'initial-roll-tie') {
+      facts.push('initial-roll-tie');
     }
   });
   const piece = action.type === 'move' ? pieceOf(before, action.pieceId) : undefined;
@@ -349,8 +433,19 @@ function actionFacts(
   if (before.pendingBonus === CAPTURE_BONUS && piece?.position.kind === 'lane') {
     facts.push('multiple-bounce');
   }
+  if (piece !== undefined && movesWithSix(before)) {
+    if (sixSteps(before) === SIX_WITHOUT_HOME) {
+      facts.push('six-counts-seven');
+    }
+    const fromOwnBarrier = barriersBefore.some(
+      (barrier) => isOwnBarrier(before, barrier) && barrier.pieces.includes(piece.id),
+    );
+    if (fromOwnBarrier) {
+      facts.push('barrier-opened-by-six');
+    }
+  }
   // Without leaving home, the engine has walked every own piece with the same steps (R-021).
-  const steps = before.pendingBonus ?? before.pendingRoll;
+  const steps = moveSteps(before);
   if (piece !== undefined && piece.position.kind !== 'home' && steps !== null) {
     const blocked = ownPieces(before, piece.color)
       .filter(({ id }) => id !== piece.id)
@@ -390,17 +485,20 @@ function hasAllPieces(state: GameState): boolean {
 function hasOvercrowdedSquare(state: GameState): boolean {
   const counts = new Map<string, number>();
   for (const { color, position } of state.pieces) {
-    const key =
-      position.kind === 'track'
-        ? `track-${position.square}`
-        : position.kind === 'lane'
-          ? `lane-${color}-${position.square}`
-          : null;
+    const key = squareKey(color, position);
     if (key !== null) {
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
   }
   return [...counts.values()].some((count) => count > MAX_PIECES_PER_SQUARE);
+}
+
+/** Identifies a track square, or a lane square of a color; null for home and goal. */
+function squareKey(color: Color, position: Position): string | null {
+  if (position.kind === 'track') {
+    return `track-${position.square}`;
+  }
+  return position.kind === 'lane' ? `lane-${color}-${position.square}` : null;
 }
 
 /** I-03: lane positions carry no color, so a piece is in its own lane if the square exists. */
