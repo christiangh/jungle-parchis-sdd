@@ -1,0 +1,26 @@
+<button
+  type="button"
+  class="block size-full rounded-[18%] focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-default"
+  [class]="
+    canRoll()
+      ? ['cursor-pointer', 'motion-safe:animate-dice-pulse', glow()]
+      : rolling()
+        ? ['motion-safe:animate-dice-spin']
+        : []
+  "
+  [disabled]="!canRoll()"
+  [attr.aria-label]="'Dado, cara ' + face()"
+  (click)="roll.emit()"
+>
+  @for (n of faces; track n) {
+    <img
+      class="size-full"
+      [ngSrc]="'/dice/dado-cara-' + n + '.svg'"
+      width="512"
+      height="512"
+      loading="eager"
+      alt=""
+      [hidden]="n !== face()"
+    />
+  }
+</button>

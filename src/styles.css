@@ -51,6 +51,33 @@
 
   /* Loading color of the jungle background tile (docs/design/fondo-jungla). */
   --color-jungle: #264018;
+
+  /* Dice on the central log (RF-008, RF-009): the spin lasts DICE_SPIN_MS. */
+  --animate-dice-spin: dice-spin 0.5s ease-out;
+  --animate-dice-pulse: dice-pulse 1.4s ease-in-out infinite;
+
+  @keyframes dice-spin {
+    0% {
+      transform: rotate(0) scale(1);
+    }
+    50% {
+      transform: rotate(360deg) scale(0.8);
+    }
+    100% {
+      transform: rotate(720deg) scale(1);
+    }
+  }
+
+  /* Glow in the colour set in --dice-glow by the component; no transform, so the button keeps still. */
+  @keyframes dice-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 var(--dice-glow);
+    }
+    50% {
+      box-shadow: 0 0 1rem 0.5rem var(--dice-glow);
+    }
+  }
 }
 
 /* Seamless jungle tile shown at 600 px, or 400 px on narrow screens (RF-001). */
