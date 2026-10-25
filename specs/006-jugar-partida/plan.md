@@ -32,7 +32,7 @@ Como en el motor (P-07), cada paso de código va precedido de su paso de tests: 
 ### Pasos
 
 - [x] 1. Fondo y recursos: copiar las imágenes del fondo y las caras del dado a `public/`, añadir el token `--color-jungle` y la utilidad `bg-jungle-tile`, con la versión de 800 por debajo de 600 px de ancho y el color de carga detrás (RF-001, RNF-007, RNF-009).
-- [ ] 2. Tests de `DiceRoller` y `GameStore`, con un esqueleto que compila y los hace fallar: valores de 1 a 6, partida nueva de 4, tirada aplicada al terminar el giro de 500 ms, sin giro con movimiento reducido, toques ignorados mientras gira o cuando no toca tirar, acción rechazada sin cambiar el estado y tirada inicial con desempate.
+- [x] 2. Tests de `DiceRoller` y `GameStore`, con un esqueleto que compila y los hace fallar: valores de 1 a 6, partida nueva de 4, tirada aplicada al terminar el giro de 500 ms, sin giro con movimiento reducido, toques ignorados mientras gira o cuando no toca tirar, acción rechazada sin cambiar el estado y tirada inicial con desempate.
 - [ ] 3. `DiceRoller` y `GameStore`, hasta que pasen los tests del paso 2 (RF-009, RF-010, RF-011, RF-021, RF-022, RNF-002, RNF-003).
 - [ ] 4. Tests de `headline(state)`, con un esqueleto que falla: tirada inicial, tirar, elegir ficha con el valor, usar el premio y ganador.
 - [ ] 5. `headline(state)` y nombres de los colores, hasta que pasen los tests del paso 4 (RF-004).
