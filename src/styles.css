@@ -73,3 +73,30 @@
     background-size: 400px 400px;
   }
 }
+
+/* Ink outline around light text, after the painted signs of docs/design/alerta-info (RNF-001). */
+@utility text-outline-ink {
+  text-shadow:
+    -2px -2px 0 var(--color-ink),
+    0 -2px 0 var(--color-ink),
+    2px -2px 0 var(--color-ink),
+    2px 0 0 var(--color-ink),
+    2px 2px 0 var(--color-ink),
+    0 2px 0 var(--color-ink),
+    -2px 2px 0 var(--color-ink),
+    -2px 0 0 var(--color-ink),
+    0 4px 2px var(--color-ink);
+}
+
+/* Wood grain and bevel over a painted plank, on top of its background colour. */
+@utility bg-plank {
+  background-image:
+    linear-gradient(to bottom, rgb(255 255 255 / 0.18), transparent 35%, rgb(0 0 0 / 0.18)),
+    repeating-linear-gradient(
+      178deg,
+      transparent 0 10px,
+      rgb(0 0 0 / 0.07) 10px 12px,
+      transparent 12px 19px,
+      rgb(255 255 255 / 0.08) 19px 20px
+    );
+}

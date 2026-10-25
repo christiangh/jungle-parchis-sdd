@@ -37,7 +37,7 @@ Como en el motor (P-07), cada paso de código va precedido de su paso de tests: 
 - [x] 4. Tests de `headline(state)`, con un esqueleto que falla: tirada inicial, tirar, elegir ficha con el valor, usar el premio y ganador.
 - [x] 5. `headline(state)` y nombres de los colores, hasta que pasen los tests del paso 4 (RF-004).
 - [x] 6. Tests de `jp-turn-banner`, con un componente vacío: clases de fondo y círculo del color de cada jugador, título e instrucción.
-- [ ] 7. `jp-turn-banner`: cartel en el color del jugador, con su círculo y el texto en blanco con contorno de tinta, hasta que pasen los tests del paso 6; medición del contraste con los cuatro colores (RF-003, RNF-001).
+- [x] 7. `jp-turn-banner`: cartel en el color del jugador, con su círculo y el texto en blanco con contorno de tinta, hasta que pasen los tests del paso 6; medición del contraste con los cuatro colores (RF-003, RNF-001).
 - [ ] 8. Tests de `jp-dice`, con un componente vacío: cara de `face`, cara inicial, latido en el color del jugador y botón activo solo con `canRoll`, giro mientras `rolling`, animaciones solo con `motion-safe:` y salida `roll`.
 - [ ] 9. `jp-dice`, hasta que pasen los tests del paso 8 (RF-007, RF-008, RNF-002).
 - [ ] 10. Tests de la aplicación con un `DiceRoller` fijo que recorren HU-01, HU-02 y HU-03: fondo, cabecera antes del tablero, dado sobre el tablero, tirada inicial con desempate y primera tirada de un jugador. Fallan con la pantalla actual.
@@ -99,7 +99,9 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** cara 6 antes de la primera tirada (supuesto del spec que deja la elección al plan).
 - **Sí:** textos del cartel: «Tirada inicial · Amarillo» / «Toca el dado»; «Turno de Rojo» / «Toca el dado»; «Turno de Rojo · 4» / «Elige una ficha iluminada»; «Turno de Rojo» / «Usa tu +20»; «Gana Rojo», sin instrucción.
 - **Sí:** `headline` mira el estado en este orden: ganador, tirada inicial, premio pendiente, tirada pendiente y, si no hay nada, tirar. El premio va antes que la tirada, como en `legalMoves` del motor.
-- **Sí:** texto del cartel en blanco con contorno de tinta (`--color-ink`), como el diseño. El blanco solo sobre el amarillo no llega a 4,5:1; con el contorno, el contraste que cuenta es el del texto con su contorno, que lo rodea entero. La medición de los cuatro colores se anota aquí en el paso 4.
+- **Sí:** texto del cartel en blanco con contorno de tinta (`--color-ink`), como el diseño. El blanco solo sobre el amarillo no llega a 4,5:1; con el contorno, el contraste que cuenta es el del texto con su contorno, que lo rodea entero.
+- **Medición del contraste (RNF-001), paso 7:** el blanco sobre el cartel da 1,96:1 en amarillo, 4,48:1 en azul, 4,83:1 en rojo y 4,25:1 en verde; sin contorno, solo el rojo llega a 4,5:1. El contorno de tinta es de 2 px en las 8 direcciones, y el blanco contra la tinta da 14,51:1 en los cuatro colores.
+- **Sí:** `TEAM_BG` y `TEAM_DARK_BORDER` viven en `turn-banner.ts`, porque las clases de `board-palette.ts` son de relleno SVG (`fill-*`) y no sirven en HTML.
 - **Sí:** el contorno se hace con `text-shadow` en 8 direcciones, no con `-webkit-text-stroke` y `paint-order`, que en HTML no todos los navegadores pintan por fuera de la letra.
 - **Sí:** `waitsForRoll(state)` como función pura exportada, que da `canRoll` junto con `rolling`. Así el premio pendiente y el ganador se prueban sin recorrer una partida entera.
 - **Sí:** el almacén expone ya `legalMoves` y `lastEvents`, como pide RF-021; los usarán PARTE-02 y PARTE-03.
