@@ -6,7 +6,7 @@
 
 ## PARTE-01: Pantalla, dado y tirada inicial
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
@@ -84,7 +84,7 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 ### Skills y agentes
 
 - `caveman:cavecrew-reviewer`: revisión del diff al cerrar la parte, si el usuario la pide.
-- `run` o `claude-in-chrome`: revisión en navegador del paso 6 a los 4 tamaños.
+- `run` o `claude-in-chrome`: revisión en navegador del paso 11 a los 4 tamaños.
 
 ### Decisiones técnicas
 
