@@ -10,7 +10,7 @@ Las reglas del juego están en [`specs/reglamento.md`](specs/reglamento.md), con
 
 - La constitución (`P-NN`) prevalece sobre todo lo demás. Los specs citan las reglas del reglamento por su identificador (`R-NNN`, `I-NN`) y no las redefinen.
 - Los specs se crean con `/cgh-sdd:cgh-spec` y se implementan con `/cgh-sdd:cgh-spec-impl`. Cada uno vive en `specs/NNN-slug/`, con su `spec.md` y su `plan.md`.
-- En el plan, cada paso de código del motor va precedido de su paso de tests (P-07). Los tests llevan en el nombre el identificador de la regla o del requisito que prueban, por ejemplo `R-050: …` o `RF-005: …`.
+- En el plan, cada paso de código del motor o de la lógica de la app (estado, derivaciones y funciones puras) va precedido de su propio paso de tests, que se ejecutan y se ven fallar antes de implementar (P-07). Plantillas, estilos y recursos visuales pueden probarse en el mismo paso. Los tests llevan en el nombre el identificador de la regla o del requisito que prueban, por ejemplo `R-050: …` o `RF-005: …`.
 - El código del motor solo importa archivos del propio motor; sus tests pueden usar además `vitest` y `fast-check`. La aplicación importa el motor solo con el alias `@engine`. Lo comprueba ESLint.
 - En `src/app/`, cada archivo agrupa un concepto con sus tipos y constantes, como recomienda la guía de estilo de Angular; lo compartido entre dominios va en `src/app/shared/`. Los componentes llevan el prefijo `jp-`.
 - La paleta se define como tokens `@theme` de Tailwind en `src/styles.css`; en `src/app/` no hay colores en hexadecimal.
