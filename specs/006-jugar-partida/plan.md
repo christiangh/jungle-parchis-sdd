@@ -38,7 +38,7 @@ Como en el motor (P-07), cada paso de código va precedido de su paso de tests: 
 - [x] 5. `headline(state)` y nombres de los colores, hasta que pasen los tests del paso 4 (RF-004).
 - [x] 6. Tests de `jp-turn-banner`, con un componente vacío: clases de fondo y círculo del color de cada jugador, título e instrucción.
 - [x] 7. `jp-turn-banner`: cartel en el color del jugador, con su círculo y el texto en blanco con contorno de tinta, hasta que pasen los tests del paso 6; medición del contraste con los cuatro colores (RF-003, RNF-001).
-- [ ] 8. Tests de `jp-dice`, con un componente vacío: cara de `face`, cara inicial, latido en el color del jugador y botón activo solo con `canRoll`, giro mientras `rolling`, animaciones solo con `motion-safe:` y salida `roll`.
+- [x] 8. Tests de `jp-dice`, con un componente vacío: cara de `face`, cara inicial, latido en el color del jugador y botón activo solo con `canRoll`, giro mientras `rolling`, animaciones solo con `motion-safe:` y salida `roll`.
 - [ ] 9. `jp-dice`, hasta que pasen los tests del paso 8 (RF-007, RF-008, RNF-002).
 - [ ] 10. Tests de la aplicación con un `DiceRoller` fijo que recorren HU-01, HU-02 y HU-03: fondo, cabecera antes del tablero, dado sobre el tablero, tirada inicial con desempate y primera tirada de un jugador. Fallan con la pantalla actual.
 - [ ] 11. Montar la pantalla: cabecera con el cartel encima del tablero y dado sobre el tronco, sin scroll, hasta que pasen los tests del paso 10; revisión en navegador a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080, y con las imágenes del fondo bloqueadas (RF-002, HU-01, HU-02, HU-03, RNF-004).
