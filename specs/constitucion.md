@@ -17,7 +17,7 @@ Criterio para decidir dónde va algo: si seguiría siendo cierto jugando en un t
 ## 2. Calidad
 
 - **P-06 · Toda regla tiene test.** Cada regla del reglamento que se implementa tiene al menos un test, y el nombre del test incluye su identificador (`R-012`).
-- **P-07 · Tests primero en el motor.** En el motor, los tests de los escenarios del spec se escriben antes que el código y deben fallar antes de implementarlo.
+- **P-07 · Tests primero.** En el motor y en la lógica de la aplicación (estado, derivaciones y funciones puras), los tests de los escenarios del spec se escriben antes que el código y se ejecutan para comprobar que fallan en sus aserciones, no por errores de compilación. Solo entonces se implementa. Las plantillas, los estilos y los recursos puramente visuales pueden probarse después, en el mismo paso.
 - **P-08 · Invariantes globales.** Existe un conjunto de invariantes del juego probados con tests basados en propiedades (fast-check) sobre partidas aleatorias. Ninguna feature puede romperlos.
 - **P-09 · Sin trampas.** Nunca se desactivan, saltan ni debilitan tests, aserciones o reglas de lint para que algo pase.
 - **P-10 · La frontera se comprueba.** Los principios P-01 y P-02 se hacen cumplir con reglas de lint, no solo con revisión.
