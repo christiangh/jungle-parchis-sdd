@@ -36,7 +36,7 @@ Como en el motor (P-07), cada paso de código va precedido de su paso de tests: 
 - [x] 3. `DiceRoller` y `GameStore`, hasta que pasen los tests del paso 2 (RF-009, RF-010, RF-011, RF-021, RF-022, RNF-002, RNF-003).
 - [x] 4. Tests de `headline(state)`, con un esqueleto que falla: tirada inicial, tirar, elegir ficha con el valor, usar el premio y ganador.
 - [x] 5. `headline(state)` y nombres de los colores, hasta que pasen los tests del paso 4 (RF-004).
-- [ ] 6. Tests de `jp-turn-banner`, con un componente vacío: clases de fondo y círculo del color de cada jugador, título e instrucción.
+- [x] 6. Tests de `jp-turn-banner`, con un componente vacío: clases de fondo y círculo del color de cada jugador, título e instrucción.
 - [ ] 7. `jp-turn-banner`: cartel en el color del jugador, con su círculo y el texto en blanco con contorno de tinta, hasta que pasen los tests del paso 6; medición del contraste con los cuatro colores (RF-003, RNF-001).
 - [ ] 8. Tests de `jp-dice`, con un componente vacío: cara de `face`, cara inicial, latido en el color del jugador y botón activo solo con `canRoll`, giro mientras `rolling`, animaciones solo con `motion-safe:` y salida `roll`.
 - [ ] 9. `jp-dice`, hasta que pasen los tests del paso 8 (RF-007, RF-008, RNF-002).
