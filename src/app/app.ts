@@ -1,22 +1,18 @@
-import { Component } from '@angular/core';
-import { COLORS, createGame, GameState } from '@engine';
+import { Component, computed, inject } from '@angular/core';
 import { Board } from './board/board';
+import { Dice } from './game/dice';
+import { GameStore } from './game/game-store';
+import { headline } from './game/headline';
+import { TurnBanner } from './game/turn-banner';
 
-/** New game with the four players (RF-008). */
-function newGame(): GameState {
-  const game = createGame({ players: COLORS });
-  if (!game.ok) {
-    throw new Error(game.error);
-  }
-  return game.value;
-}
-
+/** Game screen: jungle background, turn banner and board with the dice on its log (RF-002). */
 @Component({
-  imports: [Board],
+  imports: [Board, Dice, TurnBanner],
   selector: 'jp-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
 })
 export class App {
-  protected readonly state = newGame();
+  protected readonly store = inject(GameStore);
+  protected readonly headline = computed(() => headline(this.store.state()));
 }

@@ -41,7 +41,7 @@ Como en el motor (P-07), cada paso de código va precedido de su paso de tests: 
 - [x] 8. Tests de `jp-dice`, con un componente vacío: cara de `face`, cara inicial, latido en el color del jugador y botón activo solo con `canRoll`, giro mientras `rolling`, animaciones solo con `motion-safe:` y salida `roll`.
 - [x] 9. `jp-dice`, hasta que pasen los tests del paso 8 (RF-007, RF-008, RNF-002).
 - [x] 10. Tests de la aplicación con un `DiceRoller` fijo que recorren HU-01, HU-02 y HU-03: fondo, cabecera antes del tablero, dado sobre el tablero, tirada inicial con desempate y primera tirada de un jugador. Fallan con la pantalla actual.
-- [ ] 11. Montar la pantalla: cabecera con el cartel encima del tablero y dado sobre el tronco, sin scroll, hasta que pasen los tests del paso 10; revisión en navegador a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080, y con las imágenes del fondo bloqueadas (RF-002, HU-01, HU-02, HU-03, RNF-004).
+- [x] 11. Montar la pantalla: cabecera con el cartel encima del tablero y dado sobre el tronco, sin scroll, hasta que pasen los tests del paso 10; revisión en navegador a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080, y con las imágenes del fondo bloqueadas (RF-002, HU-01, HU-02, HU-03, RNF-004).
 
 ### Pruebas y trazabilidad
 
@@ -113,3 +113,4 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** el tablero ocupa el hueco que deja la cabecera con un contenedor `container-type: size` y un ancho `min(100cqw, 100cqh, 900px)`. En apaisado bajo (`orientation: landscape` y alto ≤ 480 px), la cabecera pasa a la izquierda, con un ancho máximo del 40 %.
 - **Sí:** en `app.spec.ts` los temporizadores falsos se activan después del primer `whenStable`, que con ellos no termina nunca.
 - **Sí:** los dos tests que ya había en `app.spec.ts` pasan a tener el nombre en español, como el resto.
+- **Revisión en navegador, paso 11:** sin scroll en ningún tamaño. Tablero de 304 px a 320 × 568 y a 568 × 320 (con la cabecera a la izquierda), de 736 px a 768 × 1024 y de 900 px a 1920 × 1080; el dado mide un 10 % del tablero y queda sobre el tronco. Con las imágenes del fondo bloqueadas se ve el color de carga `--color-jungle` y todo sigue legible.
