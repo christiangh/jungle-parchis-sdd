@@ -48,4 +48,28 @@
   --color-canopy-light: #62a03d;
 
   --color-page: #f5ead8;
+
+  /* Loading color of the jungle background tile (docs/design/fondo-jungla). */
+  --color-jungle: #264018;
+}
+
+/* Seamless jungle tile shown at 600 px, or 400 px on narrow screens (RF-001). */
+@utility bg-jungle-tile {
+  background-image: url('/background/fondo-jungla-1200.jpg');
+  background-image: image-set(
+    url('/background/fondo-jungla-1200.webp') type('image/webp'),
+    url('/background/fondo-jungla-1200.jpg') type('image/jpeg')
+  );
+  background-size: 600px 600px;
+  background-repeat: repeat;
+  background-position: center;
+
+  @media (width < 600px) {
+    background-image: url('/background/fondo-jungla-800.jpg');
+    background-image: image-set(
+      url('/background/fondo-jungla-800.webp') type('image/webp'),
+      url('/background/fondo-jungla-800.jpg') type('image/jpeg')
+    );
+    background-size: 400px 400px;
+  }
 }
