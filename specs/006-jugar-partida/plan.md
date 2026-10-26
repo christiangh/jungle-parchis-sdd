@@ -298,7 +298,7 @@ Como en las partes anteriores, cada paso de código va precedido de su paso de t
   - Tirada sin movimientos: la línea dice que pierde la tirada y de quién es el turno (HU-07.1).
   - Una acción nueva sustituye la frase anterior (HU-07.5).
   - La línea va dentro de la cabecera, tras el cartel, en blanco sobre `bg-ink` y con `aria-live="polite"`.
-- [ ] 4. Tests en navegador, que fallan porque la línea aún no se pinta:
+- [x] 4. Tests en navegador, que fallan porque la línea aún no se pinta:
   - `fixDice` y los tres escenarios de RF-023: tirada inicial con empate, salir con un 5, mover, cambiar la selección, cancelarla tocando fuera y confirmar en la réplica; comer, dado inactivo con el +20 pendiente y usarlo; tirada perdida, repetir con un 6 y tres seises, con su línea.
   - La pantalla cabe sin scroll a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080: el documento no desborda la ventana y el tablero y el cartel están enteros dentro (CE-08).
 - [ ] 5. Pintar la línea en `App` y ajustar el comentario de `playwright.config.ts`, hasta que pasen los tests de los pasos 3 y 4; revisión en navegador a los 4 tamaños con frases largas y medición del contraste de la línea (HU-07, HU-09, RNF-001, RNF-004).
