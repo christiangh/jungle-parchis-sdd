@@ -154,7 +154,7 @@ Como en PARTE-01, cada paso de código va precedido de su paso de tests, con un 
 
 ### Pasos
 
-- [ ] 1. Tests de la selección en el `GameStore`, con `selected`, `select`, `confirm` y `cancel` vacíos, que fallan:
+- [x] 1. Tests de la selección en el `GameStore`, con `selected`, `select`, `confirm` y `cancel` vacíos, que fallan:
   - `select` no hace nada con una ficha sin movimiento legal, ni mientras gira el dado, ni sin tirada ni premio pendientes.
   - Tocar otra resaltada cambia la selección, y tocar la seleccionada la cancela.
   - `cancel` no cambia el estado ni `legalMoves`.

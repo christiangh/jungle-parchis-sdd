@@ -1,5 +1,14 @@
 import { computed, DOCUMENT, inject, Service, signal } from '@angular/core';
-import { Action, applyAction, COLORS, createGame, GameEvent, GameState, legalMoves } from '@engine';
+import {
+  Action,
+  applyAction,
+  COLORS,
+  createGame,
+  GameEvent,
+  GameState,
+  legalMoves,
+  PieceId,
+} from '@engine';
 import { DiceRoller } from './dice-roller';
 
 /** How long the dice spins before the roll is applied (RF-009, RNF-003). */
@@ -42,6 +51,20 @@ export class GameStore {
   readonly face = this.face$.asReadonly();
   readonly rolling = this.rolling$.asReadonly();
   readonly canRoll = computed(() => !this.rolling$() && waitsForRoll(this.state$()));
+  /** Highlighted piece the player touched; it does not exist in the engine. */
+  readonly selected = signal<PieceId | null>(null).asReadonly();
+
+  select(pieceId: PieceId): void {
+    throw new Error(`Not implemented: ${pieceId}`);
+  }
+
+  cancel(): void {
+    throw new Error('Not implemented');
+  }
+
+  confirm(): void {
+    throw new Error('Not implemented');
+  }
 
   /** Rolls the dice for the player in turn, also in the initial roll phase (RF-009, RF-011). */
   roll(): void {
