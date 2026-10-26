@@ -336,24 +336,152 @@
     }
     <g data-pieces>
       @for (piece of pieces(); track piece.id) {
-        <g [attr.data-piece]="piece.id" [attr.data-color]="piece.color">
+        <g
+          [attr.data-piece]="piece.id"
+          [attr.data-color]="piece.color"
+          [attr.data-mode]="piece.mode"
+          [class.opacity-40]="piece.mode === 'dimmed'"
+        >
+          @if (piece.halo) {
+            <circle
+              data-part="halo"
+              [attr.cx]="piece.center.x"
+              [attr.cy]="piece.center.y"
+              [attr.r]="piece.rimRadius + 4"
+              class="fill-none stroke-sun motion-safe:animate-piece-halo"
+              stroke-width="5"
+            />
+          }
           <circle
             data-part="rim"
             [attr.cx]="piece.center.x"
             [attr.cy]="piece.center.y"
-            [attr.r]="pieceRadius"
+            [attr.r]="piece.rimRadius"
             class="fill-white"
           />
           <circle
             data-part="disc"
             [attr.cx]="piece.center.x"
             [attr.cy]="piece.center.y"
-            [attr.r]="discRadius"
+            [attr.r]="piece.discRadius"
             [class]="piece.fill + ' stroke-ink'"
             stroke-width="3"
           />
         </g>
       }
     </g>
+
+    @if (ghost(); as ghost) {
+      <g [attr.data-ghost]="ghost.pieceId" [attr.data-color]="ghost.color">
+        @if (ghost.pair; as pair) {
+          <g [attr.data-mark]="pair.kind" [attr.transform]="ghost.pairTransform">
+            @if (pair.kind === 'bridge') {
+              <rect
+                x="-6"
+                y="-15"
+                width="12"
+                height="30"
+                rx="2"
+                class="fill-wood stroke-wood-edge"
+                stroke-width="1.5"
+              />
+              <path d="M-6 -5H6M-6 5H6" class="stroke-wood-line" stroke-width="1.5" />
+            } @else {
+              <path
+                d="M0 -15C8 -8 8 8 0 15C-8 8 -8 -8 0 -15Z"
+                class="fill-canopy stroke-canopy-dark"
+                stroke-width="1.5"
+              />
+              <path d="M0 -12V12" class="stroke-canopy-dark" stroke-width="1.2" />
+            }
+          </g>
+        }
+        <g data-part="ghost-piece" class="opacity-60">
+          <circle
+            [attr.cx]="ghost.center.x"
+            [attr.cy]="ghost.center.y"
+            [attr.r]="pieceRadius"
+            class="fill-white"
+          />
+          <circle
+            [attr.cx]="ghost.center.x"
+            [attr.cy]="ghost.center.y"
+            [attr.r]="pieceRadius - 4"
+            [class]="ghost.fill + ' stroke-ink'"
+            stroke-width="3"
+            stroke-dasharray="5 4"
+          />
+        </g>
+        @if (ghost.captures) {
+          <g data-mark="target">
+            <circle
+              [attr.cx]="ghost.badge.x"
+              [attr.cy]="ghost.badge.y"
+              r="14"
+              class="fill-team-red stroke-white"
+              stroke-width="2.5"
+            />
+            <circle
+              [attr.cx]="ghost.badge.x"
+              [attr.cy]="ghost.badge.y"
+              r="9"
+              class="fill-none stroke-white/60"
+              stroke-width="1"
+            />
+            <text
+              [attr.x]="ghost.badge.x"
+              [attr.y]="ghost.badge.y + 4"
+              text-anchor="middle"
+              font-family="system-ui, sans-serif"
+              font-weight="800"
+              font-size="11"
+              class="fill-white"
+            >
+              +20
+            </text>
+          </g>
+        }
+        @if (ghost.reachesGoal) {
+          <g data-mark="sun">
+            <circle [attr.cx]="ghost.badge.x" [attr.cy]="ghost.badge.y" r="17" class="fill-sun" />
+            <circle
+              [attr.cx]="ghost.badge.x"
+              [attr.cy]="ghost.badge.y"
+              r="13"
+              class="fill-team-yellow stroke-ink"
+              stroke-width="1.5"
+            />
+            <text
+              [attr.x]="ghost.badge.x"
+              [attr.y]="ghost.badge.y + 4"
+              text-anchor="middle"
+              font-family="system-ui, sans-serif"
+              font-weight="800"
+              font-size="11"
+              class="fill-ink"
+            >
+              +10
+            </text>
+          </g>
+        }
+      </g>
+    }
   </g>
+</svg>
+
+<svg viewBox="-40 -40 1080 1080" data-layer="touch" class="absolute inset-0 size-full">
+  @for (area of touchAreas(); track area.target) {
+    <polygon
+      [attr.data-touch]="area.target"
+      [attr.points]="area.points"
+      role="button"
+      tabindex="0"
+      [attr.aria-label]="area.label"
+      class="cursor-pointer fill-transparent outline-none focus-visible:stroke-sun"
+      stroke-width="4"
+      (click)="activate($event, area.target)"
+      (keydown.enter)="activate($event, area.target)"
+      (keydown.space)="activate($event, area.target)"
+    />
+  }
 </svg>

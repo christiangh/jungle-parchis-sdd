@@ -175,7 +175,7 @@ Como en PARTE-01, cada paso de código va precedido de su paso de tests, con un 
   - Áreas táctiles pintadas con sus polígonos, `role="button"` y `aria-label`.
   - Tocar un área emite `pieceTouch` o `ghostTouch` sin propagar el clic; Intro y Espacio igual.
   - Sin movimientos legales no hay áreas táctiles.
-- [ ] 6. Pintar en `jp-board`, con tokens de la paleta, hasta que pasen los tests del paso 5 (RF-012 a RF-015, RF-018, RNF-002, RNF-007).
+- [x] 6. Pintar en `jp-board`, con tokens de la paleta, hasta que pasen los tests del paso 5 (RF-012 a RF-015, RF-018, RNF-002, RNF-007).
 - [ ] 7. Tests de la aplicación, que fallan con la pantalla actual:
   - Con un `DiceRoller` fijo, salir con un 5: seleccionar, cancelar tocando fuera, volver a seleccionar y confirmar en la réplica.
   - Con un `DiceRoller` fijo, comer: el cartel pide usar el +20, el dado no responde y el premio se usa. La secuencia de tiradas se comprueba antes con el motor.

@@ -54,6 +54,19 @@
   --animate-dice-spin: dice-spin 0.5s ease-out;
   --animate-dice-pulse: dice-pulse 1.4s ease-in-out infinite;
 
+  /* Halo of the pieces the player can move (RF-012): only opacity, so the pieces keep still. */
+  --animate-piece-halo: piece-halo 1.2s ease-in-out infinite;
+
+  @keyframes piece-halo {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+
   @keyframes dice-spin {
     0% {
       transform: rotate(0) scale(1);

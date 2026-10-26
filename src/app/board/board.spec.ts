@@ -458,7 +458,8 @@ describe('Board, al elegir movimiento', () => {
     const ghost = ghostIn(root);
     expect(ghost.getAttribute('data-ghost')).toBe('yellow-0');
     expect(ghost.getAttribute('data-color')).toBe('yellow');
-    expect(ghost.matches('.opacity-60')).toBe(true);
+    expect(ghostPiece(root).matches('.opacity-60')).toBe(true);
+    expect(ghost.matches('.opacity-60')).toBe(false);
     expect(centerOf(ghostPiece(root))).toEqual(trackPlank(13).center);
     expect(ghost.querySelector('[data-mark]')).toBeNull();
   });

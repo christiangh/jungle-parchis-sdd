@@ -10,6 +10,7 @@ import {
   homes,
   laneSquares,
   PIECE_RADIUS,
+  Point,
   rotation,
   SQUARE_LENGTH,
   SQUARE_WIDTH,
@@ -23,7 +24,8 @@ import {
   TEAM_DARK_STROKE,
   TEAM_FILL,
 } from './board-palette';
-import { PiecePlace, piecePlaces } from './board-pieces';
+import { COLOR_NAMES } from '../shared/color-names';
+import { Ghost, movePreview, PiecePreview } from './move-preview';
 
 /** A wooden or painted plank: plain track squares and lane squares. */
 export interface PlankView {
@@ -73,17 +75,51 @@ export interface HomeView extends Home {
  * A piece: a disc of its colour with an ink border, on a white rim. Ink and white
  * are 14.5:1 apart, so one of them reaches 3:1 on any background (RNF-004).
  */
-export interface PieceView extends PiecePlace {
+export interface PieceView extends PiecePreview {
   readonly fill: string;
+  readonly rimRadius: number;
+  readonly discRadius: number;
+  readonly halo: boolean;
 }
 
+/** Translucent copy of the selected piece, with its badges and pair mark. */
+export interface GhostView extends Ghost {
+  readonly fill: string;
+  /** Centre of the +20 or +10 badge, next to the ghost. */
+  readonly badge: Point;
+  /** SVG transform that lays the pair mark along the plank. */
+  readonly pairTransform: string | null;
+}
+
+/** Transparent polygon over the board that selects a piece or confirms on the ghost. */
+export interface TouchAreaView {
+  readonly target: PieceId | 'ghost';
+  readonly points: string;
+  readonly label: string;
+}
+
+/** The selected piece grows by this much, still inside the width of its plank. */
+const SELECTED_GROWTH = 3;
+
+/** Offset of the ghost badges from its centre, up and to the right. */
+const BADGE_OFFSET = 15;
+
 const decor = boardDecor();
+
+/** A piece as players read it: `yellow-0` is "1 de Amarillo". */
+function pieceName(id: PieceId, color: Color): string {
+  return `${Number(id.split('-')[1]) + 1} de ${COLOR_NAMES[color]}`;
+}
+
+function pointsOf(polygon: readonly Point[]): string {
+  return polygon.map((p) => `${p.x},${p.y}`).join(' ');
+}
 
 /** Jungle board drawn in SVG ("claro" variant of docs/design/tablero). */
 @Component({
   selector: 'jp-board',
   templateUrl: './board.html',
-  host: { class: 'block size-full' },
+  host: { class: 'relative block size-full' },
 })
 export class Board {
   readonly state = input.required<GameState>();
@@ -103,7 +139,6 @@ export class Board {
   protected readonly bladeStroke = BLADE_STROKE;
   protected readonly canopyFill = CANOPY_FILL;
   protected readonly pieceRadius = PIECE_RADIUS;
-  protected readonly discRadius = PIECE_RADIUS - 4;
 
   /** Heights of the board lines painted across each home. */
   protected readonly homeBoards = [1, 2, 3, 4, 5].map(
@@ -180,10 +215,70 @@ export class Board {
     fill: TEAM_FILL[h.color],
   }));
 
-  protected readonly pieces = computed<readonly PieceView[]>(() =>
-    piecePlaces(this.state()).map((p) => ({
-      ...p,
-      fill: TEAM_FILL[p.color],
-    })),
+  private readonly preview = computed(() =>
+    movePreview(this.state(), this.moves(), this.selected()),
   );
+
+  protected readonly pieces = computed<readonly PieceView[]>(() =>
+    this.preview().pieces.map((p) => {
+      const growth = p.mode === 'selected' ? SELECTED_GROWTH : 0;
+      return {
+        ...p,
+        fill: TEAM_FILL[p.color],
+        rimRadius: PIECE_RADIUS + growth,
+        discRadius: PIECE_RADIUS - 4 + growth,
+        halo: p.mode === 'highlighted' || p.mode === 'selected',
+      };
+    }),
+  );
+
+  protected readonly ghost = computed<GhostView | null>(() => {
+    const ghost = this.preview().ghost;
+    if (ghost === null) {
+      return null;
+    }
+    const { pair } = ghost;
+    return {
+      ...ghost,
+      fill: TEAM_FILL[ghost.color],
+      badge: { x: ghost.center.x + BADGE_OFFSET, y: ghost.center.y - BADGE_OFFSET },
+      pairTransform: pair
+        ? `translate(${pair.center.x} ${pair.center.y}) rotate(${pair.rotation})`
+        : null,
+    };
+  });
+
+  protected readonly touchAreas = computed<readonly TouchAreaView[]>(() => {
+    const { pieces, ghost } = this.preview();
+    const areas: TouchAreaView[] = pieces.flatMap((p) =>
+      p.touchArea === null
+        ? []
+        : [
+            {
+              target: p.id,
+              points: pointsOf(p.touchArea),
+              label: `Ficha ${pieceName(p.id, p.color)}`,
+            },
+          ],
+    );
+    if (ghost !== null) {
+      areas.push({
+        target: 'ghost',
+        points: pointsOf(ghost.touchArea),
+        label: `Mover la ficha ${pieceName(ghost.pieceId, ghost.color)} aquí`,
+      });
+    }
+    return areas;
+  });
+
+  /** Touch, Enter or Space on a touch area; it does not reach the screen behind (RF-016). */
+  protected activate(event: Event, target: PieceId | 'ghost'): void {
+    event.stopPropagation();
+    event.preventDefault();
+    if (target === 'ghost') {
+      this.ghostTouch.emit();
+    } else {
+      this.pieceTouch.emit(target);
+    }
+  }
 }
