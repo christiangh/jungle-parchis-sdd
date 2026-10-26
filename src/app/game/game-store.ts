@@ -42,6 +42,7 @@ export class GameStore {
   private readonly lastEvents$ = signal<readonly GameEvent[]>([]);
   private readonly face$ = signal(INITIAL_FACE);
   private readonly rolling$ = signal(false);
+  private readonly selected$ = signal<PieceId | null>(null);
 
   readonly state = this.state$.asReadonly();
   /** Events of the last accepted action, in the order the engine produced them. */
@@ -52,18 +53,29 @@ export class GameStore {
   readonly rolling = this.rolling$.asReadonly();
   readonly canRoll = computed(() => !this.rolling$() && waitsForRoll(this.state$()));
   /** Highlighted piece the player touched; it does not exist in the engine. */
-  readonly selected = signal<PieceId | null>(null).asReadonly();
+  readonly selected = this.selected$.asReadonly();
 
+  /**
+   * Touch on a piece: selects it if it has a legal move, cancels the selection if it was
+   * selected, and does nothing otherwise (RF-012, RF-016).
+   */
   select(pieceId: PieceId): void {
-    throw new Error(`Not implemented: ${pieceId}`);
+    if (!this.legalMoves().some((move) => move.pieceId === pieceId)) {
+      return;
+    }
+    this.selected$.update((selected) => (selected === pieceId ? null : pieceId));
   }
 
   cancel(): void {
-    throw new Error('Not implemented');
+    this.selected$.set(null);
   }
 
+  /** Moves the selected piece, also with a single legal move or a bonus (RF-016, RF-017, RF-019). */
   confirm(): void {
-    throw new Error('Not implemented');
+    const pieceId = this.selected$();
+    if (pieceId !== null) {
+      this.apply({ type: 'move', player: this.state$().turn, pieceId });
+    }
   }
 
   /** Rolls the dice for the player in turn, also in the initial roll phase (RF-009, RF-011). */
@@ -97,6 +109,7 @@ export class GameStore {
     }
     this.state$.set(result.value.state);
     this.lastEvents$.set(result.value.events);
+    this.selected$.set(null);
     return true;
   }
 

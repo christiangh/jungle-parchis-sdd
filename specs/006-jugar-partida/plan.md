@@ -161,7 +161,7 @@ Como en PARTE-01, cada paso de código va precedido de su paso de tests, con un 
   - `confirm` mueve y borra la selección, también con un solo movimiento; sin selección no hace nada.
   - Seleccionar y confirmar son síncronos, sin temporizadores.
   - El premio sigue el mismo flujo y el dado no responde hasta usarlo.
-- [ ] 2. Selección en el `GameStore`, hasta que pasen los tests del paso 1 (RF-016, RF-017, RF-019, RF-020, RNF-003).
+- [x] 2. Selección en el `GameStore`, hasta que pasen los tests del paso 1 (RF-016, RF-017, RF-019, RF-020, RNF-003).
 - [ ] 3. Tests de `plankCorners` y `movePreview` sobre estados construidos con `stateWith` y los `legalMoves` del motor, con un esqueleto que falla (CE-03):
   - Resaltadas exactamente las fichas de `legalMoves`; atenuadas las demás, también las de casa; sin movimientos, ninguna atenuada.
   - Réplica en el destino: la casilla de salida al salir comiendo, la casilla final tras un rebote y el puesto libre de la meta.
