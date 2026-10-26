@@ -291,7 +291,7 @@ Como en las partes anteriores, cada paso de código va precedido de su paso de t
 
 ### Pasos
 
-- [ ] 1. Tests de `lastPlay`, con un esqueleto que devuelve la cadena vacía y los hace fallar: un test por tipo de evento (CE-04), varios eventos en una sola frase y en orden, mayúscula inicial y punto final, y sin eventos la cadena vacía.
+- [x] 1. Tests de `lastPlay`, con un esqueleto que devuelve la cadena vacía y los hace fallar: un test por tipo de evento (CE-04), varios eventos en una sola frase y en orden, mayúscula inicial y punto final, y sin eventos la cadena vacía.
 - [ ] 2. `lastPlay`, hasta que pasen los tests del paso 1 (RF-005, RF-006, RNF-005).
 - [ ] 3. Tests de la aplicación con un `DiceRoller` fijo, que fallan con la pantalla actual:
   - Antes de la primera acción no hay línea de última jugada.
