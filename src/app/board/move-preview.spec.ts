@@ -1,4 +1,4 @@
-import { applyAction, Color, GameState, legalMoves, PieceId, Position } from '@engine';
+import { applyAction, GameState, legalMoves, PieceId, Position } from '@engine';
 import {
   goals,
   homes,
@@ -10,19 +10,10 @@ import {
   trackSquares,
 } from './board-geometry';
 import { pieceCenter, piecePlaces } from './board-pieces';
-import { NEW_GAME, stateWith } from './board-test-utils';
+import { NEW_GAME, rolled, stateWith } from './board-test-utils';
 import { MovePreview, movePreview, PiecePreview } from './move-preview';
 
 const PLANK_AREA = SQUARE_LENGTH * SQUARE_WIDTH;
-
-/** New game with the given pieces moved and `turn` waiting to move a roll of `roll`. */
-function rolled(
-  moved: readonly (readonly [PieceId, Position])[],
-  turn: Color,
-  roll: number,
-): GameState {
-  return { ...stateWith(moved), initialRoll: null, turn, pendingRoll: roll };
-}
 
 /** Preview of a state with the engine's own legal moves. */
 function previewOf(state: GameState, selected: PieceId | null = null): MovePreview {

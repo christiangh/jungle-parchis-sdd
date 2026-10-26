@@ -5,6 +5,7 @@ import {
   GameState,
   isSafe,
   LANE_LENGTH,
+  legalMoves,
   PieceId,
   Position,
   START_SQUARE,
@@ -21,7 +22,8 @@ import {
   SQUARE_WIDTH,
   trackSquares,
 } from './board-geometry';
-import { NEW_GAME, newGame, stateWith } from './board-test-utils';
+import { NEW_GAME, newGame, rolled, stateWith } from './board-test-utils';
+import { movePreview } from './move-preview';
 
 async function render(state: GameState = NEW_GAME): Promise<HTMLElement> {
   const fixture = TestBed.createComponent(Board);
@@ -324,5 +326,260 @@ describe('Board', () => {
     const root = await render(stateWith([['red-2', { kind: 'goal' }]]));
     const goal = goals().find((g) => g.color === 'red')!;
     expect(centerOf(pieceOf(root, 'red-2'))).toEqual(goal.slots[0]);
+  });
+});
+
+interface Choosing {
+  readonly root: HTMLElement;
+  readonly pieceTouches: PieceId[];
+  readonly ghostTouches: number[];
+}
+
+/** Renders a state with the engine's legal moves and records what the board emits. */
+async function renderChoosing(
+  state: GameState,
+  selected: PieceId | null = null,
+): Promise<Choosing> {
+  const fixture = TestBed.createComponent(Board);
+  fixture.componentRef.setInput('state', state);
+  fixture.componentRef.setInput('moves', legalMoves(state));
+  fixture.componentRef.setInput('selected', selected);
+  const pieceTouches: PieceId[] = [];
+  const ghostTouches: number[] = [];
+  fixture.componentInstance.pieceTouch.subscribe((id) => pieceTouches.push(id));
+  fixture.componentInstance.ghostTouch.subscribe(() => ghostTouches.push(ghostTouches.length));
+  await fixture.whenStable();
+  return { root: fixture.nativeElement as HTMLElement, pieceTouches, ghostTouches };
+}
+
+function ghostIn(root: HTMLElement): Element {
+  const ghost = root.querySelector('[data-layer="game"] [data-ghost]');
+  expect(ghost).not.toBeNull();
+  return ghost!;
+}
+
+function ghostPiece(root: HTMLElement): Element {
+  const piece = ghostIn(root).querySelector('[data-part="ghost-piece"]');
+  expect(piece).not.toBeNull();
+  return piece!;
+}
+
+function touchArea(root: HTMLElement, target: PieceId | 'ghost'): Element {
+  const area = root.querySelector(`svg[data-layer="touch"] [data-touch="${target}"]`);
+  expect(area, target).not.toBeNull();
+  return area!;
+}
+
+function pointsOf(area: Element): Point[] {
+  return area
+    .getAttribute('points')!
+    .trim()
+    .split(/\s+/)
+    .map((pair) => {
+      const [x, y] = pair.split(',').map(Number);
+      return { x, y };
+    });
+}
+
+/** Two yellow pieces that can move a 3 and a blue one that cannot, with the rest at home. */
+const TWO_MOVES = rolled(
+  [
+    ['yellow-0', { kind: 'track', square: 10 }],
+    ['yellow-1', { kind: 'track', square: 30 }],
+    ['blue-0', { kind: 'track', square: 40 }],
+  ],
+  'yellow',
+  3,
+);
+
+/** yellow-0 can join yellow-1 on square 13. */
+const OWN_PAIR = rolled(
+  [
+    ['yellow-1', { kind: 'track', square: 13 }],
+    ['yellow-0', { kind: 'track', square: 10 }],
+  ],
+  'yellow',
+  3,
+);
+
+describe('Board, al elegir movimiento', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [Board] }).compileComponents();
+  });
+
+  it('RF-012: las fichas de los movimientos legales llevan halo y las demás se atenúan', async () => {
+    const { root } = await renderChoosing(TWO_MOVES);
+
+    for (const id of ['yellow-0', 'yellow-1'] as const) {
+      const piece = pieceOf(root, id);
+      expect(piece.getAttribute('data-mode'), id).toBe('highlighted');
+      const halo = piece.querySelector('[data-part="halo"]');
+      expect(halo, id).not.toBeNull();
+      expect(paintedWith(halo!, 'stroke-sun'), id).toBe(true);
+      expect(piece.matches('.opacity-40'), id).toBe(false);
+    }
+    for (const id of ['yellow-2', 'blue-0', 'red-0'] as const) {
+      const piece = pieceOf(root, id);
+      expect(piece.getAttribute('data-mode'), id).toBe('dimmed');
+      expect(piece.querySelector('[data-part="halo"]'), id).toBeNull();
+      expect(piece.matches('.opacity-40'), id).toBe(true);
+    }
+  });
+
+  it('RNF-002: el halo solo late sin movimiento reducido', async () => {
+    const { root } = await renderChoosing(TWO_MOVES);
+    const halo = pieceOf(root, 'yellow-0').querySelector('[data-part="halo"]');
+    const classes = Array.from(halo?.classList ?? []);
+
+    expect(classes).toContain('motion-safe:animate-piece-halo');
+    expect(classes.filter((c) => c.startsWith('animate-'))).toEqual([]);
+  });
+
+  it('RF-020: sin movimientos legales no hay halos, atenuación, réplica ni áreas táctiles', async () => {
+    const { root } = await renderChoosing(NEW_GAME, 'yellow-0');
+
+    for (const piece of all(root, '[data-pieces] [data-piece]')) {
+      expect(piece.getAttribute('data-mode')).toBe('idle');
+      expect(piece.matches('.opacity-40')).toBe(false);
+    }
+    expect(root.querySelector('[data-part="halo"]')).toBeNull();
+    expect(root.querySelector('[data-ghost]')).toBeNull();
+    expect(root.querySelector('[data-touch]')).toBeNull();
+  });
+
+  it('RF-013: la ficha seleccionada crece y su réplica transparente está en el destino', async () => {
+    const { root } = await renderChoosing(TWO_MOVES, 'yellow-0');
+    const selected = pieceOf(root, 'yellow-0');
+
+    expect(selected.getAttribute('data-mode')).toBe('selected');
+    expect(radiusOf(selected, 'rim')).toBeGreaterThan(PIECE_RADIUS);
+    expect(radiusOf(pieceOf(root, 'yellow-1'), 'rim')).toBe(PIECE_RADIUS);
+
+    const ghost = ghostIn(root);
+    expect(ghost.getAttribute('data-ghost')).toBe('yellow-0');
+    expect(ghost.getAttribute('data-color')).toBe('yellow');
+    expect(ghost.matches('.opacity-60')).toBe(true);
+    expect(centerOf(ghostPiece(root))).toEqual(trackPlank(13).center);
+    expect(ghost.querySelector('[data-mark]')).toBeNull();
+  });
+
+  it('RF-014: la réplica de un movimiento que come lleva la diana +20', async () => {
+    const state = rolled(
+      [
+        ['red-0', { kind: 'track', square: 13 }],
+        ['yellow-0', { kind: 'track', square: 10 }],
+      ],
+      'yellow',
+      3,
+    );
+    const ghost = ghostIn((await renderChoosing(state, 'yellow-0')).root);
+    const target = ghost.querySelector('[data-mark="target"]');
+
+    expect(target?.textContent?.trim()).toBe('+20');
+    expect(paintedWith(target!, 'fill-team-red')).toBe(true);
+    expect(ghost.querySelector('[data-mark="sun"]')).toBeNull();
+  });
+
+  it('RF-014: la réplica que llega a la meta lleva el sol +10', async () => {
+    const state = rolled([['yellow-0', { kind: 'lane', square: 5 }]], 'yellow', 3);
+    const ghost = ghostIn((await renderChoosing(state, 'yellow-0')).root);
+    const sun = ghost.querySelector('[data-mark="sun"]');
+
+    expect(sun?.textContent?.trim()).toBe('+10');
+    expect(paintedWith(sun!, 'fill-team-yellow')).toBe(true);
+    expect(ghost.querySelector('[data-mark="target"]')).toBeNull();
+  });
+
+  it('RF-014, RF-015: al formar pareja propia hay puente y cada ficha está en su lado', async () => {
+    const { root } = await renderChoosing(OWN_PAIR, 'yellow-0');
+    const preview = movePreview(OWN_PAIR, legalMoves(OWN_PAIR), 'yellow-0');
+    const bridge = ghostIn(root).querySelector('[data-mark="bridge"]');
+
+    expect(bridge).not.toBeNull();
+    expect(paintedWith(bridge!, 'fill-wood')).toBe(true);
+    expect(centerOf(pieceOf(root, 'yellow-1'))).toEqual(
+      preview.pieces.find((p) => p.id === 'yellow-1')!.center,
+    );
+    expect(centerOf(ghostPiece(root))).toEqual(preview.ghost!.center);
+    expectPair(trackPlank(13), pieceOf(root, 'yellow-1'), ghostPiece(root));
+  });
+
+  it('RF-014: al compartir seguro con una rival hay hoja', async () => {
+    const state = rolled(
+      [
+        ['blue-0', { kind: 'track', square: 12 }],
+        ['yellow-0', { kind: 'track', square: 9 }],
+      ],
+      'yellow',
+      3,
+    );
+    const leaf = ghostIn((await renderChoosing(state, 'yellow-0')).root).querySelector(
+      '[data-mark="leaf"]',
+    );
+
+    expect(leaf).not.toBeNull();
+    expect(paintedWith(leaf!, 'fill-canopy')).toBe(true);
+  });
+
+  it('RF-018: las áreas táctiles van en un SVG aparte con los polígonos de la previsualización', async () => {
+    const { root } = await renderChoosing(OWN_PAIR, 'yellow-0');
+    const preview = movePreview(OWN_PAIR, legalMoves(OWN_PAIR), 'yellow-0');
+    const layer = root.querySelector('svg[data-layer="touch"]');
+
+    expect(layer).not.toBeNull();
+    expect(layer?.getAttribute('viewBox')).toBe(root.querySelector('svg')?.getAttribute('viewBox'));
+    expect(layer?.closest('[role="img"]')).toBeNull();
+    expect(all(root, '[data-touch]').map((a) => a.getAttribute('data-touch'))).toEqual([
+      'yellow-0',
+      'yellow-1',
+      'ghost',
+    ]);
+    for (const piece of preview.pieces.filter((p) => p.touchArea !== null)) {
+      expect(pointsOf(touchArea(root, piece.id)), piece.id).toEqual(piece.touchArea);
+    }
+    expect(pointsOf(touchArea(root, 'ghost'))).toEqual(preview.ghost!.touchArea);
+  });
+
+  it('RF-018: cada área táctil es un botón con nombre', async () => {
+    const { root } = await renderChoosing(TWO_MOVES, 'yellow-1');
+    const labels: Record<string, string> = {
+      'yellow-0': 'Ficha 1 de Amarillo',
+      'yellow-1': 'Ficha 2 de Amarillo',
+      ghost: 'Mover la ficha 2 de Amarillo aquí',
+    };
+
+    for (const [target, label] of Object.entries(labels)) {
+      const area = touchArea(root, target as PieceId | 'ghost');
+      expect(area.getAttribute('role'), target).toBe('button');
+      expect(area.getAttribute('tabindex'), target).toBe('0');
+      expect(area.getAttribute('aria-label'), target).toBe(label);
+    }
+  });
+
+  it('RF-016: tocar un área emite la ficha o la réplica sin propagar el toque', async () => {
+    const { root, pieceTouches, ghostTouches } = await renderChoosing(TWO_MOVES, 'yellow-0');
+    const outside = vi.fn();
+    root.addEventListener('click', outside);
+
+    touchArea(root, 'yellow-1').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    touchArea(root, 'ghost').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(pieceTouches).toEqual(['yellow-1']);
+    expect(ghostTouches).toHaveLength(1);
+    expect(outside).not.toHaveBeenCalled();
+  });
+
+  it('RF-016: Intro y Espacio en un área hacen lo mismo que tocarla', async () => {
+    const { root, pieceTouches, ghostTouches } = await renderChoosing(TWO_MOVES, 'yellow-0');
+    const space = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+
+    touchArea(root, 'yellow-0').dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+    );
+    touchArea(root, 'ghost').dispatchEvent(space);
+
+    expect(pieceTouches).toEqual(['yellow-0']);
+    expect(ghostTouches).toHaveLength(1);
+    expect(space.defaultPrevented).toBe(true);
   });
 });

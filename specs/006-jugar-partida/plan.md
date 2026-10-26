@@ -169,7 +169,7 @@ Como en PARTE-01, cada paso de código va precedido de su paso de tests, con un 
   - Previsualización de pareja: la que ya estaba primero, como queda tras aplicar el movimiento; vuelve al centro al cambiar la selección.
   - Áreas táctiles: el tablón entero, medio tablón en parejas y en la previsualización, un tablón centrado en el puesto de casa, y la casilla o el triángulo de meta para la réplica sola.
 - [x] 4. `plankCorners` y `movePreview`, hasta que pasen los tests del paso 3 (RF-012 a RF-015, RF-018, RNF-005).
-- [ ] 5. Tests de `jp-board` con las nuevas entradas y salidas sin pintar nada, que fallan:
+- [x] 5. Tests de `jp-board` con las nuevas entradas y salidas sin pintar nada, que fallan:
   - Clases de halo, atenuación y ficha seleccionada más grande; el halo solo late con `motion-safe:`.
   - Réplica con diana «+20», sol «+10» o marca de pareja, y fichas en su lado de la pareja.
   - Áreas táctiles pintadas con sus polígonos, `role="button"` y `aria-label`.

@@ -1,5 +1,5 @@
-import { Component, computed, input } from '@angular/core';
-import { Color, GameState } from '@engine';
+import { Component, computed, input, output } from '@angular/core';
+import { Color, GameState, Move, PieceId } from '@engine';
 import { boardDecor } from './board-decor';
 import {
   Goal,
@@ -87,6 +87,13 @@ const decor = boardDecor();
 })
 export class Board {
   readonly state = input.required<GameState>();
+  /** Legal moves of the player in turn, from the engine. */
+  readonly moves = input<readonly Move[]>([]);
+  readonly selected = input<PieceId | null>(null);
+  /** Touch on a highlighted piece. */
+  readonly pieceTouch = output<PieceId>();
+  /** Touch on the ghost of the selected piece. */
+  readonly ghostTouch = output<void>();
 
   protected readonly width = SQUARE_LENGTH;
   protected readonly height = SQUARE_WIDTH;
