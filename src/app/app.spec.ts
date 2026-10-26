@@ -311,6 +311,41 @@ describe('App', () => {
     expect(dice(fixture).disabled).toBe(false);
   });
 
+  it('RF-005: antes de la primera acción no hay línea de última jugada', async () => {
+    const fixture = await render();
+    expect(element(fixture, '[data-last-play]')).toBeNull();
+  });
+
+  it('RNF-001: la línea de última jugada va bajo el cartel, en blanco sobre tinta y se anuncia', async () => {
+    const fixture = await render(3);
+    roll(fixture);
+    const line = element(fixture, 'main header [data-last-play]');
+    expect(line).not.toBeNull();
+    const banner = element(fixture, 'main header jp-turn-banner');
+    expect(banner.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(line.classList).toContain('text-white');
+    expect(line.classList).toContain('bg-ink');
+    expect(line.getAttribute('aria-live')).toBe('polite');
+  });
+
+  it('HU-07.1: una tirada sin movimientos se pierde y el turno pasa al siguiente', async () => {
+    const fixture = await render(3, 5, 2, 1, 4);
+    roll(fixture, 5);
+    expect(text(fixture, '[data-last-play]')).toBe(
+      'Azul saca 4 y pierde la tirada, turno de Rojo.',
+    );
+    expect(text(fixture, '[data-title]')).toBe('Turno de Rojo');
+  });
+
+  it('HU-07.5: cada acción sustituye la frase de la anterior', async () => {
+    const fixture = await render(3, 5);
+    roll(fixture);
+    expect(text(fixture, '[data-last-play]')).toBe('Amarillo saca 3.');
+
+    roll(fixture);
+    expect(text(fixture, '[data-last-play]')).toBe('Azul saca 5.');
+  });
+
   it('CE-05: con un ganador, el cartel dice «Gana Rojo» en rojo y nada responde', async () => {
     const won: GameState = {
       ...stateWith([
