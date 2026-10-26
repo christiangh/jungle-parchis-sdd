@@ -246,7 +246,14 @@ export function homes(): readonly Home[] {
 
 /** Corners of a plank in board coordinates, from its local top left corner and clockwise. */
 export function plankCorners(plank: Pick<TrackSquare, 'x' | 'y' | 'rotation'>): readonly Point[] {
-  throw new Error(`Not implemented: ${plank.rotation}`);
+  const arm = (ARMS.length - plank.rotation / 90) % ARMS.length;
+  const { x, y } = plank;
+  return [
+    { x, y },
+    { x: x + SQUARE_LENGTH, y },
+    { x: x + SQUARE_LENGTH, y: y + SQUARE_WIDTH },
+    { x, y: y + SQUARE_WIDTH },
+  ].map((corner) => rotate(corner, arm));
 }
 
 /** SVG transform that turns an arm around the board centre. */
