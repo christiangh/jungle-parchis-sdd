@@ -245,3 +245,106 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** el ganador se prueba en `app.spec.ts` sustituyendo el `GameStore` por inyección con uno que expone un estado con ganador, solo en el test. El almacén real no puede empezar desde un estado construido sin añadir código solo para tests (RF-024).
 - **Sí:** los tests de `movePreview` usan los `legalMoves` del motor sobre estados construidos, no movimientos escritos a mano.
 - **Observación:** en el spec, HU-05 numera dos criterios como «4.»; aquí el de salir comiendo es HU-05.6.
+
+## PARTE-03: Última jugada y pruebas en navegador
+
+**Estado:** Pendiente
+
+### Enfoque
+
+La frase de la línea de última jugada sale de una función pura nueva, `lastPlay(events)`, en `src/app/game/`, que solo lee los eventos del motor (RNF-005). Cada evento da un fragmento; los fragmentos se unen con comas, en el orden del motor, con mayúscula inicial y punto final. Sin eventos da la cadena vacía (RF-005). `App` la pinta bajo el cartel desde `store.lastEvents()`, que ya existe; no hace falta tocar el almacén.
+
+Textos por tipo de evento (RF-006), con los nombres de `COLOR_NAMES` y el adjetivo femenino del color para las fichas («amarilla», «azul», «roja», «verde»):
+
+| Evento | Fragmento |
+| --- | --- |
+| `initial-roll` | «Rojo saca 5» |
+| `initial-roll-tie` | «empate entre Amarillo y Rojo» |
+| `first-player` | «empieza Azul» |
+| `piece-left-home` | «Rojo saca una ficha de casa» |
+| `piece-advanced` | «Rojo mueve una ficha» |
+| `piece-captured` | «come una ficha azul» |
+| `piece-reached-goal` | «llega a meta» |
+| `bonus-earned` | «cuenta 20» |
+| `bonus-lost` | «pierde el +20» |
+| `roll-lost` | «Rojo saca 4 y pierde la tirada» |
+| `roll-again` | «Rojo repite» |
+| `three-sixes` | «tres seises de Rojo» o «tres seises de Rojo y su ficha vuelve a casa» |
+| `turn-changed` | «turno de Verde» |
+| `game-over` | «gana Rojo» |
+
+Ejemplos: «Rojo saca una ficha de casa, come una ficha azul, cuenta 20.»; «Tres seises de Rojo y su ficha vuelve a casa, turno de Verde.»
+
+Las pruebas en navegador fijan el dado sustituyendo `Math.random` con `page.addInitScript` antes de cargar la página (RF-023, RF-024). Juegan los tres escenarios de RF-023 con secuencias de tiradas comprobadas antes con el motor, y comprueban a los cuatro tamaños de RNF-004 que la pantalla cabe sin scroll (CE-08). Corren en el trabajo `smoke` del CI, que ya ejecuta `pnpm test:e2e` (HU-09.3).
+
+Como en las partes anteriores, cada paso de código va precedido de su paso de tests, con un esqueleto que compila y los hace fallar.
+
+### Archivos
+
+- `src/app/game/last-play.ts` (nuevo): `lastPlay(events)` y los adjetivos de las fichas.
+- `src/app/app.ts` y `app.html`: `lastPlay` calculada desde `store.lastEvents()` y pintada bajo el cartel, en blanco sobre `bg-ink`, con `aria-live="polite"`.
+- `e2e/dice.ts` (nuevo): `fixDice(page, rolls)`, que sustituye `Math.random` antes de cargar la página.
+- `e2e/game.spec.ts` (nuevo): los tres escenarios de RF-023.
+- `e2e/screen.spec.ts` (nuevo): la pantalla sin scroll a los cuatro tamaños (CE-08).
+- `playwright.config.ts`: el comentario deja de hablar solo de la prueba de humo.
+- Tests: `last-play.spec.ts` (nuevo) y `app.spec.ts`.
+
+### Pasos
+
+- [ ] 1. Tests de `lastPlay`, con un esqueleto que devuelve la cadena vacía y los hace fallar: un test por tipo de evento (CE-04), varios eventos en una sola frase y en orden, mayúscula inicial y punto final, y sin eventos la cadena vacía.
+- [ ] 2. `lastPlay`, hasta que pasen los tests del paso 1 (RF-005, RF-006, RNF-005).
+- [ ] 3. Tests de la aplicación con un `DiceRoller` fijo, que fallan con la pantalla actual:
+  - Antes de la primera acción no hay línea de última jugada.
+  - Tirada sin movimientos: la línea dice que pierde la tirada y de quién es el turno (HU-07.1).
+  - Una acción nueva sustituye la frase anterior (HU-07.5).
+  - La línea va dentro de la cabecera, tras el cartel, en blanco sobre `bg-ink` y con `aria-live="polite"`.
+- [ ] 4. Tests en navegador, que fallan porque la línea aún no se pinta:
+  - `fixDice` y los tres escenarios de RF-023: tirada inicial con empate, salir con un 5, mover, cambiar la selección, cancelarla tocando fuera y confirmar en la réplica; comer, dado inactivo con el +20 pendiente y usarlo; tirada perdida, repetir con un 6 y tres seises, con su línea.
+  - La pantalla cabe sin scroll a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080: el documento no desborda la ventana y el tablero y el cartel están enteros dentro (CE-08).
+- [ ] 5. Pintar la línea en `App` y ajustar el comentario de `playwright.config.ts`, hasta que pasen los tests de los pasos 3 y 4; revisión en navegador a los 4 tamaños con frases largas y medición del contraste de la línea (HU-07, HU-09, RNF-001, RNF-004).
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+| --- | --- | --- |
+| HU-07.1 (tirada perdida) | 1–5 | `last-play.spec.ts`: `roll-lost` + `turn-changed`; `app.spec.ts` y `e2e/game.spec.ts`: línea y cartel del siguiente |
+| HU-07.2 (repite con un 6) | 1, 2, 4, 5 | `last-play.spec.ts`: `roll-again`; `e2e/game.spec.ts`: línea con «repite» y cartel que pide tirar |
+| HU-07.3 (tres seises) | 1, 2, 4, 5 | `last-play.spec.ts`: con y sin ficha que vuelve, en una frase con el turno; `e2e/game.spec.ts`: tercer 6 |
+| HU-07.4 (comer) | 1, 2, 4, 5 | `last-play.spec.ts`: `piece-captured` + `bonus-earned`; `e2e/game.spec.ts`: línea tras comer |
+| HU-07.5 (sustituye, sin temporizadores) | 3, 5 | `app.spec.ts`: la segunda acción cambia la frase; `lastPlay` es pura, sin temporizadores |
+| HU-09.1 (dado fijado desde el test) | 4, 5 | `e2e/game.spec.ts`: la cara y el cartel muestran los valores de `fixDice` |
+| HU-09.2 (sin URL ni código de pruebas) | 5 | Búsqueda en `src/app/` de `location`, `URLSearchParams`, `queryParam` y `ActivatedRoute` sin resultados; la app no importa `*-test-utils.ts` |
+| HU-09.3 (CI) | 4, 5 | Trabajo `smoke` de `.github/workflows/ci.yml`, que ya ejecuta `pnpm test:e2e` sin reintentos |
+| RF-005 | 1, 2, 3, 5 | `last-play.spec.ts`: orden y una sola frase; `app.spec.ts`: vacía al empezar y sustituida |
+| RF-006 | 1, 2 | `last-play.spec.ts`: un test por tipo de evento |
+| RF-023 | 4, 5 | `e2e/game.spec.ts`: los tres escenarios |
+| RF-024 | 4, 5 | Ver HU-09.2 |
+| RNF-001 | 3, 5 | `app.spec.ts`: clases `text-white` y `bg-ink`; medición del contraste, anotada en «Decisiones técnicas» |
+| RNF-004 | 4, 5 | `e2e/screen.spec.ts` a los 4 tamaños |
+| RNF-005 | 1, 2 | `lastPlay` solo lee los eventos; revisión del diff |
+| RNF-006, RNF-008 | todos | `pnpm check`; `src/engine/` y `package.json` sin cambios |
+| CE-01 | 4, 5 | `pnpm test:e2e` en local y en el CI |
+| CE-02 | 5 | Ver HU-09.2 |
+| CE-04 | 1, 2 | `last-play.spec.ts` |
+| CE-06 | 5 | Cartel medido en PARTE-01; línea en blanco sobre `bg-ink`, medida en el paso 5 |
+| CE-08 | 4, 5 | `e2e/screen.spec.ts` |
+| CE-09 | 5 | `pnpm check` y `pnpm test:e2e` en verde; `git diff master -- src/engine` vacío |
+| Hecho cuando | 5 | Todo lo anterior en verde |
+
+Comandos: `pnpm test:once` en los pasos 1–3; `pnpm test:e2e` en los pasos 4 y 5; `pnpm check` y `pnpm test:e2e` al cerrar la parte.
+
+### Skills y agentes
+
+- `caveman:cavecrew-reviewer`: revisión del diff al cerrar la parte, si el usuario la pide.
+- Playwright: revisión en navegador y medición del contraste del paso 5.
+
+### Decisiones técnicas
+
+- **Sí:** `lastPlay` como función pura de los eventos, en `src/app/game/`, como `headline`. Se prueba sin pintar nada y no decide reglas (RNF-005).
+- **Sí:** fichas nombradas por su color («una ficha azul»), sin número. Basta para saber quién comió a quién, y la frase cabe a 320 px.
+- **Sí:** `piece-advanced` no dice cuántas casillas avanza. El evento no trae la tirada, y calcularla desde `from` y `to` sería geometría del motor en la interfaz.
+- **Sí:** la línea en blanco sobre `bg-ink` macizo. El contraste no depende del fondo de jungla que queda detrás.
+- **Sí:** la línea con `aria-live="polite"`, para que un lector de pantalla la lea al cambiar sin interrumpir. La accesibilidad completa sigue siendo de otro spec.
+- **No:** activar el movimiento reducido en las pruebas en navegador (pregunta abierta del spec). Las aserciones de Playwright esperan solas a la cara final y a los resaltados, y así el giro también se prueba en navegador real.
+- **No:** comprobación AXE automática (pregunta abierta del spec). Necesita una dependencia nueva (P-17) y encaja mejor en el spec de accesibilidad.
+- **Sí:** las secuencias de tiradas de los escenarios se comprueban antes con el motor, como en PARTE-02.
