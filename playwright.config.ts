@@ -3,7 +3,8 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = 4300;
 const CI = !!process.env['CI'];
 
-// Browser smoke test (RF-016). Run with `pnpm test:e2e`, outside `pnpm check`.
+// Browser tests: smoke test (RF-016), game scenarios (RF-023) and screen fit (CE-08). Run with
+// `pnpm test:e2e`, outside `pnpm check`.
 export default defineConfig({
   testDir: './e2e',
   forbidOnly: CI,

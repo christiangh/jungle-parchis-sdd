@@ -301,7 +301,7 @@ Como en las partes anteriores, cada paso de código va precedido de su paso de t
 - [x] 4. Tests en navegador, que fallan porque la línea aún no se pinta:
   - `fixDice` y los tres escenarios de RF-023: tirada inicial con empate, salir con un 5, mover, cambiar la selección, cancelarla tocando fuera y confirmar en la réplica; comer, dado inactivo con el +20 pendiente y usarlo; tirada perdida, repetir con un 6 y tres seises, con su línea.
   - La pantalla cabe sin scroll a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080: el documento no desborda la ventana y el tablero y el cartel están enteros dentro (CE-08).
-- [ ] 5. Pintar la línea en `App` y ajustar el comentario de `playwright.config.ts`, hasta que pasen los tests de los pasos 3 y 4; revisión en navegador a los 4 tamaños con frases largas y medición del contraste de la línea (HU-07, HU-09, RNF-001, RNF-004).
+- [x] 5. Pintar la línea en `App` y ajustar el comentario de `playwright.config.ts`, hasta que pasen los tests de los pasos 3 y 4; revisión en navegador a los 4 tamaños con frases largas y medición del contraste de la línea (HU-07, HU-09, RNF-001, RNF-004).
 
 ### Pruebas y trazabilidad
 
@@ -348,3 +348,5 @@ Comandos: `pnpm test:once` en los pasos 1–3; `pnpm test:e2e` en los pasos 4 y 
 - **No:** activar el movimiento reducido en las pruebas en navegador (pregunta abierta del spec). Las aserciones de Playwright esperan solas a la cara final y a los resaltados, y así el giro también se prueba en navegador real.
 - **No:** comprobación AXE automática (pregunta abierta del spec). Necesita una dependencia nueva (P-17) y encaja mejor en el spec de accesibilidad.
 - **Sí:** las secuencias de tiradas de los escenarios se comprueban antes con el motor, como en PARTE-02.
+- **Sí:** `roll` espera el final del giro con un `MutationObserver` instalado antes de tocar el dado. Esperar a que aparezca la clase del giro fallaba a veces con varios workers: el giro de 500 ms terminaba antes de verlo.
+- **Medición (paso 5):** la línea en blanco sobre `ink` (#3b2412) da 14,51:1, por encima del 4,5:1 de AA. Revisada en navegador a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080 con «Tres seises de Azul y su ficha vuelve a casa, turno de Rojo.»: a 320 y a 568 × 320 ocupa dos líneas, centrada, sin tapar el tablero ni desbordar.

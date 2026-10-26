@@ -3,6 +3,15 @@
 >
   <header class="shrink-0 [@media(orientation:landscape)_and_(max-height:480px)]:max-w-[40%]">
     <jp-turn-banner [headline]="headline()" />
+    @if (lastPlay(); as line) {
+      <p
+        class="bg-ink mx-auto mt-2 w-fit max-w-full rounded-lg px-3 py-1 text-center text-sm/tight text-white sm:text-base/tight"
+        aria-live="polite"
+        data-last-play
+      >
+        {{ line }}
+      </p>
+    }
   </header>
   <div
     class="flex min-h-0 w-full min-w-0 flex-1 items-center justify-center self-stretch [container-type:size]"
