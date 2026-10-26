@@ -1,9 +1,11 @@
+import { computed, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { COLORS } from '@engine';
+import { COLORS, GameState, legalMoves, PieceId } from '@engine';
 import { App } from './app';
 import { homes } from './board/board-geometry';
+import { stateWith } from './board/board-test-utils';
 import { DICE_GLOW } from './game/dice';
-import { DICE_SPIN_MS } from './game/game-store';
+import { DICE_SPIN_MS, GameStore } from './game/game-store';
 import { provideRolls } from './game/game-test-utils';
 import { TEAM_BG } from './game/turn-banner';
 
@@ -36,6 +38,78 @@ function roll(fixture: ComponentFixture<App>, count = 1): void {
     fixture.detectChanges();
   }
 }
+
+function touchAreas(fixture: ComponentFixture<App>): Element[] {
+  return Array.from(
+    (fixture.nativeElement as HTMLElement).querySelectorAll('jp-board [data-touch]'),
+  );
+}
+
+/** Touches the area of a piece or of the ghost, as a pointer would. */
+function touch(fixture: ComponentFixture<App>, target: PieceId | 'ghost'): void {
+  const area = (fixture.nativeElement as HTMLElement).querySelector(
+    `jp-board [data-touch="${target}"]`,
+  );
+  if (area === null) {
+    throw new Error(`no touch area for ${target}`);
+  }
+  area.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  fixture.detectChanges();
+}
+
+function ghost(fixture: ComponentFixture<App>): Element | null {
+  return (fixture.nativeElement as HTMLElement).querySelector('jp-board [data-ghost]');
+}
+
+function halos(fixture: ComponentFixture<App>): string[] {
+  return Array.from(
+    (fixture.nativeElement as HTMLElement).querySelectorAll('jp-board [data-piece]'),
+  )
+    .filter((piece) => piece.querySelector('[data-part="halo"]') !== null)
+    .map((piece) => piece.getAttribute('data-piece')!);
+}
+
+/**
+ * Rolls each value and, while a roll is pending, touches the piece of the first legal move
+ * and then its ghost. The last roll is left pending.
+ */
+function play(fixture: ComponentFixture<App>, rolls: readonly number[]): void {
+  const store = TestBed.inject(GameStore);
+  rolls.forEach((_, i) => {
+    roll(fixture);
+    const last = i === rolls.length - 1;
+    while (!last && store.state().pendingRoll !== null) {
+      const before = store.state();
+      touch(fixture, store.legalMoves()[0].pieceId);
+      touch(fixture, 'ghost');
+      if (store.state() === before) {
+        throw new Error('the touched move was not applied');
+      }
+    }
+  });
+}
+
+/** Store stub that only shows a fixed state; the legal moves still come from the engine. */
+function storeShowing(state: GameState): Partial<GameStore> {
+  return {
+    state: signal(state).asReadonly(),
+    lastEvents: signal([]).asReadonly(),
+    legalMoves: computed(() => legalMoves(state)),
+    face: signal(6).asReadonly(),
+    rolling: signal(false).asReadonly(),
+    canRoll: computed(() => false),
+    selected: signal<PieceId | null>(null).asReadonly(),
+    roll: vi.fn(),
+    select: vi.fn(),
+    confirm: vi.fn(),
+    cancel: vi.fn(),
+  };
+}
+
+// Blue starts and takes a piece out of home with a 5: a single legal move.
+const EXIT = [3, 5, 2, 1, 5];
+// Red captures a green piece and earns 20 squares with red-0 as its only legal move.
+const CAPTURE = [3, 5, 2, 1, 2, 5, 5, 4, 4, 6, 2, 3, 2, 5, 6, 6];
 
 describe('App', () => {
   afterEach(() => {
@@ -154,5 +228,117 @@ describe('App', () => {
     expect(dice(fixture).classList).not.toContain('motion-safe:animate-dice-pulse');
     expect(text(fixture, '[data-title]')).toBe('Turno de Azul · 5');
     expect(text(fixture, '[data-instruction]')).toBe('Elige una ficha iluminada');
+  });
+
+  it('HU-04.6: con un solo movimiento la ficha no se mueve hasta confirmar en la réplica', async () => {
+    const fixture = await render(...EXIT);
+    play(fixture, EXIT);
+    const store = TestBed.inject(GameStore);
+    const [move] = store.legalMoves();
+
+    expect(halos(fixture)).toEqual([move.pieceId]);
+    expect(ghost(fixture)).toBeNull();
+
+    touch(fixture, move.pieceId);
+    expect(ghost(fixture)).not.toBeNull();
+    expect(store.state().pendingRoll).toBe(5);
+  });
+
+  it('HU-04.5: tocar fuera cancela la selección y los halos siguen', async () => {
+    const fixture = await render(...EXIT);
+    play(fixture, EXIT);
+    const [move] = TestBed.inject(GameStore).legalMoves();
+    touch(fixture, move.pieceId);
+
+    element(fixture, 'main').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+
+    expect(ghost(fixture)).toBeNull();
+    expect(halos(fixture)).toEqual([move.pieceId]);
+  });
+
+  it('HU-04.3: tocar la réplica mueve la ficha y quita halos, réplica y atenuación', async () => {
+    const fixture = await render(...EXIT);
+    play(fixture, EXIT);
+    const store = TestBed.inject(GameStore);
+    const [move] = store.legalMoves();
+    touch(fixture, move.pieceId);
+    element(fixture, 'main').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+    touch(fixture, move.pieceId);
+
+    touch(fixture, 'ghost');
+
+    const piece = store.state().pieces.find((p) => p.id === move.pieceId);
+    expect(piece?.position).toEqual(move.to);
+    expect(halos(fixture)).toEqual([]);
+    expect(ghost(fixture)).toBeNull();
+    expect(touchAreas(fixture)).toEqual([]);
+    expect(element(fixture, 'jp-board [data-piece].opacity-40')).toBeNull();
+    expect(text(fixture, '[data-instruction]')).toBe('Toca el dado');
+  });
+
+  it('HU-06.1: tras comer, el cartel pide usar el +20, la ficha brilla y el dado no responde', async () => {
+    // The sequence leaves red with a capture as its only legal move (checked in the store tests).
+    const fixture = await render(...CAPTURE);
+    play(fixture, CAPTURE);
+    touch(fixture, 'red-0');
+    touch(fixture, 'ghost');
+
+    expect(text(fixture, '[data-title]')).toBe('Turno de Rojo');
+    expect(text(fixture, '[data-instruction]')).toBe('Usa tu +20');
+    expect(halos(fixture)).toEqual(['red-0']);
+    expect(dice(fixture).disabled).toBe(true);
+
+    dice(fixture).click();
+    fixture.detectChanges();
+    expect(dice(fixture).classList).not.toContain('motion-safe:animate-dice-spin');
+  });
+
+  it('HU-06.2: confirmar el +20 avanza 20 casillas y el cartel vuelve a pedir tirar', async () => {
+    const fixture = await render(...CAPTURE);
+    play(fixture, CAPTURE);
+    touch(fixture, 'red-0');
+    touch(fixture, 'ghost');
+
+    touch(fixture, 'red-0');
+    touch(fixture, 'ghost');
+
+    const store = TestBed.inject(GameStore);
+    const piece = store.state().pieces.find((p) => p.id === 'red-0');
+    expect(piece?.position).toEqual({ kind: 'track', square: 11 });
+    expect(text(fixture, '[data-instruction]')).toBe('Toca el dado');
+    expect(dice(fixture).disabled).toBe(false);
+  });
+
+  it('CE-05: con un ganador, el cartel dice «Gana Rojo» en rojo y nada responde', async () => {
+    const won: GameState = {
+      ...stateWith([
+        ['red-0', { kind: 'goal' }],
+        ['red-1', { kind: 'goal' }],
+        ['red-2', { kind: 'goal' }],
+        ['red-3', { kind: 'goal' }],
+      ]),
+      initialRoll: null,
+      turn: 'red',
+      winner: 'red',
+    };
+    const store = storeShowing(won);
+    TestBed.configureTestingModule({ providers: [{ provide: GameStore, useValue: store }] });
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+
+    expect(text(fixture, '[data-title]')).toBe('Gana Rojo');
+    expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.red);
+    expect(dice(fixture).disabled).toBe(true);
+    expect(halos(fixture)).toEqual([]);
+    expect(touchAreas(fixture)).toEqual([]);
+    expect(element(fixture, 'jp-board [data-piece].opacity-40')).toBeNull();
+
+    element(fixture, 'jp-board [data-piece="red-0"]').dispatchEvent(
+      new MouseEvent('click', { bubbles: true }),
+    );
+    expect(store.select).not.toHaveBeenCalled();
+    expect(store.confirm).not.toHaveBeenCalled();
   });
 });
