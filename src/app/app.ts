@@ -11,6 +11,8 @@ import { TurnBanner } from './game/turn-banner';
   selector: 'jp-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
+  // A touch anywhere outside the board's touch areas cancels the selection (RF-016).
+  host: { '(click)': 'store.cancel()' },
 })
 export class App {
   protected readonly store = inject(GameStore);

@@ -8,7 +8,13 @@
     class="flex min-h-0 w-full min-w-0 flex-1 items-center justify-center self-stretch [container-type:size]"
   >
     <div class="relative aspect-square w-[min(100cqw,100cqh,900px)]" data-board-slot>
-      <jp-board [state]="store.state()" />
+      <jp-board
+        [state]="store.state()"
+        [moves]="store.legalMoves()"
+        [selected]="store.selected()"
+        (pieceTouch)="store.select($event)"
+        (ghostTouch)="store.confirm()"
+      />
       <jp-dice
         class="absolute top-1/2 left-1/2 w-[10%] -translate-1/2"
         [face]="store.face()"

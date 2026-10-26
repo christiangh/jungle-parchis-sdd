@@ -180,7 +180,7 @@ Como en PARTE-01, cada paso de código va precedido de su paso de tests, con un 
   - Con un `DiceRoller` fijo, salir con un 5: seleccionar, cancelar tocando fuera, volver a seleccionar y confirmar en la réplica.
   - Con un `DiceRoller` fijo, comer: el cartel pide usar el +20, el dado no responde y el premio se usa. La secuencia de tiradas se comprueba antes con el motor.
   - Con el `GameStore` sustituido en el test por uno con un estado con ganador: cartel «Gana Rojo» en rojo, dado inactivo y ninguna ficha resaltada ni que responda (CE-05).
-- [ ] 8. Montar en `App`: conectar entradas y salidas del tablero y cancelar con `(click)` en el `host`, hasta que pasen los tests del paso 7; revisión en navegador a los 4 tamaños y medición de las áreas táctiles a 320 × 568 (HU-04, HU-05, HU-06, HU-08, CE-07).
+- [x] 8. Montar en `App`: conectar entradas y salidas del tablero y cancelar con `(click)` en el `host`, hasta que pasen los tests del paso 7; revisión en navegador a los 4 tamaños y medición de las áreas táctiles a 320 × 568 (HU-04, HU-05, HU-06, HU-08, CE-07).
 
 ### Pruebas y trazabilidad
 
