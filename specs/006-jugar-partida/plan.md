@@ -114,3 +114,134 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** en `app.spec.ts` los temporizadores falsos se activan después del primer `whenStable`, que con ellos no termina nunca.
 - **Sí:** los dos tests que ya había en `app.spec.ts` pasan a tener el nombre en español, como el resto.
 - **Revisión en navegador, paso 11:** sin scroll en ningún tamaño. Tablero de 304 px a 320 × 568 y a 568 × 320 (con la cabecera a la izquierda), de 736 px a 768 × 1024 y de 900 px a 1920 × 1080; el dado mide un 10 % del tablero y queda sobre el tronco. Con las imágenes del fondo bloqueadas se ve el color de carga `--color-jungle` y todo sigue legible.
+
+## PARTE-02: Mover fichas y premios
+
+**Estado:** Pendiente
+
+### Enfoque
+
+La selección es estado de la pantalla, no del motor. Vive en el `GameStore` como `selected` (id de ficha o `null`), con `select(id)`, `confirm()` y `cancel()`:
+
+- `select` solo acepta fichas de `legalMoves`; tocar otra resaltada cambia la selección y tocar la seleccionada la cancela.
+- `confirm` aplica la acción `move` con el motor.
+- Cada estado nuevo borra la selección.
+
+Los premios no necesitan nada aparte: `legalMoves` del motor ya da los del premio, y `canRoll` ya es falso con premio pendiente (RF-019).
+
+Lo que se pinta sale de una función pura nueva, `movePreview(state, moves, selected)`, en `src/app/board/`:
+
+- Para cada ficha: su modo (sin nada que elegir, resaltada, seleccionada o atenuada), su centro, que en una previsualización de pareja pasa a su lado del tablón, y su área táctil.
+- Para la réplica: su centro, su área táctil y sus indicadores, que salen solo del `Move` del motor y del estado (RNF-005): diana si come (`captures`), sol si el destino es la meta, y pareja si en el destino queda otra ficha que no se come (puente si es del mismo color, hoja si es rival en un seguro).
+
+El tablero (`jp-board`) recibe `moves` y `selected` y emite `pieceTouch(id)` y `ghostTouch()`. Las áreas táctiles van en un segundo SVG superpuesto, con el mismo `viewBox`, porque el SVG del dibujo es `role="img"` y sus hijos no pueden ser controles. Un toque en cualquier otro punto llega al `host` de `App` y cancela la selección.
+
+Como en PARTE-01, cada paso de código va precedido de su paso de tests, con un esqueleto que compila y los hace fallar.
+
+### Archivos
+
+- `src/styles.css`: animación `--animate-piece-halo`, solo de opacidad, con sus `@keyframes`.
+- `src/app/game/game-store.ts`: `selected`, `select`, `confirm` y `cancel`.
+- `src/app/board/board-geometry.ts`: `plankCorners`, las cuatro esquinas de un tablón en coordenadas del tablero.
+- `src/app/board/move-preview.ts` (nuevo): `movePreview(state, moves, selected)` y sus tipos.
+- `src/app/board/board.ts` y `board.html`:
+  - entradas `moves` y `selected`; salidas `pieceTouch` y `ghostTouch`;
+  - halo, atenuación y ficha seleccionada más grande;
+  - réplica translúcida, diana «+20», sol «+10» y marca de pareja;
+  - SVG de áreas táctiles.
+- `src/app/app.ts` y `app.html`: pasan `legalMoves` y `selected` al tablero, conectan sus salidas y cancelan con `(click)` en el `host`.
+- Tests: `move-preview.spec.ts` (nuevo), y `game-store.spec.ts`, `board-geometry.spec.ts`, `board.spec.ts` y `app.spec.ts`.
+
+### Pasos
+
+- [ ] 1. Tests de la selección en el `GameStore`, con `selected`, `select`, `confirm` y `cancel` vacíos, que fallan:
+  - `select` no hace nada con una ficha sin movimiento legal, ni mientras gira el dado, ni sin tirada ni premio pendientes.
+  - Tocar otra resaltada cambia la selección, y tocar la seleccionada la cancela.
+  - `cancel` no cambia el estado ni `legalMoves`.
+  - `confirm` mueve y borra la selección, también con un solo movimiento; sin selección no hace nada.
+  - Seleccionar y confirmar son síncronos, sin temporizadores.
+  - El premio sigue el mismo flujo y el dado no responde hasta usarlo.
+- [ ] 2. Selección en el `GameStore`, hasta que pasen los tests del paso 1 (RF-016, RF-017, RF-019, RF-020, RNF-003).
+- [ ] 3. Tests de `plankCorners` y `movePreview` sobre estados construidos con `stateWith` y los `legalMoves` del motor, con un esqueleto que falla (CE-03):
+  - Resaltadas exactamente las fichas de `legalMoves`; atenuadas las demás, también las de casa; sin movimientos, ninguna atenuada.
+  - Réplica en el destino: la casilla de salida al salir comiendo, la casilla final tras un rebote y el puesto libre de la meta.
+  - Cada indicador aparece solo cuando su `Move` lo justifica.
+  - Previsualización de pareja: la que ya estaba primero, como queda tras aplicar el movimiento; vuelve al centro al cambiar la selección.
+  - Áreas táctiles: el tablón entero, medio tablón en parejas y en la previsualización, un tablón centrado en el puesto de casa, y la casilla o el triángulo de meta para la réplica sola.
+- [ ] 4. `plankCorners` y `movePreview`, hasta que pasen los tests del paso 3 (RF-012 a RF-015, RF-018, RNF-005).
+- [ ] 5. Tests de `jp-board` con las nuevas entradas y salidas sin pintar nada, que fallan:
+  - Clases de halo, atenuación y ficha seleccionada más grande; el halo solo late con `motion-safe:`.
+  - Réplica con diana «+20», sol «+10» o marca de pareja, y fichas en su lado de la pareja.
+  - Áreas táctiles pintadas con sus polígonos, `role="button"` y `aria-label`.
+  - Tocar un área emite `pieceTouch` o `ghostTouch` sin propagar el clic; Intro y Espacio igual.
+  - Sin movimientos legales no hay áreas táctiles.
+- [ ] 6. Pintar en `jp-board`, con tokens de la paleta, hasta que pasen los tests del paso 5 (RF-012 a RF-015, RF-018, RNF-002, RNF-007).
+- [ ] 7. Tests de la aplicación, que fallan con la pantalla actual:
+  - Con un `DiceRoller` fijo, salir con un 5: seleccionar, cancelar tocando fuera, volver a seleccionar y confirmar en la réplica.
+  - Con un `DiceRoller` fijo, comer: el cartel pide usar el +20, el dado no responde y el premio se usa. La secuencia de tiradas se comprueba antes con el motor.
+  - Con el `GameStore` sustituido en el test por uno con un estado con ganador: cartel «Gana Rojo» en rojo, dado inactivo y ninguna ficha resaltada ni que responda (CE-05).
+- [ ] 8. Montar en `App`: conectar entradas y salidas del tablero y cancelar con `(click)` en el `host`, hasta que pasen los tests del paso 7; revisión en navegador a los 4 tamaños y medición de las áreas táctiles a 320 × 568 (HU-04, HU-05, HU-06, HU-08, CE-07).
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+| --- | --- | --- |
+| HU-04.1 (halo y atenuación) | 3, 4, 5, 6 | `move-preview.spec.ts`: resaltadas = `legalMoves`, el resto atenuado, también en casa; `board.spec.ts`: clases |
+| HU-04.2 (crece, réplica) | 3–8 | `move-preview.spec.ts`: réplica en el destino; `board.spec.ts`: radio mayor; `app.spec.ts`: tocar ficha → réplica |
+| HU-04.3 (confirmar en réplica) | 1, 2, 7, 8 | `game-store.spec.ts`: `confirm` mueve; `app.spec.ts`: tocar réplica → ficha en destino, sin halo, réplica ni atenuación |
+| HU-04.4 (cambiar selección) | 1–4 | `game-store.spec.ts`: `select` de otra resaltada; `move-preview.spec.ts`: réplica de la nueva |
+| HU-04.5 (cancelar) | 1, 2, 7, 8 | `game-store.spec.ts`: tocar la seleccionada cancela; `app.spec.ts`: tocar fuera cancela y los halos siguen |
+| HU-04.6 (un solo movimiento) | 1, 2, 7, 8 | Salida con 5, único movimiento: no mueve sin confirmar |
+| HU-04.7 (tablón a 320 px) | 3, 4, 8 | `move-preview.spec.ts`: área = esquinas del tablón; medición en navegador a 320 × 568 |
+| HU-05.1 (diana +20) | 3–6 | `move-preview.spec.ts`: solo con `captures`; `board.spec.ts`: diana con «+20» |
+| HU-05.2 (sol +10) | 3–6 | `move-preview.spec.ts`: solo con destino meta; `board.spec.ts`: sol con «+10» |
+| HU-05.3 (pareja) | 3–6 | `move-preview.spec.ts`: la que estaba a su lado, réplica al otro, puente u hoja; `board.spec.ts`: posiciones |
+| HU-05.4 (seleccionar la de la pareja) | 3, 4 | `move-preview.spec.ts`: vuelve al centro y tiene su réplica |
+| HU-05.5 (confirmar en pareja) | 1–4 | `move-preview.spec.ts`: la previsualización coincide con el estado tras aplicar el movimiento |
+| HU-05.6 (salir comiendo) | 3, 4 | `move-preview.spec.ts`: réplica en la casilla de salida con diana (R-023) |
+| HU-06.1 (+20, halos, dado inactivo) | 1, 2, 7, 8 | `app.spec.ts`: tras comer, cartel «Usa tu +20», fichas del premio resaltadas, dado deshabilitado |
+| HU-06.2 (usar premio) | 1, 2, 7, 8 | `app.spec.ts`: confirmar → avanza 20 y el cartel pide tirar o pasa de turno |
+| HU-06.3 (premio encadenado) | 1, 2 | `game-store.spec.ts`: el flujo no distingue premios; el texto ya lo prueba `headline.spec.ts` |
+| HU-08.1 (Gana Rojo) | 7, 8 | `app.spec.ts` con estado con ganador: cartel «Gana Rojo» en rojo |
+| HU-08.2 (todo quieto) | 1–8 | `game-store.spec.ts`: `select` no hace nada; `board.spec.ts`: sin áreas táctiles; `app.spec.ts`: dado deshabilitado y tablero en la posición final |
+| RF-012, RF-013 | 3–6 | Ver HU-04.1 y HU-04.2 |
+| RF-014, RF-015 | 3–6 | Ver HU-05.1 a HU-05.5 |
+| RF-016, RF-017 | 1, 2, 7, 8 | Ver HU-04.3 a HU-04.6 |
+| RF-018 | 3–6 | `move-preview.spec.ts`: tablón, mitades, casa y réplica; `board.spec.ts`: polígonos pintados |
+| RF-019 | 1, 2, 7, 8 | Ver HU-06 |
+| RF-020 | 1–8 | Ver HU-08 |
+| RNF-002 | 5, 6 | `board.spec.ts`: el halo solo late con `motion-safe:` |
+| RNF-003 | 1, 2 | `game-store.spec.ts`: selección y confirmación síncronas, sin temporizadores |
+| RNF-005 | 3, 4 | `movePreview` solo lee `Move` y el estado; revisión del diff |
+| RNF-006, RNF-008 | todos | `pnpm check`; `src/engine/` y `package.json` sin cambios |
+| RNF-007 | 5, 6 | Búsqueda de `#[0-9a-fA-F]{3,8}\b` en `src/app/` sin resultados |
+| CE-03 | 3–6 | `move-preview.spec.ts` y `board.spec.ts` |
+| CE-05 | 7, 8 | `app.spec.ts` con estado con ganador |
+| CE-07 | 3, 4, 8 | Área = esquinas del tablón en unidades del SVG; medición en navegador a 320 px |
+| Hecho cuando | 8 | Todo lo anterior en verde con `pnpm check` y `pnpm test:e2e` |
+
+Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerrar la parte.
+
+### Skills y agentes
+
+- `caveman:cavecrew-reviewer`: revisión del diff al cerrar la parte, si el usuario la pide.
+- `run` o Playwright: revisión en navegador y medición de las áreas táctiles del paso 8.
+
+### Decisiones técnicas
+
+- **Sí:** la selección en el `GameStore`, junto al estado. El tablero sigue sin estado propio, y confirmar, cambiar o cancelar se prueban sin componentes.
+- **Sí:** `movePreview` como función pura en `src/app/board/`. Es geometría de pantalla a partir del `Move` del motor y no decide reglas (RNF-005).
+- **Sí:** `movePreview` da a cada ficha un modo: `idle` si no hay nada que elegir, y si no `highlighted`, `selected` o `dimmed`. Así, sin movimientos legales (ganador, dado girando o esperando tirada), no se atenúa nada.
+- **Sí:** la marca de pareja distingue puente (mismo color) y hoja (rival en un seguro), como el diseño. Solo mira el color de la ficha que ya ocupa el destino.
+- **Sí:** el área táctil de una ficha sale de su centro: el tablón entero si está en el centro de su casilla, y la mitad más cercana si no. Sirve igual para las parejas y para la previsualización de pareja.
+- **Sí:** en casa, el área es un rectángulo del tamaño de un tablón, horizontal y centrado en el puesto.
+- **Sí:** las áreas táctiles van en un SVG aparte superpuesto. Los hijos de un `role="img"` son decorativos para los lectores de pantalla.
+- **Sí:** áreas táctiles con `role="button"`, `tabindex="0"`, `aria-label` y teclas Intro y Espacio. Lo exige el lint de accesibilidad de plantillas, que no se desactiva (P-09). La accesibilidad completa con teclado sigue siendo de otro spec.
+- **Sí:** se cancela tocando fuera con `(click)` en el `host` de `App`, y los toques del tablero paran la propagación.
+- **Sí:** la ficha seleccionada crece con un radio mayor, no con `transform: scale`, que en SVG obliga a ajustar `transform-box`.
+- **Sí:** solo tokens que ya existen: halo con `sun`, diana con `team-red` y blanco, sol con `team-yellow` y `sun`, puente con los tonos de madera y hoja con `canopy`.
+- **Sí:** el halo late solo en opacidad. Sin escala, Playwright puede tocar las fichas en PARTE-03.
+- **Sí:** los tests del almacén llegan a cada situación con secuencias reales de tiradas, comprobadas antes con el motor: salir con un 5 (un solo movimiento), dos fichas azules y un 6 (dos movimientos), y rojo come y gana un +20.
+- **Sí:** el ganador se prueba en `app.spec.ts` sustituyendo el `GameStore` por inyección con uno que expone un estado con ganador, solo en el test. El almacén real no puede empezar desde un estado construido sin añadir código solo para tests (RF-024).
+- **Sí:** los tests de `movePreview` usan los `legalMoves` del motor sobre estados construidos, no movimientos escritos a mano.
+- **Observación:** en el spec, HU-05 numera dos criterios como «4.»; aquí el de salir comiendo es HU-05.6.
