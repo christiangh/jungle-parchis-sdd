@@ -117,7 +117,7 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 
 ## PARTE-02: Mover fichas y premios
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
