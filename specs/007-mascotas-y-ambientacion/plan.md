@@ -6,7 +6,7 @@
 
 ## PARTE-01: Ambientación y nombre de ficha compartido
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
