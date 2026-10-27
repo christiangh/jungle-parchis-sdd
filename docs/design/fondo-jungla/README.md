@@ -1,6 +1,6 @@
-# Fondo jungla (selva densa)
+# Fondo jungla (salvia claro)
 
-Loseta repetible sin costuras, vista cenital.
+Loseta repetible sin costuras, vista cenital. Versión suavizada: tonos salvia más claros para no cargar la pantalla alrededor del tablero.
 
 - fondo-jungla-1200.webp — principal (pantallas retina, mostrado a 600 px)
 - fondo-jungla-800.webp — móviles (mostrado a 400 px)
@@ -13,7 +13,7 @@ Las imágenes de producción se copian a `public/` al implementarlo, y el color 
 
 ```css
 .juego {
-  background-color: #264018;
+  background-color: #a9b18c;
   background-image: url(fondo-jungla-1200.jpg);
   background-image: image-set(url(fondo-jungla-1200.webp) type("image/webp"), url(fondo-jungla-1200.jpg) type("image/jpeg"));
   background-size: 600px 600px;
@@ -29,4 +29,4 @@ Las imágenes de producción se copian a `public/` al implementarlo, y el color 
 }
 ```
 
-El color #264018 se ve mientras carga la imagen.
+El color #a9b18c se ve mientras carga la imagen.

@@ -7,5 +7,6 @@ Referencias visuales exportadas de Claude Design para los specs de interfaz. No 
 | [`tablero/`](tablero/) | Tablero de la jungla, variantes «claro» y «suave» | SPEC 005 |
 | [`movimientos/`](movimientos/) | Estados de las fichas al elegir y mover | SPEC 006 |
 | [`dado-arbol/`](dado-arbol/) | Las seis caras del dado | SPEC 006 |
-| [`alerta-info/`](alerta-info/) | Cartel de madera para los avisos de turno | SPEC 006 |
-| [`fondo-jungla/`](fondo-jungla/) | Fondo de la página, en loseta repetible | SPEC 006 |
+| [`fondo-jungla/`](fondo-jungla/) | Fondo de la página, en loseta repetible; versión suavizada | SPEC 006; la versión suavizada, pendiente |
+| [`mascotas/`](mascotas/) | Mascotas de los equipos: fichas, casas y animaciones | Pendiente |
+| [`avisos-y-campeon/`](avisos-y-campeon/) | Avisos con la mascota del equipo y pantalla de campeón | Pendiente |
