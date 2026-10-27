@@ -1,5 +1,37 @@
-<main class="grid min-h-dvh place-items-center bg-page">
-  <div class="aspect-square w-[min(96vw,96dvh,900px)]" data-board-slot>
-    <jp-board [state]="state" />
+<main
+  class="bg-jungle bg-jungle-tile flex h-dvh flex-col items-center gap-2 overflow-hidden p-2 sm:gap-4 sm:p-4 [@media(orientation:landscape)_and_(max-height:480px)]:flex-row"
+>
+  <header class="shrink-0 [@media(orientation:landscape)_and_(max-height:480px)]:max-w-[40%]">
+    <jp-turn-banner [headline]="headline()" />
+    @if (lastPlay(); as line) {
+      <p
+        class="bg-ink mx-auto mt-2 w-fit max-w-full rounded-lg px-3 py-1 text-center text-sm/tight text-white sm:text-base/tight"
+        aria-live="polite"
+        data-last-play
+      >
+        {{ line }}
+      </p>
+    }
+  </header>
+  <div
+    class="flex min-h-0 w-full min-w-0 flex-1 items-center justify-center self-stretch [container-type:size]"
+  >
+    <div class="relative aspect-square w-[min(100cqw,100cqh,900px)]" data-board-slot>
+      <jp-board
+        [state]="store.state()"
+        [moves]="store.legalMoves()"
+        [selected]="store.selected()"
+        (pieceTouch)="store.select($event)"
+        (ghostTouch)="store.confirm()"
+      />
+      <jp-dice
+        class="absolute top-1/2 left-1/2 w-[10%] -translate-1/2"
+        [face]="store.face()"
+        [color]="headline().color"
+        [canRoll]="store.canRoll()"
+        [rolling]="store.rolling()"
+        (roll)="store.roll()"
+      />
+    </div>
   </div>
 </main>

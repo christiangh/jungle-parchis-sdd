@@ -7,7 +7,9 @@ import {
   homes,
   laneSquares,
   PIECE_RADIUS,
+  plankCorners,
   Point,
+  SQUARE_LENGTH,
   SQUARE_WIDTH,
   trackSquares,
 } from './board-geometry';
@@ -265,6 +267,21 @@ describe('board geometry', () => {
       for (const other of COLORS.filter((c) => c !== color)) {
         expect(distance(start!, own!), color).toBeLessThan(distance(start!, homeCenter(other)!));
       }
+    }
+  });
+
+  it('RF-018: las esquinas de cada tablón rodean su casilla, con el lado largo en el eje de pareja', () => {
+    for (const square of [...trackSquares(), ...laneSquares()]) {
+      const label =
+        'number' in square ? `casilla ${square.number}` : `${square.color} ${square.step}`;
+      const corners = plankCorners(square);
+      expect(corners, label).toHaveLength(4);
+      const [a, b, c, d] = corners;
+      expect({ x: (a.x + c.x) / 2, y: (a.y + c.y) / 2 }, label).toEqual(square.center);
+      expect({ x: (b.x + d.x) / 2, y: (b.y + d.y) / 2 }, label).toEqual(square.center);
+      expect(distance(a, b), label).toBe(SQUARE_LENGTH);
+      expect(distance(b, c), label).toBe(SQUARE_WIDTH);
+      expect(Math.abs(dot(minus(b, a), square.pairAxis)), label).toBe(SQUARE_LENGTH);
     }
   });
 });

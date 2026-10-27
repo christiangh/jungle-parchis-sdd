@@ -1,0 +1,29 @@
+<div
+  class="bg-plank relative flex items-center gap-3 rounded-xl border-4 px-6 py-2 shadow-lg shadow-black/40 sm:gap-4 sm:px-8"
+  [class]="[fill(), edge()]"
+  [attr.data-color]="headline().color"
+  data-plank
+>
+  <span
+    class="absolute top-1.5 left-2 size-1.5 rounded-full bg-black/35"
+    aria-hidden="true"
+    data-nail
+  ></span>
+  <span
+    class="absolute top-1.5 right-2 size-1.5 rounded-full bg-black/35"
+    aria-hidden="true"
+    data-nail
+  ></span>
+  <span
+    class="size-7 shrink-0 rounded-full border-4 border-white ring-2 ring-ink sm:size-9"
+    [class]="fill()"
+    aria-hidden="true"
+    data-dot
+  ></span>
+  <div class="text-outline-ink font-serif text-white" data-text>
+    <p class="text-xl/tight font-bold sm:text-3xl/tight" data-title>{{ headline().title }}</p>
+    @if (headline().instruction; as instruction) {
+      <p class="text-base/tight sm:text-xl/tight" data-instruction>{{ instruction }}</p>
+    }
+  </div>
+</div>

@@ -3,7 +3,8 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = 4300;
 const CI = !!process.env['CI'];
 
-// Browser smoke test (RF-016). Run with `pnpm test:e2e`, outside `pnpm check`.
+// Browser tests: smoke test (RF-016), game scenarios (RF-023) and screen fit (CE-08). Run with
+// `pnpm test:e2e`, outside `pnpm check`.
 export default defineConfig({
   testDir: './e2e',
   forbidOnly: CI,
@@ -15,11 +16,12 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  // Own server with the production build, never one already running.
+  // Server with the production build. Locally it reuses one already running on the port; the CI
+  // always starts its own.
   webServer: {
     command: `pnpm ng serve --configuration production --port ${PORT}`,
     url: `http://localhost:${PORT}`,
-    reuseExistingServer: false,
+    reuseExistingServer: !CI,
     timeout: 120_000,
   },
 });

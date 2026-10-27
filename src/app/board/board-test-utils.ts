@@ -27,3 +27,12 @@ export function stateWith(moved: readonly (readonly [PieceId, Position])[]): Gam
     ],
   };
 }
+
+/** New game with the given pieces moved and `turn` waiting to move a roll of `roll`. */
+export function rolled(
+  moved: readonly (readonly [PieceId, Position])[],
+  turn: Color,
+  roll: number,
+): GameState {
+  return { ...stateWith(moved), initialRoll: null, turn, pendingRoll: roll };
+}
