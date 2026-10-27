@@ -24,4 +24,4 @@ El gestor de paquetes es pnpm, nunca npm.
 - `pnpm check`: formato, lint y todos los tests, incluidos los de propiedades. Cierra cada parte de un spec.
 - `pnpm test:once`: todos los tests menos los de propiedades; tarda segundos. Es el que se usa en cada paso.
 - `pnpm test:properties`: solo los tests de propiedades (`src/engine/invariants.spec.ts`, 1000 partidas aleatorias).
-- `pnpm test:e2e`: prueba de humo en Chromium con Playwright (`e2e/`), tras comprobar sus tipos (`tsconfig.e2e.json`). Levanta su propio `ng serve` con la configuración de producción en el puerto 4300; no ejecuta `ng build`. Fuera de `pnpm check`; corre en el CI. La primera vez: `pnpm exec playwright install chromium`.
+- `pnpm test:e2e`: pruebas en navegador con Playwright en Chromium (`e2e/`): humo, escenarios de partida y pantalla sin scroll, tras comprobar sus tipos (`tsconfig.e2e.json`). Usa `ng serve` con la configuración de producción en el puerto 4300: en local reutiliza el que ya esté levantado en ese puerto y en el CI levanta siempre el suyo; no ejecuta `ng build`. Fuera de `pnpm check`; corre en el CI. La primera vez: `pnpm exec playwright install chromium`.

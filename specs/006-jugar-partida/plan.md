@@ -248,7 +248,7 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 
 ## PARTE-03: Última jugada y pruebas en navegador
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
@@ -348,5 +348,7 @@ Comandos: `pnpm test:once` en los pasos 1–3; `pnpm test:e2e` en los pasos 4 y 
 - **No:** activar el movimiento reducido en las pruebas en navegador (pregunta abierta del spec). Las aserciones de Playwright esperan solas a la cara final y a los resaltados, y así el giro también se prueba en navegador real.
 - **No:** comprobación AXE automática (pregunta abierta del spec). Necesita una dependencia nueva (P-17) y encaja mejor en el spec de accesibilidad.
 - **Sí:** las secuencias de tiradas de los escenarios se comprueban antes con el motor, como en PARTE-02.
-- **Sí:** `roll` espera el final del giro con un `MutationObserver` instalado antes de tocar el dado. Esperar a que aparezca la clase del giro fallaba a veces con varios workers: el giro de 500 ms terminaba antes de verlo.
+- **Sí:** las pruebas en navegador instalan `page.clock`, y `roll` toca el dado y adelanta el reloj 500 ms, lo que espera el almacén con `setTimeout` antes de aplicar la tirada. Con el giro en tiempo real, el escenario de comer tardaba 14 s y con 4 workers pasaba de los 30 s de límite; con el reloj tarda 6 s y pasa 8 de 8 veces con 4 workers. La aplicación no cambia y el giro se sigue pintando.
+- **Sí:** la secuencia de comer, de 16 tiradas, ya es la mínima. Comer exige recorrer al menos 17 casillas, porque las salidas están a 17 una de otra y son seguros (R-006), y sin usar un 5, que obliga a salir (R-021). Eso pide 4 tiradas en dos turnos, con las 3 tiradas de los rivales entre turno y turno.
+- **Sí:** en local, `pnpm test:e2e` reutiliza el servidor que ya esté en el puerto 4300; en el CI siempre levanta el suyo.
 - **Medición (paso 5):** la línea en blanco sobre `ink` (#3b2412) da 14,51:1, por encima del 4,5:1 de AA. Revisada en navegador a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080 con «Tres seises de Azul y su ficha vuelve a casa, turno de Rojo.»: a 320 y a 568 × 320 ocupa dos líneas, centrada, sin tapar el tablero ni desbordar.

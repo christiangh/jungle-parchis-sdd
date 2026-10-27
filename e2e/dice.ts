@@ -1,12 +1,15 @@
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 
-const SPIN = 'motion-safe:animate-dice-spin';
+// Same value as DICE_SPIN_MS in the game store, which waits the spin with setTimeout.
+const SPIN_MS = 500;
 
 /**
  * Fixes the dice values by replacing `Math.random` before the page loads, so the app keeps its
- * real dice roller (RF-023, RF-024). Once the values run out, the dice rolls 1.
+ * real dice roller (RF-023, RF-024). Once the values run out, the dice rolls 1. It also installs
+ * the fake clock that `roll` moves forward.
  */
 export async function fixDice(page: Page, rolls: readonly number[]): Promise<void> {
+  await page.clock.install();
   await page.addInitScript((values) => {
     const queue = [...values];
     // The roller takes floor(random * 6) + 1; the middle of each sixth avoids rounding edges.
@@ -19,28 +22,13 @@ export function dice(page: Page) {
 }
 
 /**
- * Touches the dice and waits for the spin to end. Polling the class could miss a 500 ms spin on a
- * busy machine, so an observer installed before the touch waits for the spin class to go away.
+ * Touches the dice, moves the fake clock past the spin so the roll is applied without waiting,
+ * and waits for the screen to show it.
  */
 export async function roll(page: Page, count = 1): Promise<void> {
   for (let i = 0; i < count; i++) {
-    const spun = dice(page).evaluate(
-      (button, spin) =>
-        new Promise<void>((resolve) => {
-          new MutationObserver((records, observer) => {
-            const stopped = records.some(
-              (record) =>
-                record.oldValue?.split(' ').includes(spin) && !button.classList.contains(spin),
-            );
-            if (stopped) {
-              observer.disconnect();
-              resolve();
-            }
-          }).observe(button, { attributeFilter: ['class'], attributeOldValue: true });
-        }),
-      SPIN,
-    );
     await dice(page).click();
-    await spun;
+    await page.clock.runFor(SPIN_MS);
+    await expect(dice(page)).not.toHaveClass(/animate-dice-spin/);
   }
 }

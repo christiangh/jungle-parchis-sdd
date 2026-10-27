@@ -16,11 +16,12 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  // Own server with the production build, never one already running.
+  // Server with the production build. Locally it reuses one already running on the port; the CI
+  // always starts its own.
   webServer: {
     command: `pnpm ng serve --configuration production --port ${PORT}`,
     url: `http://localhost:${PORT}`,
-    reuseExistingServer: false,
+    reuseExistingServer: !CI,
     timeout: 120_000,
   },
 });
