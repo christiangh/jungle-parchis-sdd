@@ -1,5 +1,6 @@
-import { Color, GameEvent, PieceId } from '@engine';
+import { Color, GameEvent } from '@engine';
 import { COLOR_NAMES } from '../shared/color-names';
+import { pieceColor } from '../shared/piece-id';
 
 /** Colour of a piece as an adjective, to agree with «ficha». */
 const PIECE_COLORS: Readonly<Record<Color, string>> = {
@@ -8,10 +9,6 @@ const PIECE_COLORS: Readonly<Record<Color, string>> = {
   red: 'roja',
   green: 'verde',
 };
-
-function colorOf(pieceId: PieceId): Color {
-  return pieceId.split('-')[0] as Color;
-}
 
 function names(colors: readonly Color[]): string {
   const all = colors.map((color) => COLOR_NAMES[color]);
@@ -28,11 +25,11 @@ function fragment(event: GameEvent): string {
     case 'first-player':
       return `empieza ${COLOR_NAMES[event.player]}`;
     case 'piece-left-home':
-      return `${COLOR_NAMES[colorOf(event.pieceId)]} saca una ficha de casa`;
+      return `${COLOR_NAMES[pieceColor(event.pieceId)]} saca una ficha de casa`;
     case 'piece-advanced':
-      return `${COLOR_NAMES[colorOf(event.pieceId)]} mueve una ficha`;
+      return `${COLOR_NAMES[pieceColor(event.pieceId)]} mueve una ficha`;
     case 'piece-captured':
-      return `come una ficha ${PIECE_COLORS[colorOf(event.pieceId)]}`;
+      return `come una ficha ${PIECE_COLORS[pieceColor(event.pieceId)]}`;
     case 'piece-reached-goal':
       return 'llega a meta';
     case 'bonus-earned':

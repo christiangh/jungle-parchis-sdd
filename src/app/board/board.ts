@@ -24,7 +24,7 @@ import {
   TEAM_DARK_STROKE,
   TEAM_FILL,
 } from './board-palette';
-import { COLOR_NAMES } from '../shared/color-names';
+import { pieceName } from '../shared/piece-id';
 import { Ghost, movePreview, PiecePreview } from './move-preview';
 
 /** A wooden or painted plank: plain track squares and lane squares. */
@@ -105,11 +105,6 @@ const SELECTED_GROWTH = 3;
 const BADGE_OFFSET = 15;
 
 const decor = boardDecor();
-
-/** A piece as players read it: `yellow-0` is "1 de Amarillo". */
-function pieceName(id: PieceId, color: Color): string {
-  return `${Number(id.split('-')[1]) + 1} de ${COLOR_NAMES[color]}`;
-}
 
 function pointsOf(polygon: readonly Point[]): string {
   return polygon.map((p) => `${p.x},${p.y}`).join(' ');
@@ -257,7 +252,7 @@ export class Board {
             {
               target: p.id,
               points: pointsOf(p.touchArea),
-              label: `Ficha ${pieceName(p.id, p.color)}`,
+              label: `Ficha ${pieceName(p.id)}`,
             },
           ],
     );
@@ -265,7 +260,7 @@ export class Board {
       areas.push({
         target: 'ghost',
         points: pointsOf(ghost.touchArea),
-        label: `Mover la ficha ${pieceName(ghost.pieceId, ghost.color)} aquí`,
+        label: `Mover la ficha ${pieceName(ghost.pieceId)} aquí`,
       });
     }
     return areas;

@@ -3,6 +3,7 @@
 
 import { Color, GameState, Piece, PieceId, Position } from '@engine';
 import { goals, homes, laneSquares, Point, trackSquares } from './board-geometry';
+import { pieceIndex } from '../shared/piece-id';
 
 /** Where a piece goes inside its position: its index there and how many pieces share it. */
 export interface PlaceInPosition {
@@ -59,7 +60,7 @@ export function piecePlaces(state: GameState): readonly PiecePlace[] {
     const shared = together.get(positionKey(piece))!;
     const index =
       piece.position.kind === 'home'
-        ? pieceNumber(piece.id)
+        ? pieceIndex(piece.id)
         : shared.filter((other) => arrival.get(other.id)! < arrival.get(piece.id)!).length;
     return {
       id: piece.id,
@@ -77,9 +78,4 @@ function positionKey(piece: Piece): string {
     : position.kind === 'lane'
       ? `lane-${piece.color}-${position.square}`
       : `${position.kind}-${piece.color}`;
-}
-
-/** A home has one slot per piece number. */
-function pieceNumber(id: PieceId): number {
-  return Number(id.slice(id.indexOf('-') + 1));
 }
