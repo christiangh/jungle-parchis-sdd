@@ -1,6 +1,6 @@
 # SPEC 006 — Jugar una partida
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 001, SPEC 002, SPEC 003, SPEC 004, SPEC 005
 > **Fecha:** 2026-10-25
 > **Autor:** Christian Garcia
@@ -287,6 +287,8 @@ Se reutilizan los glosarios de SPEC 001 (tirada, movimiento legal, acción y eve
 - **No:** llegar al ganador en una prueba en navegador. Exigiría una partida entera; el ganador se prueba con tests de componente sobre estados construidos.
 - **Sí:** tres partes: pantalla y dado, mover y premios, última jugada y pruebas en navegador. Cada una se entrega y prueba sola.
 - **Sí:** estado en un único almacén que aplica las acciones con el motor. Una sola fuente de verdad para toda la pantalla.
+- **No:** comprobación AXE automática en las pruebas en navegador. Requiere una dependencia más (P-17) y queda para el spec de accesibilidad.
+- **No:** activar el movimiento reducido en las pruebas en navegador. Para no esperar al giro, las pruebas adelantan un reloj simulado, y el giro se sigue pintando en navegador real.
 
 ## 14. Riesgos
 
@@ -329,8 +331,7 @@ Se reutilizan los glosarios de SPEC 001 (tirada, movimiento legal, acción y eve
 
 ## 16. Preguntas abiertas
 
-- ¿Se añade una comprobación AXE automática a las pruebas en navegador? Sigue pendiente desde SPEC 005: las instrucciones del proyecto exigen pasar AXE, pero requiere una dependencia más (P-17).
-- ¿Las pruebas en navegador activan el movimiento reducido para no esperar al giro? Acelera y estabiliza las pruebas, pero deja el giro sin cubrir en navegador real; se decide en el plan de PARTE-03.
+Ninguna.
 
 ## 17. Qué NO entra en este spec
 
