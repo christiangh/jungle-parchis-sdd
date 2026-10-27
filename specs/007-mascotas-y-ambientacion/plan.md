@@ -34,7 +34,7 @@ El cartel y la línea no cambian de diseño en esta parte (eso es PARTE-03): sol
 - [x] 1. Fondo suavizado: sustituir las cuatro imágenes de `public/background/` por las del diseño y cambiar `--color-jungle` a `#a9b18c`; actualizar la fila de `docs/design/README.md`. Revisión en navegador a 320 × 568 y 1920 × 1080, con y sin las imágenes bloqueadas (RF-001, RNF-006).
 - [x] 2. Tipografías: descargar de Fontsource los WOFF2 latinos de Caprasimo 400 y Figtree 600 y su licencia a `public/fonts/`, declarar los `@font-face` y los tokens, precargarlas en `index.html` y aplicar `font-display` al cartel y `font-semibold` a la línea (RF-002, RNF-008).
 - [x] 3. Pruebas en navegador de la ambientación en `e2e/ambience.spec.ts`: con las imágenes del fondo bloqueadas, el fondo de la página es `rgb(169, 177, 140)`; el título del cartel se pinta con Caprasimo y la línea de última jugada con Figtree, y `document.fonts.check` las da por cargadas; durante la carga y una tirada, todas las peticiones son al mismo origen (HU-01, CE-08).
-- [ ] 4. Tests de `piece-id.ts`, con un esqueleto que compila y los hace fallar: color, número de hueco y nombre de las 16 fichas («1 de Amarillo» … «4 de Verde») (RF-003).
+- [x] 4. Tests de `piece-id.ts`, con un esqueleto que compila y los hace fallar: color, número de hueco y nombre de las 16 fichas («1 de Amarillo» … «4 de Verde») (RF-003).
 - [ ] 5. `piece-id.ts`, hasta que pasen los tests del paso 4, y sustitución en `board.ts`, `board-pieces.ts` y `last-play.ts`; los tests existentes del tablero y de la línea pasan sin cambios. Búsqueda de `split(`, `indexOf('-')` y `slice(` sobre identificadores de ficha en `src/app/`: solo en `piece-id.ts` (RF-003, CE-10).
 
 ### Pruebas y trazabilidad
