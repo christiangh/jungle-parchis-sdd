@@ -1,6 +1,6 @@
-/* Alertas y pantalla de campeón · Parchís de la jungla */
+/* Pantalla de campeón · Parchís de la jungla */
 @import url("https://fonts.googleapis.com/css2?family=Caprasimo&display=swap");
-.pj-alerta, .pj-campeon__tablon {
+.pj-campeon__tablon {
   --c: #e3b23a; --borde: #6b4a0c; --sombra: #4a320a;
   position: relative; display: inline-flex; align-items: center; gap: 12px;
   padding: 8px 24px 8px 10px; border-radius: 14px;
@@ -8,20 +8,14 @@
   border: 3px solid var(--borde);
   box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -4px 0 rgba(0,0,0,.2), 0 8px 16px rgba(10,20,4,.45);
 }
-.pj-alerta::before, .pj-alerta::after { content: ""; position: absolute; top: 7px; width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,.4); }
-.pj-alerta::before { left: 7px; } .pj-alerta::after { right: 7px; }
-.pj-alerta ficha-animal { width: 46px; height: 46px; flex: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
-.pj-alerta__texto, .pj-campeon__titulo {
+.pj-campeon__titulo {
   font-family: "Caprasimo", serif; color: #fff; white-space: nowrap;
   text-shadow: 2px 2px 0 var(--sombra), -2px 2px 0 var(--sombra), 2px -2px 0 var(--sombra), -2px -2px 0 var(--sombra), 2px 0 0 var(--sombra), -2px 0 0 var(--sombra), 0 2px 0 var(--sombra), 0 -2px 0 var(--sombra), 0 4px 0 var(--sombra);
 }
-.pj-alerta__texto { font-size: 26px; }
-.pj-alerta--pequena .pj-alerta__texto { font-size: 22px; }
-.pj-alerta--pequena ficha-animal { width: 40px; height: 40px; }
-.pj-amarillo { --c: #e3b23a; --borde: #6b4a0c; --sombra: #4a320a; }
-.pj-rojo     { --c: #c8452d; --borde: #5e2416; --sombra: #3b1a10; }
-.pj-azul     { --c: #3a7cb0; --borde: #1f4566; --sombra: #173450; }
-.pj-verde    { --c: #2e8b57; --borde: #17492d; --sombra: #12381f; }
+.pj-campeon__tablon.pj-amarillo { --c: #e3b23a; --borde: #6b4a0c; --sombra: #4a320a; }
+.pj-campeon__tablon.pj-rojo     { --c: #c8452d; --borde: #5e2416; --sombra: #3b1a10; }
+.pj-campeon__tablon.pj-azul     { --c: #3a7cb0; --borde: #1f4566; --sombra: #173450; }
+.pj-campeon__tablon.pj-verde    { --c: #2e8b57; --borde: #17492d; --sombra: #12381f; }
 
 /* Pantalla de campeón */
 .pj-campeon { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: rgba(18,14,8,.64); }
