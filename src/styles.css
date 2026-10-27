@@ -1,5 +1,22 @@
 @import 'tailwindcss';
 
+/* Design fonts (docs/design/avisos-y-campeon), served by the app: latin subset, only the weights used. */
+@font-face {
+  font-family: 'Caprasimo';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/caprasimo-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/figtree-latin-600-normal.woff2') format('woff2');
+}
+
 /*
  * Jungle board palette ("claro" variant of docs/design/tablero).
  * `static` emits every variable so the SVG can use them even when no utility does.
@@ -46,6 +63,10 @@
   --color-canopy-dark: #1f4a18;
   --color-canopy: #33702a;
   --color-canopy-light: #62a03d;
+
+  /* Caprasimo for the turn banner, Figtree for every other text (RF-002). */
+  --font-display: 'Caprasimo', ui-serif, Georgia, serif;
+  --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif;
 
   /* Loading color of the softened jungle background tile (docs/design/fondo-jungla). */
   --color-jungle: #a9b18c;

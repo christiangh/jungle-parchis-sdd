@@ -32,7 +32,7 @@ El cartel y la línea no cambian de diseño en esta parte (eso es PARTE-03): sol
 ### Pasos
 
 - [x] 1. Fondo suavizado: sustituir las cuatro imágenes de `public/background/` por las del diseño y cambiar `--color-jungle` a `#a9b18c`; actualizar la fila de `docs/design/README.md`. Revisión en navegador a 320 × 568 y 1920 × 1080, con y sin las imágenes bloqueadas (RF-001, RNF-006).
-- [ ] 2. Tipografías: descargar de Fontsource los WOFF2 latinos de Caprasimo 400 y Figtree 600 y su licencia a `public/fonts/`, declarar los `@font-face` y los tokens, precargarlas en `index.html` y aplicar `font-display` al cartel y `font-semibold` a la línea (RF-002, RNF-008).
+- [x] 2. Tipografías: descargar de Fontsource los WOFF2 latinos de Caprasimo 400 y Figtree 600 y su licencia a `public/fonts/`, declarar los `@font-face` y los tokens, precargarlas en `index.html` y aplicar `font-display` al cartel y `font-semibold` a la línea (RF-002, RNF-008).
 - [ ] 3. Pruebas en navegador de la ambientación en `e2e/ambience.spec.ts`: con las imágenes del fondo bloqueadas, el fondo de la página es `rgb(169, 177, 140)`; el título del cartel se pinta con Caprasimo y la línea de última jugada con Figtree, y `document.fonts.check` las da por cargadas; durante la carga y una tirada, todas las peticiones son al mismo origen (HU-01, CE-08).
 - [ ] 4. Tests de `piece-id.ts`, con un esqueleto que compila y los hace fallar: color, número de hueco y nombre de las 16 fichas («1 de Amarillo» … «4 de Verde») (RF-003).
 - [ ] 5. `piece-id.ts`, hasta que pasen los tests del paso 4, y sustitución en `board.ts`, `board-pieces.ts` y `last-play.ts`; los tests existentes del tablero y de la línea pasan sin cambios. Búsqueda de `split(`, `indexOf('-')` y `slice(` sobre identificadores de ficha en `src/app/`: solo en `piece-id.ts` (RF-003, CE-10).
@@ -64,10 +64,12 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 
 - **Sí:** las imágenes nuevas sustituyen a las antiguas con el mismo nombre. La utilidad `bg-jungle-tile` y sus tests no cambian, y no quedan imágenes sin usar en `public/`.
 - **Sí:** el token conserva el nombre `--color-jungle` y solo cambia su valor. Sigue siendo el color de carga del fondo de jungla.
-- **Sí:** fuentes en WOFF2 copiadas a `public/fonts/` desde los paquetes de Fontsource (`@fontsource/caprasimo`, `@fontsource/figtree`), descargadas una vez con su versión exacta anotada aquí. No se añade ninguna dependencia (RNF-009, P-17).
+- **Sí:** fuentes en WOFF2 copiadas a `public/fonts/` desde los paquetes de Fontsource (`@fontsource/caprasimo`, `@fontsource/figtree`), descargadas una vez en su versión 5.3.0 (jsDelivr, `files/*-latin-*-normal.woff2` y `LICENSE`). `OFL.txt` une el aviso de copyright de las dos, con el mismo texto de licencia. No se añade ninguna dependencia (RNF-009, P-17).
 - **No:** añadir `@fontsource/*` como dependencia. Traería todos los pesos y subconjuntos para usar dos archivos.
 - **No:** Google Fonts. Pide recursos a otro origen al cargar (RNF-008, P-16).
 - **Sí:** solo Caprasimo 400 (es su único peso) y Figtree 600 (el del diseño), subconjunto latino (U+0000-00FF y algunos signos), que incluye á, é, í, ó, ú, ü, ñ, ¡ y ¿.
 - **Sí:** Figtree como `--font-sans`, la tipografía por defecto de Tailwind, para que todo texto que no sea el cartel la use sin marcarlo uno a uno.
 - **Sí:** `font-display: swap` y precarga. El texto se ve desde el principio con la tipografía de respaldo, y la precarga reduce el cambio a la tipografía final. Que ese cambio no mueva el tablero lo garantiza RNF-010, en PARTE-03.
 - **Sí:** `piece-id.ts` en `src/app/shared/`, porque lo usan el tablero y la partida. `pieceIndex` empieza en 0, como el número del identificador y los huecos de la casa; `pieceName` suma 1 para los jugadores.
+- **Sí:** el título del cartel deja `font-bold`. Caprasimo solo tiene peso 400, como en el diseño, y la negrita la sintetizaría el navegador deformando la letra.
+- **Sí:** el texto con peso normal usa también Figtree 600, la única cara servida; el diseño usa 600 en todos los textos que no son el cartel.
