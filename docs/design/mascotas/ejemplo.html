@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mascotas · Parchís de la jungla</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background-color:#a9b18c;background-image:image-set(url(../fondo-jungla/fondo-jungla-1200.webp) type("image/webp"),url(../fondo-jungla/fondo-jungla-1200.jpg) type("image/jpeg"));background-size:600px 600px;font-family:system-ui,sans-serif}
+.grid{display:grid;grid-template-columns:repeat(4,160px);gap:24px;padding:24px;border-radius:28px;background:rgba(255,248,234,.85)}
+.grid>div{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13px;color:#2b1d0f}
+ficha-animal,mascota-animada{width:140px;height:140px}</style>
+<script src="componentes/fichas-animales.js"></script><script src="componentes/mascotas-animadas.js"></script></head>
+<body><div class="grid">
+<div><mascota-animada animal="jaguar" anim="c"></mascota-animada>Jaguar · animado</div>
+<div><mascota-animada animal="loro" anim="c"></mascota-animada>Loro · animado</div>
+<div><mascota-animada animal="hipo" anim="b"></mascota-animada>Hipopótamo · animado</div>
+<div><mascota-animada animal="rana" anim="c"></mascota-animada>Rana · animado</div>
+<div><ficha-animal animal="jaguar" variant="e"></ficha-animal>Ficha</div>
+<div><ficha-animal animal="loro" variant="b"></ficha-animal>Ficha</div>
+<div><ficha-animal animal="hipo" variant="g"></ficha-animal>Ficha</div>
+<div><ficha-animal animal="rana" variant="a"></ficha-animal>Ficha</div>
+</div></body></html>
