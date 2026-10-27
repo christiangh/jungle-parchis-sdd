@@ -9,4 +9,4 @@ Referencias visuales exportadas de Claude Design para los specs de interfaz. No 
 | [`dado-arbol/`](dado-arbol/) | Las seis caras del dado | SPEC 006 |
 | [`fondo-jungla/`](fondo-jungla/) | Fondo de la página, en loseta repetible; versión suavizada | SPEC 006; la versión suavizada, pendiente |
 | [`mascotas/`](mascotas/) | Mascotas de los equipos: fichas, casas y animaciones | Pendiente |
-| [`avisos-y-campeon/`](avisos-y-campeon/) | Avisos con la mascota del equipo y pantalla de campeón | Pendiente |
+| [`avisos-y-campeon/`](avisos-y-campeon/) | Aviso de turno con la última jugada debajo, con las mascotas, y pantalla de campeón | Pendiente |
