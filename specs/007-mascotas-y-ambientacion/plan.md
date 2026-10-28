@@ -76,7 +76,7 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 
 ## PARTE-02: Mascotas en fichas y casas
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
