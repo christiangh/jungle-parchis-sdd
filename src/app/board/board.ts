@@ -26,7 +26,8 @@ import {
   TEAM_FILL,
   TEAM_STROKE,
 } from './board-palette';
-import { animatedPieces } from './board-turn';
+import { animatedPieces, homeInTurn } from './board-turn';
+import { HomeScene, homeScenes, SceneShape, SlotDecor } from './home-scenes';
 import { Mascot } from '../shared/mascot';
 import { pieceName } from '../shared/piece-id';
 import { Ghost, movePreview, PiecePreview } from './move-preview';
@@ -71,8 +72,11 @@ export interface GoalView extends Goal {
   readonly fill: string;
 }
 
+/** A home with its scene and the decoration under each slot (RF-006). */
 export interface HomeView extends Home {
   readonly fill: string;
+  readonly scene: readonly SceneShape[];
+  readonly decor: readonly SlotDecor[];
 }
 
 /**
@@ -131,6 +135,8 @@ function translation(center: Point): string {
 const BADGE_OFFSET = 15;
 
 const decor = boardDecor();
+
+const scenes = new Map<Color, HomeScene>(homeScenes().map((s) => [s.color, s]));
 
 function pointsOf(polygon: readonly Point[]): string {
   return polygon.map((p) => `${p.x},${p.y}`).join(' ');
@@ -237,7 +243,12 @@ export class Board {
   protected readonly homes: readonly HomeView[] = homes().map((h) => ({
     ...h,
     fill: TEAM_FILL[h.color],
+    scene: scenes.get(h.color)!.scene,
+    decor: scenes.get(h.color)!.slots,
   }));
+
+  /** Home highlighted for the team in turn; none once there is a winner (RF-007). */
+  protected readonly homeTurn = computed(() => homeInTurn(this.state()));
 
   private readonly preview = computed(() =>
     movePreview(this.state(), this.moves(), this.selected()),

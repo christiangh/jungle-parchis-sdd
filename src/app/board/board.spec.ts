@@ -25,6 +25,7 @@ import {
   trackSquares,
 } from './board-geometry';
 import { NEW_GAME, newGame, rolled, stateWith } from './board-test-utils';
+import { homeScenes } from './home-scenes';
 import { movePreview } from './move-preview';
 import { MASCOTS } from '../shared/mascot';
 
@@ -301,6 +302,97 @@ describe('Board', () => {
       'blue-2',
       'blue-3',
     ]);
+  });
+
+  it('RF-006: cada casa tiene la escena de su equipo y un decorado en cada hueco', async () => {
+    const root = await render();
+    for (const { color, scene, slots } of homeScenes()) {
+      const home = root.querySelector(`[data-home="${color}"]`)!;
+      const drawn = all(home as HTMLElement, '[data-part="scene"] > path');
+      expect(
+        drawn.map((path) => path.getAttribute('transform')),
+        color,
+      ).toEqual(scene.map((shape) => shape.transform));
+      expect(
+        drawn.map((path) => path.getAttribute('class')),
+        color,
+      ).toEqual(scene.map((shape) => shape.paint));
+      expect(
+        all(home as HTMLElement, '[data-home-slot]').map((slot) => slot.getAttribute('transform')),
+        color,
+      ).toEqual(slots.map((slot) => slot.transform));
+      expect(
+        all(home as HTMLElement, '[data-home-slot]').every((slot) => slot.children.length > 0),
+        color,
+      ).toBe(true);
+    }
+  });
+
+  it('RF-006: el hueco de una ficha que ha salido queda vacío', async () => {
+    const root = await render(stateWith([['red-0', { kind: 'track', square: 30 }]]));
+    const home = homes().find((h) => h.color === 'red')!;
+    const atHome = all(root, '[data-piece][data-color="red"]')
+      .filter((piece) => piece.getAttribute('data-piece') !== 'red-0')
+      .map(centerOf);
+
+    expect(atHome).toEqual(home.slots.slice(1));
+    expect(centerOf(pieceOf(root, 'red-0'))).toEqual(trackPlank(30).center);
+  });
+
+  it('RF-007, CE-04: solo la casa en turno se resalta y las demás no se atenúan', async () => {
+    const root = await render({ ...NEW_GAME, initialRoll: null, turn: 'blue' });
+    expect(all(root, '[data-home][data-turn]').map((h) => h.getAttribute('data-home'))).toEqual([
+      'blue',
+    ]);
+    for (const home of all(root, '[data-home]')) {
+      const color = home.getAttribute('data-home')!;
+      expect(home.hasAttribute('opacity'), color).toBe(false);
+      expect(home.getAttribute('class') ?? '', color).not.toMatch(/opacity/);
+    }
+  });
+
+  it('RF-007: la casa en turno lleva borde y brillo fijos, y el pulso solo con movimiento permitido', async () => {
+    const root = await render();
+    const home = root.querySelector('[data-home="yellow"]')!;
+    const pulse = home.querySelector('[data-part="turn-pulse"]');
+
+    expect(home.querySelector('[data-part="turn-glow"]')).not.toBeNull();
+    expect(paintedWith(home.querySelector('[data-part="turn-ring"]')!, 'stroke-white')).toBe(true);
+    expect(pulse?.classList.contains('motion-safe:animate-home-pulse')).toBe(true);
+    expect(pulse?.classList.contains('opacity-0')).toBe(true);
+    for (const color of ['blue', 'red', 'green']) {
+      expect(root.querySelector(`[data-home="${color}"] [data-part^="turn-"]`), color).toBeNull();
+    }
+  });
+
+  it('RF-007, CE-04: con ganador no se resalta ninguna casa', async () => {
+    const root = await render({ ...NEW_GAME, initialRoll: null, turn: 'blue', winner: 'red' });
+    expect(all(root, '[data-home][data-turn]')).toHaveLength(0);
+    expect(all(root, '[data-part^="turn-"]')).toHaveLength(0);
+  });
+
+  it('HU-03: la casa amarilla se resalta con los huecos vacíos si todas sus fichas han salido', async () => {
+    const root = await render(
+      rolled(
+        [
+          ['yellow-0', { kind: 'track', square: 5 }],
+          ['yellow-1', { kind: 'track', square: 12 }],
+          ['yellow-2', { kind: 'track', square: 20 }],
+          ['yellow-3', { kind: 'lane', square: 2 }],
+        ],
+        'yellow',
+        3,
+      ),
+    );
+    const home = homes().find((h) => h.color === 'yellow')!;
+    const centers = all(root, '[data-piece]').map(centerOf);
+
+    expect(all(root, '[data-home][data-turn]').map((h) => h.getAttribute('data-home'))).toEqual([
+      'yellow',
+    ]);
+    for (const slot of home.slots) {
+      expect(centers).not.toContainEqual(slot);
+    }
   });
 
   it('RF-010: en una partida nueva hay 4 fichas en cada casa, en puestos distintos', async () => {
