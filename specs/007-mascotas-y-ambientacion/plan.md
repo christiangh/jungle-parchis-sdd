@@ -73,3 +73,81 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** `piece-id.ts` en `src/app/shared/`, porque lo usan el tablero y la partida. `pieceIndex` empieza en 0, como el número del identificador y los huecos de la casa; `pieceName` suma 1 para los jugadores.
 - **Sí:** el título del cartel deja `font-bold`. Caprasimo solo tiene peso 400, como en el diseño, y la negrita la sintetizaría el navegador deformando la letra.
 - **Sí:** el texto con peso normal usa también Figtree 600, la única cara servida; el diseño usa 600 en todos los textos que no son el cartel.
+
+## PARTE-02: Mascotas en fichas y casas
+
+**Estado:** Pendiente
+
+### Enfoque
+
+Un componente nuevo, `Mascot` (`src/app/shared/mascot.ts`), dibuja en SVG la mascota de un equipo. Lo usa el tablero en esta parte y lo usarán el cartel y la pestaña en PARTE-03, por eso va en `shared/`. Su selector es de atributo sobre un `<g>` (`g[jpMascot]`), para meterlo dentro del SVG del tablero y, en PARTE-03, dentro de un `<svg>` pequeño en el cartel. Cada mascota se reconstruye a mano desde `docs/design/mascotas/componentes`, con la variante elegida (jaguar `e`, loro `b`, hipopótamo `g`, rana `a`) y con clases en las piezas que mueve su animación (jaguar `c`, loro `c`, hipopótamo `b`, rana `c`). La animación solo corre con la entrada `animated` y con movimiento permitido; en reposo, la mascota animada es igual que la quieta. Sus colores son tokens nuevos `--color-mascot-*` en `src/styles.css`.
+
+La ficha-mascota sustituye al disco de color de SPEC 006. Conserva el borde blanco, el halo, la atenuación, el crecimiento al seleccionar y la réplica discontinua, y dibuja dentro la mascota recortada al círculo. Fuera de casa mide lo mismo que ahora (radio 17); en casa ocupa su hueco (radio 28), como en el diseño. Las áreas táctiles no cambian.
+
+Las casas pasan a la variante `e` del diseño: cada una con su escena de fondo (ramas y hojas del loro, olas del hipopótamo, manchas del jaguar, juncos y ondas de la rana) y su decorado bajo cada hueco (nido, toalla, nido de paja, nenúfar). La geometría de las escenas es un cálculo puro en `src/app/board/home-scenes.ts`, como el decorado del tablero en `board-decor.ts`.
+
+Qué casa se resalta y qué fichas se animan sale del estado del motor, en funciones puras nuevas en `src/app/board/board-turn.ts`. La casa en turno es la de `state.turn`, también en la tirada inicial, salvo con ganador, que no hay ninguna. Las fichas animadas son las de ese equipo que están en casa. El resalte es un borde claro y un brillo fijos, que se ven igual sin movimiento (RNF-002), más un pulso que solo corre con movimiento permitido.
+
+### Archivos
+
+- `src/styles.css`: tokens `--color-mascot-*` de las cuatro mascotas y de las escenas de las casas, agrupados por equipo; tokens del resalte de la casa en turno; `@keyframes` y `--animate-*` del pulso de la casa.
+- `src/app/shared/mascot.ts`, `mascot.html`, `mascot.css` (nuevos): componente `Mascot` con entradas `color` y `animated`; `MASCOTS`, equipo → animal (RF-004); animaciones de 3 s con pausa, solo con movimiento permitido.
+- `src/app/shared/mascot.spec.ts` (nuevo): animal de cada equipo, decorativo para el lector y animado solo con `animated`.
+- `src/app/board/board-turn.ts`, `board-turn.spec.ts` (nuevos): `homeInTurn(state)` y `animatedPieces(state)`.
+- `src/app/board/home-scenes.ts`, `home-scenes.spec.ts` (nuevos): geometría de la escena y del decorado de cada hueco de cada casa.
+- `src/app/board/board-geometry.ts`: constante `HOME_PIECE_RADIUS` (28).
+- `src/app/board/board.ts`, `board.html`: fichas y réplica con `Mascot`; radio según estén en casa o no; fichas animadas; casas con escena, decorado de huecos y resalte de la casa en turno (`data-turn`).
+- `src/app/board/board.spec.ts`: tests de las fichas-mascota y de las casas; los de SPEC 006 se mantienen.
+- `e2e/mascots.spec.ts` (nuevo): animaciones según el turno y con movimiento reducido.
+
+### Pasos
+
+- [ ] 1. Tokens de las mascotas, las escenas y el resalte de la casa en `src/styles.css`, con los colores del diseño; búsqueda de hexadecimales en `src/app/` sin resultados (RNF-006).
+- [ ] 2. Tests de `board-turn.ts`, con un esqueleto que compila y los hace fallar: casa en turno en un turno normal, en la tirada inicial y con tirada o premio pendientes, y ninguna con ganador; fichas animadas: solo las que están en casa del equipo en turno, ninguna si todas han salido y ninguna con ganador (RF-007, CE-04).
+- [ ] 3. `board-turn.ts`, hasta que pasen los tests del paso 2.
+- [ ] 4. Componente `Mascot`: las cuatro mascotas con sus variantes y animaciones, recortadas a un círculo con un id único por instancia, `aria-hidden`, y animadas solo con `animated` y movimiento permitido. Tests en `mascot.spec.ts` en el mismo paso, porque es dibujo. Revisión en navegador de las cuatro a tamaño grande frente a `docs/design/mascotas/ejemplo.html` (RF-004, RNF-003).
+- [ ] 5. Fichas-mascota en el tablero: fichas y réplica con `Mascot` sobre el tono oscuro de su equipo y con el borde del color del equipo; radio 28 en casa; `animated` en las fichas de `animatedPieces`. Tests en `board.spec.ts`: cada ficha lleva la mascota de su equipo en el recorrido, el pasillo, la meta y la casa; halo, atenuación, crecimiento y réplica como en SPEC 006; una ficha roja comida vuelve a su hueco con el loro; solo se animan las fichas en casa del equipo en turno (RF-005, HU-02).
+- [ ] 6. Tests de `home-scenes.ts`, con un esqueleto que compila y los hace fallar: escena dentro de su casa, un decorado por hueco centrado en él, y la misma geometría en cada llamada (RF-006).
+- [ ] 7. `home-scenes.ts`, hasta que pasen los tests del paso 6, y casas en `board.html`: escena, decorado de huecos y resalte de `homeInTurn` (borde y brillo fijos, pulso con movimiento permitido). Tests en `board.spec.ts`: solo la casa en turno lleva `data-turn` y las otras no se atenúan; con ganador, ninguna; los huecos vacíos no muestran ficha (RF-006, RF-007, HU-03, CE-04).
+- [ ] 8. Pruebas en navegador en `e2e/mascots.spec.ts`: al empezar, solo las fichas en casa amarillas tienen animaciones en marcha; tras pasar el turno, solo las del nuevo equipo; con `reducedMotion: 'reduce'`, ninguna animación de mascota en marcha y la casa en turno sigue marcada (HU-03, RNF-002, CE-07). Revisión en navegador a 320 × 568 y 1920 × 1080 (RNF-005).
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+| --- | --- | --- |
+| HU-02.1 (cada ficha con la mascota de su equipo) | 5 | `board.spec.ts`: `RF-005: …` con la mascota de cada ficha en una partida nueva |
+| HU-02.2 (halo, atenuación, crecimiento y réplica con mascota) | 5 | `board.spec.ts`: estados de SPEC 006 con la ficha-mascota, y réplica con mascota |
+| HU-02.3 (ficha roja comida vuelve a su hueco) | 5 | `board.spec.ts`: estado tras comer una ficha roja, pintada con el loro en su hueco de la casa roja |
+| HU-03.1 (casa azul resaltada, solo fichas azules en casa animadas) | 2, 3, 5, 7 | `board-turn.spec.ts` y `board.spec.ts`: `data-turn` solo en la casa azul y animación solo en sus fichas en casa |
+| HU-03.2 (casa amarilla resaltada con los huecos vacíos) | 2, 3, 7 | `board-turn.spec.ts`: ninguna ficha animada; `board.spec.ts`: casa amarilla con `data-turn` y sin fichas |
+| HU-03.3 (movimiento reducido: casa resaltada, nada animado) | 8 | `e2e/mascots.spec.ts` con `reducedMotion: 'reduce'` |
+| RF-004 | 4 | `mascot.spec.ts`: jaguar, loro, hipopótamo y rana según el equipo |
+| RF-005 | 5 | Ver HU-02 |
+| RF-006 | 6, 7 | `home-scenes.spec.ts`; `board.spec.ts`: escena y decorados en cada casa, huecos vacíos sin ficha |
+| RF-007 | 2, 3, 5, 7 | Ver HU-03; `board-turn.spec.ts`: ninguna casa con ganador |
+| RNF-002 | 4, 7, 8 | Animaciones solo con movimiento permitido; `e2e/mascots.spec.ts` |
+| RNF-003 | 4, 8 | Bucles de 3 s con pausa en `mascot.css`; las animaciones van dentro de la mascota y no tocan la capa táctil: los tests de áreas táctiles de `board.spec.ts` no cambian |
+| RNF-005 | 5, 8 | Revisión en navegador a 320 × 568: el color de cada ficha-mascota se distingue |
+| RNF-006 | 1, 4, 7 | Búsqueda de `#[0-9a-fA-F]{3,8}\b` en `src/app/` sin resultados |
+| CE-04 (casas) | 2, 7 | `board-turn.spec.ts` y `board.spec.ts` |
+| CE-07 (casas) | 8 | `e2e/mascots.spec.ts` |
+| Hecho cuando: criterios de HU-02 y HU-03, y CE-04 y CE-07 en las casas | 1-8 | `pnpm check` y `pnpm test:e2e` |
+
+Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerrar la parte.
+
+### Skills y agentes
+
+- `run`: revisión en navegador de las mascotas y del tablero.
+- `caveman:cavecrew-reviewer`: revisión del diff al cerrar la parte, si el usuario la pide.
+
+### Decisiones técnicas
+
+- **Sí:** `Mascot` en `src/app/shared/`, con selector de atributo sobre `<g>` y plantilla con prefijo `svg:`. Sirve dentro del SVG del tablero y, en PARTE-03, dentro de un `<svg>` del cartel y de la pestaña.
+- **No:** `<symbol>` y `<use>`. No permiten animar una sola ficha sin trucos de propiedades heredadas.
+- **No:** copiar los componentes web ni los SVG del diseño. Lo impide RNF-009, y sus colores van en hexadecimal.
+- **Sí:** la ficha-mascota va sobre el tono oscuro de su equipo, con el borde del color del equipo. El diseño usa un fondo oscuro con el aro del color, y sobre el tono base el jaguar, del mismo amarillo, no se distinguiría. Se sigue distinguiendo por color a 9 px (RNF-005).
+- **Sí:** las fichas en casa ocupan su hueco (radio 28), como en la variante `e` del diseño; fuera de casa conservan el radio 17. Las áreas táctiles no cambian.
+- **Sí:** el resalte de la casa en turno es un borde y un brillo fijos, más un pulso solo con movimiento permitido. El medallón de la esquina del diseño es una mascota decorativa fija, que el spec descarta.
+- **Sí:** animaciones CSS en `mascot.css`, dentro de `@media (prefers-reduced-motion: no-preference)` y activadas con una clase del componente. Solo transforman partes de la mascota o cambian su opacidad, dentro de su `<g>`.
+- **Sí:** id único por instancia para el recorte (`jp-mascot-N`), porque el tablero tiene hasta 17 mascotas a la vez.
+- **Sí:** la geometría de escenas y decorados se calcula una vez, como `boardDecor()`, y tiene sus tests (P-07).
