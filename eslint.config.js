@@ -33,7 +33,8 @@ module.exports = defineConfig([
       '@angular-eslint/component-selector': [
         'error',
         {
-          type: 'element',
+          // Attribute selectors let a component render inside an SVG, as `g[jp-mascot]`.
+          type: ['element', 'attribute'],
           prefix: 'jp',
           style: 'kebab-case',
         },

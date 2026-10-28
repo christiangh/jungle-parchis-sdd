@@ -80,7 +80,7 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 
 ### Enfoque
 
-Un componente nuevo, `Mascot` (`src/app/shared/mascot.ts`), dibuja en SVG la mascota de un equipo. Lo usa el tablero en esta parte y lo usarán el cartel y la pestaña en PARTE-03, por eso va en `shared/`. Su selector es de atributo sobre un `<g>` (`g[jpMascot]`), para meterlo dentro del SVG del tablero y, en PARTE-03, dentro de un `<svg>` pequeño en el cartel. Cada mascota se reconstruye a mano desde `docs/design/mascotas/componentes`, con la variante elegida (jaguar `e`, loro `b`, hipopótamo `g`, rana `a`) y con clases en las piezas que mueve su animación (jaguar `c`, loro `c`, hipopótamo `b`, rana `c`). La animación solo corre con la entrada `animated` y con movimiento permitido; en reposo, la mascota animada es igual que la quieta. Sus colores son tokens nuevos `--color-mascot-*` en `src/styles.css`.
+Un componente nuevo, `Mascot` (`src/app/shared/mascot.ts`), dibuja en SVG la mascota de un equipo. Lo usa el tablero en esta parte y lo usarán el cartel y la pestaña en PARTE-03, por eso va en `shared/`. Su selector es de atributo sobre un `<g>` (`g[jp-mascot]`), para meterlo dentro del SVG del tablero y, en PARTE-03, dentro de un `<svg>` pequeño en el cartel. Cada mascota se reconstruye a mano desde `docs/design/mascotas/componentes`, con la variante elegida (jaguar `e`, loro `b`, hipopótamo `g`, rana `a`) y con clases en las piezas que mueve su animación (jaguar `c`, loro `c`, hipopótamo `b`, rana `c`). La animación solo corre con la entrada `animated` y con movimiento permitido; en reposo, la mascota animada es igual que la quieta. Sus colores son tokens nuevos `--color-mascot-*` en `src/styles.css`.
 
 La ficha-mascota sustituye al disco de color de SPEC 006. Conserva el borde blanco, el halo, la atenuación, el crecimiento al seleccionar y la réplica discontinua, y dibuja dentro la mascota recortada al círculo. Fuera de casa mide lo mismo que ahora (radio 17); en casa ocupa su hueco (radio 28), como en el diseño. Las áreas táctiles no cambian.
 
@@ -91,7 +91,8 @@ Qué casa se resalta y qué fichas se animan sale del estado del motor, en funci
 ### Archivos
 
 - `src/styles.css`: tokens `--color-mascot-*` de las cuatro mascotas y de las escenas de las casas, agrupados por equipo; tokens del resalte de la casa en turno; `@keyframes` y `--animate-*` del pulso de la casa.
-- `src/app/shared/mascot.ts`, `mascot.html`, `mascot.css` (nuevos): componente `Mascot` con entradas `color` y `animated`; `MASCOTS`, equipo → animal (RF-004); animaciones de 3 s con pausa, solo con movimiento permitido.
+- `eslint.config.js`: la regla `@angular-eslint/component-selector` admite también selectores de atributo, con el mismo prefijo y estilo.
+- `src/app/shared/mascot.ts`, `mascot.html`, `mascot.css` (nuevos): componente `Mascot` con entradas `color`, `radius` y `animated`; `MASCOTS`, equipo → animal (RF-004); animaciones de 3 s con pausa, solo con movimiento permitido.
 - `src/app/shared/mascot.spec.ts` (nuevo): animal de cada equipo, decorativo para el lector y animado solo con `animated`.
 - `src/app/board/board-turn.ts`, `board-turn.spec.ts` (nuevos): `homeInTurn(state)` y `animatedPieces(state)`.
 - `src/app/board/home-scenes.ts`, `home-scenes.spec.ts` (nuevos): geometría de la escena y del decorado de cada hueco de cada casa.
@@ -105,7 +106,7 @@ Qué casa se resalta y qué fichas se animan sale del estado del motor, en funci
 - [x] 1. Tokens de las mascotas, las escenas y el resalte de la casa en `src/styles.css`, con los colores del diseño; búsqueda de hexadecimales en `src/app/` sin resultados (RNF-006).
 - [x] 2. Tests de `board-turn.ts`, con un esqueleto que compila y los hace fallar: casa en turno en un turno normal, en la tirada inicial y con tirada o premio pendientes, y ninguna con ganador; fichas animadas: solo las que están en casa del equipo en turno, ninguna si todas han salido y ninguna con ganador (RF-007, CE-04).
 - [x] 3. `board-turn.ts`, hasta que pasen los tests del paso 2.
-- [ ] 4. Componente `Mascot`: las cuatro mascotas con sus variantes y animaciones, recortadas a un círculo con un id único por instancia, `aria-hidden`, y animadas solo con `animated` y movimiento permitido. Tests en `mascot.spec.ts` en el mismo paso, porque es dibujo. Revisión en navegador de las cuatro a tamaño grande frente a `docs/design/mascotas/ejemplo.html` (RF-004, RNF-003).
+- [x] 4. Componente `Mascot`: las cuatro mascotas con sus variantes y animaciones, recortadas a un círculo con un id único por instancia, `aria-hidden`, y animadas solo con `animated` y movimiento permitido. Tests en `mascot.spec.ts` en el mismo paso, porque es dibujo. Revisión en navegador de las cuatro a tamaño grande frente a `docs/design/mascotas/ejemplo.html` (RF-004, RNF-003).
 - [ ] 5. Fichas-mascota en el tablero: fichas y réplica con `Mascot` sobre el tono oscuro de su equipo y con el borde del color del equipo; radio 28 en casa; `animated` en las fichas de `animatedPieces`. Tests en `board.spec.ts`: cada ficha lleva la mascota de su equipo en el recorrido, el pasillo, la meta y la casa; halo, atenuación, crecimiento y réplica como en SPEC 006; una ficha roja comida vuelve a su hueco con el loro; solo se animan las fichas en casa del equipo en turno (RF-005, HU-02).
 - [ ] 6. Tests de `home-scenes.ts`, con un esqueleto que compila y los hace fallar: escena dentro de su casa, un decorado por hueco centrado en él, y la misma geometría en cada llamada (RF-006).
 - [ ] 7. `home-scenes.ts`, hasta que pasen los tests del paso 6, y casas en `board.html`: escena, decorado de huecos y resalte de `homeInTurn` (borde y brillo fijos, pulso con movimiento permitido). Tests en `board.spec.ts`: solo la casa en turno lleva `data-turn` y las otras no se atenúan; con ganador, ninguna; los huecos vacíos no muestran ficha (RF-006, RF-007, HU-03, CE-04).
@@ -142,7 +143,7 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 
 ### Decisiones técnicas
 
-- **Sí:** `Mascot` en `src/app/shared/`, con selector de atributo sobre `<g>` y plantilla con prefijo `svg:`. Sirve dentro del SVG del tablero y, en PARTE-03, dentro de un `<svg>` del cartel y de la pestaña.
+- **Sí:** `Mascot` en `src/app/shared/`, con selector de atributo sobre `<g>` (`g[jp-mascot]`) y plantilla con prefijo `svg:`. Sirve dentro del SVG del tablero y, en PARTE-03, dentro de un `<svg>` del cartel y de la pestaña.
 - **No:** `<symbol>` y `<use>`. No permiten animar una sola ficha sin trucos de propiedades heredadas.
 - **No:** copiar los componentes web ni los SVG del diseño. Lo impide RNF-009, y sus colores van en hexadecimal.
 - **Sí:** la ficha-mascota va sobre el tono oscuro de su equipo, con el borde del color del equipo. El diseño usa un fondo oscuro con el aro del color, y sobre el tono base el jaguar, del mismo amarillo, no se distinguiría. Se sigue distinguiendo por color a 9 px (RNF-005).
@@ -152,3 +153,7 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** id único por instancia para el recorte (`jp-mascot-N`), porque el tablero tiene hasta 17 mascotas a la vez.
 - **Sí:** la geometría de escenas y decorados se calcula una vez, como `boardDecor()`, y tiene sus tests (P-07).
 - **Sí:** los colores comunes a varias mascotas o escenas son un único token (tinta, pupila, dorado, gema, rubor) y los que repiten un color de equipo lo referencian con `var()`. Los `@keyframes` del pulso de la casa van con el resalte, en el paso 7.
+- **Sí:** la regla `@angular-eslint/component-selector` admite selectores de elemento y de atributo, con el mismo prefijo `jp` y en kebab-case. Un elemento `<jp-mascot>` dentro de un `<svg>` no se pinta, y desactivar la regla en una línea iría contra P-09. Decisión del usuario en el paso 4.
+- **Sí:** `Mascot` recibe el radio del círculo que llena y escala el dibujo del diseño (círculo de radio 44 centrado en (0, 3), el centro de su placa). Las puntas de las plumas del loro y las orejas del jaguar quedan recortadas por el círculo.
+- **Sí:** las reglas fuera de la animación son el primer fotograma de cada bucle, que coincide con la mascota quieta: el reflejo de las gafas, la sonrisa abierta, las chispas, el pico abierto, las notas, las burbujas, las gotas y el guiño quedan ocultos.
+- **Sí:** el rubor de la rana se anima en cada mejilla, de 0,5 a 0,95 de opacidad. En el diseño se anima el grupo sobre mejillas ya a 0,5, y en reposo quedaría más tenue que en la mascota quieta.
