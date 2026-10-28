@@ -102,7 +102,7 @@ Qué casa se resalta y qué fichas se animan sale del estado del motor, en funci
 
 ### Pasos
 
-- [ ] 1. Tokens de las mascotas, las escenas y el resalte de la casa en `src/styles.css`, con los colores del diseño; búsqueda de hexadecimales en `src/app/` sin resultados (RNF-006).
+- [x] 1. Tokens de las mascotas, las escenas y el resalte de la casa en `src/styles.css`, con los colores del diseño; búsqueda de hexadecimales en `src/app/` sin resultados (RNF-006).
 - [ ] 2. Tests de `board-turn.ts`, con un esqueleto que compila y los hace fallar: casa en turno en un turno normal, en la tirada inicial y con tirada o premio pendientes, y ninguna con ganador; fichas animadas: solo las que están en casa del equipo en turno, ninguna si todas han salido y ninguna con ganador (RF-007, CE-04).
 - [ ] 3. `board-turn.ts`, hasta que pasen los tests del paso 2.
 - [ ] 4. Componente `Mascot`: las cuatro mascotas con sus variantes y animaciones, recortadas a un círculo con un id único por instancia, `aria-hidden`, y animadas solo con `animated` y movimiento permitido. Tests en `mascot.spec.ts` en el mismo paso, porque es dibujo. Revisión en navegador de las cuatro a tamaño grande frente a `docs/design/mascotas/ejemplo.html` (RF-004, RNF-003).
@@ -151,3 +151,4 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** animaciones CSS en `mascot.css`, dentro de `@media (prefers-reduced-motion: no-preference)` y activadas con una clase del componente. Solo transforman partes de la mascota o cambian su opacidad, dentro de su `<g>`.
 - **Sí:** id único por instancia para el recorte (`jp-mascot-N`), porque el tablero tiene hasta 17 mascotas a la vez.
 - **Sí:** la geometría de escenas y decorados se calcula una vez, como `boardDecor()`, y tiene sus tests (P-07).
+- **Sí:** los colores comunes a varias mascotas o escenas son un único token (tinta, pupila, dorado, gema, rubor) y los que repiten un color de equipo lo referencian con `var()`. Los `@keyframes` del pulso de la casa van con el resalte, en el paso 7.

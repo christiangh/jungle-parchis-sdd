@@ -64,6 +64,78 @@
   --color-canopy: #33702a;
   --color-canopy-light: #62a03d;
 
+  /* Team mascots (docs/design/mascotas): jaguar, parrot, hippo and frog (RF-004). */
+  --color-mascot-ink: #2b1d0f;
+  --color-mascot-pupil: #15120e;
+  --color-mascot-gold: #f2c14e;
+  --color-mascot-gold-dark: #c98a1e;
+  --color-mascot-gem: #fff3a8;
+  --color-mascot-blush: #f08a6a;
+
+  --color-mascot-jaguar: var(--color-team-yellow);
+  --color-mascot-jaguar-ochre: #b9811c;
+  --color-mascot-jaguar-cream: #fbeed2;
+  --color-mascot-jaguar-lens: #1e1a14;
+  --color-mascot-jaguar-nose: #6e2e1e;
+
+  --color-mascot-parrot: #d8432a;
+  --color-mascot-parrot-face: #fbf3e6;
+  --color-mascot-parrot-beak: #efe6d2;
+  --color-mascot-parrot-beak-dark: #2b2420;
+  --color-mascot-parrot-tongue: #e86a7a;
+  --color-mascot-parrot-note: #f5ead8;
+  --color-mascot-mic: #d9dcde;
+  --color-mascot-mic-grille: #8a9094;
+  --color-mascot-mic-stand: #9aa0a4;
+
+  --color-mascot-hippo: #7c9cc4;
+  --color-mascot-hippo-light: #9bb6d8;
+  --color-mascot-hippo-dark: #5d7fa8;
+  --color-mascot-hippo-pink: #f2a8a0;
+  --color-mascot-hippo-nostril: #2b3a52;
+  --color-mascot-buoy: #f07aa0;
+  --color-mascot-buoy-stripe: #fff5f0;
+  --color-mascot-buoy-rope: #e8dcc0;
+  --color-mascot-water: #8fd0ea;
+
+  --color-mascot-frog: #7cc242;
+  --color-mascot-frog-dark: #5aa232;
+  --color-mascot-frog-belly: #e6efa0;
+  --color-mascot-frog-eye: #f2e27a;
+
+  /* Home scenes and slot decorations, variant `e` of docs/design/mascotas (RF-006). */
+  --color-home-red-branch: #5a3418;
+  --color-home-red-leaf: #2e7a32;
+  --color-home-red-nest: #7a4a22;
+  --color-home-red-nest-dark: #3e220e;
+  --color-home-red-twig-1: #a6743e;
+  --color-home-red-twig-2: #8a5a2b;
+  --color-home-red-twig-3: #c4935a;
+  --color-home-red-twig-4: #6e4220;
+
+  --color-home-blue-wave: #bfe3f2;
+  --color-home-blue-stripe: #7fd0e8;
+  --color-home-blue-towel-edge: #1f4566;
+
+  --color-home-yellow-spot: var(--color-mascot-gold-dark);
+  --color-home-yellow-nest: #b8862a;
+  --color-home-yellow-nest-dark: #6b4a0c;
+  --color-home-yellow-nest-hole: #8a5e1a;
+  --color-home-yellow-straw-1: #f2d27a;
+  --color-home-yellow-straw-2: var(--color-team-yellow);
+  --color-home-yellow-straw-3: #d9a440;
+  --color-home-yellow-straw-4: #f7e2a0;
+  --color-home-yellow-straw-5: #c9922e;
+
+  --color-home-green-reed: #1f5a2e;
+  --color-home-green-ripple: #bfe8c8;
+  --color-home-green-pad: var(--color-mascot-frog-dark);
+  --color-home-green-pad-shine: #a6dc6a;
+
+  /* Home in turn: fixed border and glow, seen without motion too (RF-007, RNF-002). */
+  --color-home-turn-glow: #fff6c8;
+  --color-home-turn-ring: var(--color-mascot-gem);
+
   /* Caprasimo for the turn banner, Figtree for every other text (RF-002). */
   --font-display: 'Caprasimo', ui-serif, Georgia, serif;
   --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif;
