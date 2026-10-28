@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import {
+  applyAction,
   Color,
   COLORS,
   GameState,
@@ -14,6 +15,7 @@ import {
 import { Board } from './board';
 import {
   goals,
+  HOME_PIECE_RADIUS,
   homes,
   laneSquares,
   PIECE_RADIUS,
@@ -24,6 +26,7 @@ import {
 } from './board-geometry';
 import { NEW_GAME, newGame, rolled, stateWith } from './board-test-utils';
 import { movePreview } from './move-preview';
+import { MASCOTS } from '../shared/mascot';
 
 async function render(state: GameState = NEW_GAME): Promise<HTMLElement> {
   const fixture = TestBed.createComponent(Board);
@@ -47,9 +50,9 @@ function pieceOf(root: HTMLElement, id: PieceId): Element {
   return piece!;
 }
 
-/** Centre shared by all the circles of a piece. */
+/** Centre shared by all the circles of a piece, not counting those of its mascot. */
 function centerOf(piece: Element): Point {
-  const circles = Array.from(piece.querySelectorAll('circle'));
+  const circles = Array.from(piece.querySelectorAll(':scope > circle'));
   expect(circles.length, piece.getAttribute('data-piece')!).toBeGreaterThan(0);
   const [center] = circles.map((c) => ({
     x: Number(c.getAttribute('cx')),
@@ -64,6 +67,28 @@ function centerOf(piece: Element): Point {
 
 function radiusOf(piece: Element, part: 'rim' | 'disc'): number {
   return Number(piece.querySelector(`[data-part="${part}"]`)?.getAttribute('r'));
+}
+
+function mascotOf(piece: Element): Element {
+  const mascot = piece.querySelector(':scope > [data-mascot]');
+  expect(mascot, piece.getAttribute('data-piece') ?? undefined).not.toBeNull();
+  return mascot!;
+}
+
+/** A mascot piece of its team: mascot, disc and border of the team, white rim, of this radius. */
+function expectMascotPiece(piece: Element, radius: number): void {
+  const id = piece.getAttribute('data-piece')!;
+  const color = piece.getAttribute('data-color') as Color;
+  const disc = piece.querySelector('[data-part="disc"]');
+  const center = centerOf(piece);
+  expect(mascotOf(piece).getAttribute('data-mascot'), id).toBe(MASCOTS[color]);
+  expect(mascotOf(piece).getAttribute('transform'), id).toBe(`translate(${center.x} ${center.y})`);
+  expect(disc?.classList.contains(`fill-team-${color}-dark`), id).toBe(true);
+  expect(disc?.classList.contains(`stroke-team-${color}`), id).toBe(true);
+  expect(Number(disc?.getAttribute('stroke-width')), id).toBeGreaterThan(0);
+  expect(piece.querySelector('[data-part="rim"]')?.classList.contains('fill-white'), id).toBe(true);
+  expect(radiusOf(piece, 'rim'), id).toBe(radius);
+  expect(radiusOf(piece, 'disc'), id).toBeLessThan(radius);
 }
 
 function trackPlank(square: number) {
@@ -220,21 +245,62 @@ describe('Board', () => {
     expect(pieces?.nextElementSibling).toBeNull();
   });
 
-  it('RF-009: cada ficha es un disco de su color con borde oscuro y reborde claro', async () => {
+  it('RF-005: en una partida nueva cada ficha es la ficha-mascota de su equipo y llena su hueco', async () => {
     const root = await render();
     const pieces = all(root, '[data-piece]');
     expect(pieces).toHaveLength(NEW_GAME.pieces.length);
     for (const piece of pieces) {
-      const color = piece.getAttribute('data-color');
-      const disc = piece.querySelector('[data-part="disc"]');
-      const rim = piece.querySelector('[data-part="rim"]');
-      expect(disc?.classList.contains(`fill-team-${color}`), color!).toBe(true);
-      expect(Number(disc?.getAttribute('stroke-width')), color!).toBeGreaterThan(0);
-      expect(disc?.classList.contains('stroke-ink'), color!).toBe(true);
-      expect(rim?.classList.contains('fill-white'), color!).toBe(true);
-      expect(radiusOf(piece, 'rim'), color!).toBe(PIECE_RADIUS);
-      expect(radiusOf(piece, 'disc'), color!).toBeLessThan(PIECE_RADIUS);
+      expectMascotPiece(piece, HOME_PIECE_RADIUS);
     }
+  });
+
+  it('RF-005: en el recorrido, el pasillo y la meta la ficha-mascota tiene el tamaño de SPEC 006', async () => {
+    const root = await render(
+      stateWith([
+        ['yellow-0', { kind: 'track', square: 5 }],
+        ['red-1', { kind: 'track', square: 30 }],
+        ['blue-2', { kind: 'lane', square: 3 }],
+        ['green-3', { kind: 'goal' }],
+      ]),
+    );
+    for (const id of ['yellow-0', 'red-1', 'blue-2', 'green-3'] as const) {
+      expectMascotPiece(pieceOf(root, id), PIECE_RADIUS);
+    }
+    expectMascotPiece(pieceOf(root, 'red-0'), HOME_PIECE_RADIUS);
+  });
+
+  it('RF-005: una ficha roja comida vuelve a su hueco de la casa roja con el loro', async () => {
+    const state = rolled(
+      [
+        ['red-0', { kind: 'track', square: 13 }],
+        ['yellow-0', { kind: 'track', square: 10 }],
+      ],
+      'yellow',
+      3,
+    );
+    const outcome = applyAction(state, { type: 'move', player: 'yellow', pieceId: 'yellow-0' });
+    expect(outcome.ok).toBe(true);
+    const root = await render(outcome.ok ? outcome.value.state : state);
+    const red = pieceOf(root, 'red-0');
+    const home = homes().find((h) => h.color === 'red')!;
+
+    expect(centerOf(red)).toEqual(home.slots[0]);
+    expect(mascotOf(red).getAttribute('data-mascot')).toBe('parrot');
+    expectMascotPiece(red, HOME_PIECE_RADIUS);
+  });
+
+  it('RF-007: solo se animan las fichas en casa del equipo en turno', async () => {
+    const animated = async (state: GameState) =>
+      all(await render(state), '[data-piece]')
+        .filter((piece) => mascotOf(piece).hasAttribute('data-animated'))
+        .map((piece) => piece.getAttribute('data-piece'));
+
+    expect(await animated(NEW_GAME)).toEqual(['yellow-0', 'yellow-1', 'yellow-2', 'yellow-3']);
+    expect(await animated(rolled([['blue-0', { kind: 'track', square: 22 }]], 'blue', 3))).toEqual([
+      'blue-1',
+      'blue-2',
+      'blue-3',
+    ]);
   });
 
   it('RF-010: en una partida nueva hay 4 fichas en cada casa, en puestos distintos', async () => {
@@ -260,8 +326,8 @@ describe('Board', () => {
     const root = await render(stateWith([['yellow-0', { kind: 'track', square: 5 }]]));
     const piece = pieceOf(root, 'yellow-0');
     expect(centerOf(piece)).toEqual(trackPlank(5).center);
-    expect(paintedWith(piece, 'fill-team-yellow')).toBe(true);
-    expect(piece.querySelector('[data-part="disc"]')?.classList.contains('stroke-ink')).toBe(true);
+    expect(paintedWith(piece, 'fill-team-yellow-dark')).toBe(true);
+    expect(paintedWith(piece, 'stroke-team-yellow')).toBe(true);
     expect(piece.querySelector('[data-part="rim"]')?.classList.contains('fill-white')).toBe(true);
   });
 
@@ -462,6 +528,18 @@ describe('Board, al elegir movimiento', () => {
     expect(ghost.matches('.opacity-60')).toBe(false);
     expect(centerOf(ghostPiece(root))).toEqual(trackPlank(13).center);
     expect(ghost.querySelector('[data-mark]')).toBeNull();
+    expectMascotPiece(selected, PIECE_RADIUS + 3);
+  });
+
+  it('RF-005: la réplica lleva la mascota de su equipo, sin animar, con el borde discontinuo', async () => {
+    const { root } = await renderChoosing(TWO_MOVES, 'yellow-0');
+    const mascot = ghostPiece(root).querySelector(':scope > [data-mascot]');
+    const disc = ghostPiece(root).querySelector(':scope > [stroke-dasharray]');
+
+    expect(mascot?.getAttribute('data-mascot')).toBe('jaguar');
+    expect(mascot?.hasAttribute('data-animated')).toBe(false);
+    expect(paintedWith(disc!, 'fill-team-yellow-dark')).toBe(true);
+    expect(paintedWith(disc!, 'stroke-team-yellow')).toBe(true);
   });
 
   it('RF-014: la réplica de un movimiento que come lleva la diana +20', async () => {

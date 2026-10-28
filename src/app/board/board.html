@@ -364,8 +364,15 @@
             [attr.cx]="piece.center.x"
             [attr.cy]="piece.center.y"
             [attr.r]="piece.discRadius"
-            [class]="piece.fill + ' stroke-ink'"
-            stroke-width="3"
+            [class]="piece.fill + ' ' + piece.stroke"
+            [attr.stroke-width]="borderWidth"
+          />
+          <g
+            jp-mascot
+            [attr.transform]="piece.transform"
+            [color]="piece.color"
+            [radius]="piece.mascotRadius"
+            [animated]="piece.animated"
           />
         </g>
       }
@@ -406,10 +413,16 @@
           <circle
             [attr.cx]="ghost.center.x"
             [attr.cy]="ghost.center.y"
-            [attr.r]="pieceRadius - 4"
-            [class]="ghost.fill + ' stroke-ink'"
-            stroke-width="3"
+            [attr.r]="ghostDiscRadius"
+            [class]="ghost.fill + ' ' + ghost.stroke"
+            [attr.stroke-width]="borderWidth"
             stroke-dasharray="5 4"
+          />
+          <g
+            jp-mascot
+            [attr.transform]="ghost.transform"
+            [color]="ghost.color"
+            [radius]="ghost.mascotRadius"
           />
         </g>
         @if (ghost.captures) {

@@ -83,6 +83,9 @@ export const HOME_SIZE = 320;
 /** Radius of a piece, rim included. */
 export const PIECE_RADIUS = 17;
 
+/** Radius of a piece at home, rim included: it fills its slot. */
+export const HOME_PIECE_RADIUS = 28;
+
 /** Gap between a home's corner and its painted square. */
 export const HOME_INSET = 30;
 

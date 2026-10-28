@@ -13,6 +13,14 @@ export const TEAM_FILL: Readonly<Record<Color, string>> = {
   green: 'fill-team-green',
 };
 
+/** Border of a mascot piece and its ghost. */
+export const TEAM_STROKE: Readonly<Record<Color, string>> = {
+  yellow: 'stroke-team-yellow',
+  blue: 'stroke-team-blue',
+  red: 'stroke-team-red',
+  green: 'stroke-team-green',
+};
+
 export const TEAM_DARK_FILL: Readonly<Record<Color, string>> = {
   yellow: 'fill-team-yellow-dark',
   blue: 'fill-team-blue-dark',
