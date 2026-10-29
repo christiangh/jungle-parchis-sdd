@@ -1,7 +1,8 @@
 import { expect, Page, test } from '@playwright/test';
 import { fixDice, roll } from './dice';
 
-// Mascot animations of the pieces at home of the team in turn (HU-03): RF-007, RNF-002, CE-07.
+// Mascot animations of the pieces at home of the team in turn (HU-03) and of the turn banner
+// (HU-04): RF-007, RF-008, RNF-002, CE-07.
 
 /** Pieces whose mascot has an animation running, in board order. */
 function animatedPieces(page: Page): Promise<string[]> {
@@ -20,6 +21,24 @@ function animatedPieces(page: Page): Promise<string[]> {
 function homeInTurn(page: Page) {
   return page.locator('[data-home][data-turn]');
 }
+
+/** Running animations of the turn banner mascot. */
+function bannerAnimations(page: Page): Promise<number> {
+  return page
+    .locator('[data-plank] [data-mascot]')
+    .evaluate(
+      (mascot) =>
+        mascot
+          .getAnimations({ subtree: true })
+          .filter((animation) => animation.playState === 'running').length,
+    );
+}
+
+test('RF-008, CE-07: la mascota del cartel se anima', async ({ page }) => {
+  await page.goto('/');
+
+  await expect.poll(() => bannerAnimations(page)).toBeGreaterThan(0);
+});
 
 test('RF-007: al empezar, solo se animan las fichas en casa amarillas', async ({ page }) => {
   await page.goto('/');
@@ -60,5 +79,12 @@ test.describe('con movimiento reducido', () => {
       .locator('[data-part="turn-pulse"]')
       .evaluate((ring) => ring.getAnimations().length);
     expect(pulse).toBe(0);
+  });
+
+  test('RNF-002, CE-07: la mascota del cartel no se anima', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.locator('[data-plank] [data-mascot]')).toBeVisible();
+    expect(await bannerAnimations(page)).toBe(0);
   });
 });
