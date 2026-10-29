@@ -14,15 +14,15 @@ function newGame(): GameState {
 const PLAYING: GameState = { ...newGame(), initialRoll: null, turn: 'red' };
 
 describe('headline', () => {
-  it('RF-004: en la tirada inicial dice quién tira, en su color', () => {
+  it('RF-009: en la tirada inicial pide tirar, en el color de quien tira', () => {
     expect(headline(newGame())).toEqual({
       color: 'yellow',
-      title: 'Tirada inicial · Amarillo',
-      instruction: 'Toca el dado',
+      action: 'Toca el dado',
+      turn: 'Tirada inicial, turno de Amarillo.',
     });
   });
 
-  it('RF-004: en un desempate dice a quién le toca tirar', () => {
+  it('RF-009: en un desempate pide tirar a quien le toca', () => {
     const tie: GameState = {
       ...newGame(),
       turn: 'red',
@@ -30,45 +30,53 @@ describe('headline', () => {
     };
     expect(headline(tie)).toEqual({
       color: 'red',
-      title: 'Tirada inicial · Rojo',
-      instruction: 'Toca el dado',
+      action: 'Toca el dado',
+      turn: 'Tirada inicial, turno de Rojo.',
     });
   });
 
-  it('RF-004: sin tirada pendiente pide tirar al jugador en turno', () => {
+  it('RF-009: sin tirada pendiente pide tirar al jugador en turno', () => {
     expect(headline(PLAYING)).toEqual({
       color: 'red',
-      title: 'Turno de Rojo',
-      instruction: 'Toca el dado',
+      action: 'Toca el dado',
+      turn: 'Turno de Rojo.',
     });
   });
 
-  it('RF-004: con tirada pendiente muestra su valor y pide elegir ficha', () => {
+  it('RF-009: con tirada pendiente pide elegir ficha, sin el valor', () => {
     expect(headline({ ...PLAYING, pendingRoll: 4 })).toEqual({
       color: 'red',
-      title: 'Turno de Rojo · 4',
-      instruction: 'Elige una ficha iluminada',
+      action: 'Elige una ficha',
+      turn: 'Turno de Rojo.',
     });
   });
 
-  it('RF-004: con premio pendiente pide usarlo con su valor', () => {
+  it('RF-009: con premio pendiente pide usarlo con su valor', () => {
     expect(headline({ ...PLAYING, pendingBonus: 20 })).toEqual({
       color: 'red',
-      title: 'Turno de Rojo',
-      instruction: 'Usa tu +20',
+      action: 'Usa tu +20',
+      turn: 'Turno de Rojo.',
     });
-    expect(headline({ ...PLAYING, pendingBonus: 10 }).instruction).toBe('Usa tu +10');
+    expect(headline({ ...PLAYING, pendingBonus: 10 }).action).toBe('Usa tu +10');
   });
 
-  it('RF-004: con ganador dice quién ha ganado, en su color y sin instrucción', () => {
-    expect(headline({ ...PLAYING, winner: 'blue' })).toEqual({
-      color: 'blue',
-      title: 'Gana Azul',
-      instruction: null,
+  it('RF-009, RF-010: con ganador dice quién ha ganado, en su color y sin turno', () => {
+    expect(headline({ ...PLAYING, winner: 'green' })).toEqual({
+      color: 'green',
+      action: '¡Gana Verde!',
+      turn: null,
     });
   });
 
-  it('RF-004: cada color tiene su nombre en castellano', () => {
+  it('RF-010: el turno nombra a cada equipo en castellano', () => {
+    for (const color of COLORS) {
+      expect(headline({ ...PLAYING, turn: color }).turn, color).toBe(
+        `Turno de ${COLOR_NAMES[color]}.`,
+      );
+    }
+  });
+
+  it('RF-010: cada color tiene su nombre en castellano', () => {
     expect(COLOR_NAMES).toEqual({
       yellow: 'Amarillo',
       blue: 'Azul',

@@ -11,7 +11,7 @@ async function render(headline: Headline): Promise<HTMLElement> {
 }
 
 function playing(color: Color): Headline {
-  return { color, title: 'Turno de X', instruction: 'Toca el dado' };
+  return { color, action: 'Toca el dado', turn: 'Turno de X.' };
 }
 
 describe('TurnBanner', () => {
@@ -42,22 +42,18 @@ describe('TurnBanner', () => {
     });
   });
 
-  it('RF-003: muestra el título y la instrucción', async () => {
+  it('RF-009: muestra la acción', async () => {
     const banner = await render({
       color: 'red',
-      title: 'Turno de Rojo · 4',
-      instruction: 'Elige una ficha iluminada',
+      action: 'Elige una ficha',
+      turn: 'Turno de Rojo.',
     });
-    expect(banner.querySelector('[data-title]')?.textContent?.trim()).toBe('Turno de Rojo · 4');
-    expect(banner.querySelector('[data-instruction]')?.textContent?.trim()).toBe(
-      'Elige una ficha iluminada',
-    );
+    expect(banner.querySelector('[data-title]')?.textContent?.trim()).toBe('Elige una ficha');
   });
 
-  it('RF-003: sin instrucción solo muestra el título', async () => {
-    const banner = await render({ color: 'blue', title: 'Gana Azul', instruction: null });
-    expect(banner.querySelector('[data-title]')?.textContent?.trim()).toBe('Gana Azul');
-    expect(banner.querySelector('[data-instruction]')).toBeNull();
+  it('RF-009: con ganador muestra quién ha ganado', async () => {
+    const banner = await render({ color: 'blue', action: '¡Gana Azul!', turn: null });
+    expect(banner.querySelector('[data-title]')?.textContent?.trim()).toBe('¡Gana Azul!');
   });
 
   it('RNF-001: el texto es blanco con contorno de tinta en los cuatro colores', async () => {

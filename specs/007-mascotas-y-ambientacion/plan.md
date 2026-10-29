@@ -229,7 +229,7 @@ Los textos se unen con «, », con mayúscula inicial y punto final: «Mueve una
 
 ### Pasos
 
-- [ ] 1. Tests de `headline.ts`, con un esqueleto que compila y los hace fallar. Un test por estado, con su color, su acción y su texto de turno: tirar, tirada inicial y desempate, elegir ficha, premio pendiente de 10 y de 20, y ganador. Con ganador, `turn` es `null` (RF-009, RF-010, CE-02, CE-03).
+- [x] 1. Tests de `headline.ts`, con un esqueleto que compila y los hace fallar. Un test por estado, con su color, su acción y su texto de turno: tirar, tirada inicial y desempate, elegir ficha, premio pendiente de 10 y de 20, y ganador. Con ganador, `turn` es `null` (RF-009, RF-010, CE-02, CE-03).
 - [ ] 2. `headline.ts`, hasta que pasen los tests del paso 1.
 - [ ] 3. Tests de `last-play.ts` y de `lastPlayer`, con un esqueleto que compila y los hace fallar (RF-011, RF-012):
   - Un test por tipo de evento con su texto de la tabla, sin nombrar al equipo que actúa ni el turno (CE-01).
