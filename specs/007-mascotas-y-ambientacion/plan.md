@@ -254,7 +254,7 @@ Los textos se unen con «, », con mayúscula inicial y punto final: «Mueve una
 - [x] 7. Pruebas en navegador de SPEC 006 adaptadas (RF-013, CE-06, CE-09, RNF-004):
   - `game.spec.ts`: los mismos escenarios, con las acciones y frases nuevas y el color de la pestaña.
   - `ambience.spec.ts` y `screen.spec.ts`: selectores nuevos y hueco reservado dentro de la ventana.
-- [ ] 8. Pruebas en navegador nuevas:
+- [x] 8. Pruebas en navegador nuevas:
   - `e2e/notices.spec.ts`, contraste (CE-05, RNF-001): recorriendo los cuatro colores en la tirada inicial, el texto mide al menos 4,5:1 contra su fondo inmediato. En el cartel, ese fondo es el contorno de tinta; en la pestaña, el tono oscuro.
   - `e2e/notices.spec.ts`, tablero quieto (CE-11, RNF-010): en las cuatro ventanas, la caja del tablero es la misma antes de la primera acción, con una pestaña corta y con un empate de cuatro.
   - `e2e/mascots.spec.ts` (CE-07, RNF-002): la mascota del cartel tiene animaciones en marcha, y con movimiento reducido no tiene ninguna.
