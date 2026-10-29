@@ -364,7 +364,7 @@ El manifiesto ya usa rutas relativas para sus iconos, que se resuelven contra la
   - Al empezar, solo el medallón amarillo tiene animaciones en marcha; tras pasar el turno, solo el del nuevo equipo.
   - Con movimiento reducido, ningún medallón tiene animaciones en marcha y el de la casa en turno sigue con el brillo y el aro.
   - Revisión en navegador a 320 × 568 y 1920 × 1080: los medallones no tapan los huecos ni se recortan en las esquinas.
-- [ ] 5. Iconos: copiar los seis archivos a `public/` y declararlos en `src/index.html` con rutas relativas (RF-015, RNF-011).
+- [x] 5. Iconos: copiar los seis archivos a `public/` y declararlos en `src/index.html` con rutas relativas (RF-015, RNF-011).
 - [ ] 6. Pruebas en navegador en `e2e/icons.spec.ts` (CE-13, HU-06):
   - Cada `link` de icono y el del manifiesto tiene un `href` relativo, sin barra inicial ni origen.
   - Cada uno responde 200 desde el mismo origen y con su tipo (`image/x-icon`, `image/svg+xml`, `image/png`, manifiesto JSON).
