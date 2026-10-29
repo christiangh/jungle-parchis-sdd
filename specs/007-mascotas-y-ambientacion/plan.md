@@ -240,7 +240,7 @@ Los textos se unen con «, », con mayúscula inicial y punto final: «Mueve una
   - En 200 partidas aleatorias, con dados de una semilla fija, ninguna frase es más larga que `LONGEST_PLAY`.
   - En `game-store.spec.ts`: `lastPlayer` empieza en `null`, pasa al jugador de cada acción aceptada y no cambia con una acción rechazada.
 - [x] 4. `last-play.ts` y `lastPlayer` en `GameStore`, hasta que pasen los tests del paso 3. Los tests de SPEC 006 de la línea en `app.spec.ts` pasan a los textos nuevos; la línea sigue siendo la de SPEC 006 hasta el paso 6.
-- [ ] 5. `TurnBanner` nuevo: tablón del color con borde oscuro y clavos, placa con la mascota animada, acción con `font-display` y contorno de tinta, y turno en `sr-only` antes de la acción. Tests en `turn-banner.spec.ts` en el mismo paso (RF-008, RF-010, HU-04):
+- [x] 5. `TurnBanner` nuevo: tablón del color con borde oscuro y clavos, placa con la mascota animada, acción con `font-display` y contorno de tinta, y turno en `sr-only` antes de la acción. Tests en `turn-banner.spec.ts` en el mismo paso (RF-008, RF-010, HU-04):
   - Color y mascota de cada equipo, con la mascota animada.
   - Acción visible, sin «Turno de».
   - Texto del turno antes de la acción, y sin él con ganador.
