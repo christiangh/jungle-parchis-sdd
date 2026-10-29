@@ -42,16 +42,20 @@ test('RF-015, CE-13: cada icono y el manifiesto responden desde el mismo origen 
   }
 });
 
-test('RF-015, CE-13: el manifiesto se llama Parchís y sus iconos responden', async ({ page }) => {
+test('RF-015, CE-13: el manifiesto se llama como la página, Parchís en corto, y sus iconos responden', async ({
+  page,
+}) => {
   await page.goto('/');
   const url = await page
     .locator('link[rel="manifest"]')
     .evaluate((link: HTMLLinkElement) => link.href);
   const manifest = (await (await page.request.get(url)).json()) as {
+    name: string;
     short_name: string;
     icons: { src: string; type: string }[];
   };
 
+  expect(manifest.name).toBe(await page.title());
   expect(manifest.short_name).toBe('Parchís');
   expect(manifest.icons.map((icon) => icon.src)).toEqual(['icon-192.png', 'icon-512.png']);
   for (const icon of manifest.icons) {

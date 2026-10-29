@@ -349,6 +349,7 @@ El manifiesto ya usa rutas relativas para sus iconos, que se resuelven contra la
 - `public/favicon.ico`, `favicon.svg`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `site.webmanifest` (copiados del diseño).
 - `src/index.html`: enlaces al favicon, al icono de inicio y al manifiesto.
 - `e2e/icons.spec.ts` (nuevo): rutas relativas y carga desde el mismo origen (RF-015, CE-13).
+- `angular.json`: aviso del presupuesto `anyComponentStyle` de 4 kB a 6 kB, por `mascot.css`.
 
 ### Pasos
 
@@ -399,10 +400,12 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 
 - **Sí:** el medallón se añade en esta parte y revierte la decisión de PARTE-02 que lo descartaba (RF-014). Las fichas en casa siguen en sus huecos y con su tamaño.
 - **Sí:** el centro del medallón es el del diseño, pero con radios más pequeños (mascota 44, brillo 62) en lugar de 52 y 74. Con los del diseño, el brillo y el pulso se salen del `viewBox` y quedan recortados en las esquinas del tablero.
-- **Sí:** el pulso del medallón crece hasta el borde del brillo (54 → 62), no hasta 1,45 como en el diseño, por la misma razón que el pulso de la casa en PARTE-02.
+- **Sí:** el pulso del medallón crece hasta el borde del brillo, no hasta 1,45 como en el diseño, por la misma razón que el pulso de la casa en PARTE-02: escala 1,07, con la que el borde exterior de su trazo de 7 llega a 62. El respiro escala 1,04, para que el disco no pise el aro blanco.
 - **Sí:** el medallón usa la ficha-mascota (tono oscuro y borde del color del equipo) y la mascota animada de `Mascot`, sin dibujo nuevo. No hacen falta tokens de color nuevos.
 - **Sí:** se anima la mascota del medallón además de las fichas en casa del equipo en turno (RF-007). Así, con la casa vacía, la mascota en turno sigue moviéndose.
 - **Sí:** `homeMedallions()` en `board-geometry.ts`, junto a `homes()`, porque es posición en el tablero; los tests comprueban las distancias, no solo las coordenadas.
 - **Sí:** se copian los iconos tal cual, incluida la metadata de procedencia de `favicon.svg`. `favicon-16.png`, `favicon-32.png` y `favicon-48.png` no se copian: `favicon.ico` ya contiene esos tamaños y ningún enlace los usa.
+- **Sí:** dos retoques a `site.webmanifest`: el salto de línea final que pide Prettier, y su `name` en «Parchís de la jungla», igual que el `<title>` de `src/index.html`. `e2e/icons.spec.ts` comprueba que coinciden.
+- **Sí:** el aviso del presupuesto `anyComponentStyle` de `angular.json` sube de 4 kB a 6 kB; el error sigue en 8 kB. `mascot.css` pesa 5,33 kB porque lleva los bucles de las cuatro mascotas (PARTE-02), y partirlo o mover sus `@keyframes` a `src/styles.css` solo cambiaría dónde pesan. Así `ng build` queda sin avisos.
 - **Sí:** rutas relativas en `src/index.html`, resueltas contra `<base href>`. Al desplegar en una subruta basta con cambiar `<base href>` al construir; el despliegue queda fuera de este spec.
 - **No:** `<meta name="theme-color">` ni service worker. No los pide el spec; el manifiesto ya trae `theme_color`.
