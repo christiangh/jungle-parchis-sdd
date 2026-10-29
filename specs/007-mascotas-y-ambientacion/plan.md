@@ -307,3 +307,102 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** la mascota del cartel y de la pestaña va en una placa redonda del tono oscuro con aro del color, como las fichas-mascota, en lugar del cuadrado redondeado del diseño. `Mascot` ya recorta a un círculo.
 - **Sí:** el contraste del cartel se mide contra el contorno de tinta, que es su fondo inmediato, como en SPEC 006. El de la pestaña se mide contra su tono oscuro, sin las vetas de la madera.
 - **Sí:** cambian los textos esperados de los tests de SPEC 006 del cartel y de la línea (`headline.spec.ts`, `turn-banner.spec.ts`, `last-play.spec.ts`, `app.spec.ts` y las pruebas en navegador), porque RF-008, RF-009, RF-011 y RF-012 sustituyen a los requisitos que probaban. Los escenarios no cambian.
+
+## PARTE-04: Medallones de las casas e iconos de la aplicación
+
+**Estado:** Pendiente
+
+### Enfoque
+
+**Medallones.** Cada casa lleva en su esquina exterior un medallón con su mascota, como en la variante `e` de `docs/design/mascotas/componentes/casas-personajes.js`. Su posición es geometría pura del tablero: `homeMedallions()` en `board-geometry.ts` da, por equipo, el centro del medallón. En el diseño, ese centro está a 22 del vértice exterior de la casa, y el medallón mide 64 de radio, con un brillo de 74 en el turno. Aquí se mantiene el centro y se reduce el tamaño, para que el brillo no se salga del `viewBox` del tablero (−40) ni toque las fichas en casa:
+
+| Pieza | Radio | Cuándo |
+| --- | --- | --- |
+| Mascota (`Mascot`, sobre el tono oscuro y con el borde del color del equipo, como las fichas-mascota) | 44 | Siempre |
+| Sombra | 54 | Fuera de turno |
+| Aro blanco fijo | 50 | En turno |
+| Brillo fijo (`fill-home-turn-glow`) | 62 | En turno |
+| Pulso: anillo de 54 que crece hasta 62 y se desvanece | 54 → 62 | En turno, solo con movimiento permitido |
+
+Distancias: del centro del medallón al borde del `viewBox` hay 62; al centro del hueco más cercano, unos 107, así que entre el brillo y una ficha en casa (radio 28) quedan unos 17.
+
+El medallón de la casa en turno usa `homeInTurn(state)`, que ya existe: brillo, aro, pulso, mascota animada (`animated`) y un leve «respiro» de escala, como el `cp-breath` del diseño, solo con movimiento permitido. Los demás llevan la sombra y la mascota quieta. Con ganador, `homeInTurn` es `null` y ninguno se resalta. Los medallones van en la capa de juego, encima de las hojas de las esquinas y debajo de las fichas, sin áreas táctiles y con `aria-hidden`.
+
+**Iconos.** Los archivos del diseño se copian sin cambios a `public/`: `favicon.ico` (sustituye al de Angular), `favicon.svg`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png` y `site.webmanifest`. En `src/index.html` se declaran con rutas relativas, sin la barra inicial que propone su `LEEME.md`, para que se resuelvan contra `<base href>` tanto en la raíz como en una subruta de GitHub Pages:
+
+```html
+<link rel="icon" href="favicon.ico" sizes="any" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="manifest" href="site.webmanifest" />
+```
+
+El manifiesto ya usa rutas relativas para sus iconos, que se resuelven contra la URL del propio manifiesto, y no declara `start_url` ni `scope`, que por defecto son la página y su carpeta. No necesita cambios.
+
+### Archivos
+
+- `src/app/board/board-geometry.ts`, `board-geometry.spec.ts`: `homeMedallions()` y las constantes de sus radios (RF-014).
+- `src/app/board/board.ts`, `board.html`: medallones de las casas, con su resalte en turno.
+- `src/app/board/board.spec.ts`: tests de los medallones.
+- `src/styles.css`: `@keyframes` y `--animate-*` del pulso y del respiro del medallón.
+- `e2e/mascots.spec.ts`: el medallón en turno se anima, los demás no, y con movimiento reducido ninguno.
+- `public/favicon.ico`, `favicon.svg`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `site.webmanifest` (copiados del diseño).
+- `src/index.html`: enlaces al favicon, al icono de inicio y al manifiesto.
+- `e2e/icons.spec.ts` (nuevo): rutas relativas y carga desde el mismo origen (RF-015, CE-13).
+
+### Pasos
+
+- [ ] 1. Tests de `homeMedallions()`, con un esqueleto que compila y los hace fallar: un medallón por equipo, centrado a 22 del vértice exterior de su casa; el brillo cabe en el `viewBox` del tablero; el brillo no se solapa con ninguna ficha en su hueco (radio `HOME_PIECE_RADIUS`); la misma geometría en cada llamada (RF-014, CE-12).
+- [ ] 2. `homeMedallions()`, hasta que pasen los tests del paso 1.
+- [ ] 3. Medallones en `board.html`: mascota sobre el tono oscuro con el borde del color, sombra fuera de turno; en turno, brillo, aro, pulso y respiro, y la mascota animada; `aria-hidden`; tokens de animación en `src/styles.css`. Tests en `board.spec.ts` en el mismo paso (RF-014, HU-03, CE-12):
+  - Un medallón por casa con la mascota de su equipo y decorativo.
+  - Solo el de la casa en turno lleva `data-turn` y su mascota `animated`; los demás, quietos y con sombra.
+  - Con ganador, ninguno resaltado ni animado.
+  - Con todas las fichas del equipo en turno fuera de casa, su medallón sigue resaltado y animado (HU-03.2).
+  - Los tests de casas y fichas de PARTE-02 siguen pasando sin cambios.
+- [ ] 4. Pruebas en navegador en `e2e/mascots.spec.ts` (CE-07, CE-12, RNF-002):
+  - Al empezar, solo el medallón amarillo tiene animaciones en marcha; tras pasar el turno, solo el del nuevo equipo.
+  - Con movimiento reducido, ningún medallón tiene animaciones en marcha y el de la casa en turno sigue con el brillo y el aro.
+  - Revisión en navegador a 320 × 568 y 1920 × 1080: los medallones no tapan los huecos ni se recortan en las esquinas.
+- [ ] 5. Iconos: copiar los seis archivos a `public/` y declararlos en `src/index.html` con rutas relativas (RF-015, RNF-011).
+- [ ] 6. Pruebas en navegador en `e2e/icons.spec.ts` (CE-13, HU-06):
+  - Cada `link` de icono y el del manifiesto tiene un `href` relativo, sin barra inicial ni origen.
+  - Cada uno responde 200 desde el mismo origen y con su tipo (`image/x-icon`, `image/svg+xml`, `image/png`, manifiesto JSON).
+  - El manifiesto tiene el nombre corto «Parchís» y sus dos iconos responden 200, resueltos contra la URL del manifiesto.
+  - Revisión en navegador: el favicon se ve en la pestaña.
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+| --- | --- | --- |
+| HU-03.2 (casa amarilla vacía, medallón animado) | 3 | `board.spec.ts` |
+| HU-03.3 (movimiento reducido, medallón resaltado y quieto) | 4 | `e2e/mascots.spec.ts` con `reducedMotion: 'reduce'` |
+| HU-03.4 (un medallón por casa, solo el rojo resaltado) | 1, 2, 3 | `board-geometry.spec.ts`; `board.spec.ts` |
+| HU-03.5 (con ganador, ningún medallón resaltado) | 3 | `board.spec.ts` |
+| HU-06.1, HU-06.2 | 5, 6 | `e2e/icons.spec.ts`; revisión en navegador |
+| HU-06.3 (subruta) | 5, 6 | `e2e/icons.spec.ts`: `href` relativos |
+| RF-014 | 1-4 | Ver HU-03 (CE-12) |
+| RF-015 | 5, 6 | `e2e/icons.spec.ts` (CE-13) |
+| RNF-002 | 3, 4 | `e2e/mascots.spec.ts` (CE-07) |
+| RNF-006 | 3 | Búsqueda de hexadecimales en `src/app/` sin resultados |
+| RNF-008, RNF-011 | 6 | `e2e/icons.spec.ts`; `ambience.spec.ts` sigue sin peticiones a otros orígenes |
+| Hecho cuando: HU-03, HU-06 y CE-07, CE-12, CE-13 | 1-6 | `pnpm check` y `pnpm test:e2e` |
+
+Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerrar la parte.
+
+### Skills y agentes
+
+- `run`: revisión en navegador de los medallones y del favicon.
+- `caveman:cavecrew-reviewer`: revisión del diff al cerrar la parte, si el usuario la pide.
+
+### Decisiones técnicas
+
+- **Sí:** el medallón se añade en esta parte y revierte la decisión de PARTE-02 que lo descartaba (RF-014). Las fichas en casa siguen en sus huecos y con su tamaño.
+- **Sí:** el centro del medallón es el del diseño, pero con radios más pequeños (mascota 44, brillo 62) en lugar de 52 y 74. Con los del diseño, el brillo y el pulso se salen del `viewBox` y quedan recortados en las esquinas del tablero.
+- **Sí:** el pulso del medallón crece hasta el borde del brillo (54 → 62), no hasta 1,45 como en el diseño, por la misma razón que el pulso de la casa en PARTE-02.
+- **Sí:** el medallón usa la ficha-mascota (tono oscuro y borde del color del equipo) y la mascota animada de `Mascot`, sin dibujo nuevo. No hacen falta tokens de color nuevos.
+- **Sí:** se anima la mascota del medallón además de las fichas en casa del equipo en turno (RF-007). Así, con la casa vacía, la mascota en turno sigue moviéndose.
+- **Sí:** `homeMedallions()` en `board-geometry.ts`, junto a `homes()`, porque es posición en el tablero; los tests comprueban las distancias, no solo las coordenadas.
+- **Sí:** se copian los iconos tal cual, incluida la metadata de procedencia de `favicon.svg`. `favicon-16.png`, `favicon-32.png` y `favicon-48.png` no se copian: `favicon.ico` ya contiene esos tamaños y ningún enlace los usa.
+- **Sí:** rutas relativas en `src/index.html`, resueltas contra `<base href>`. Al desplegar en una subruta basta con cambiar `<base href>` al construir; el despliegue queda fuera de este spec.
+- **No:** `<meta name="theme-color">` ni service worker. No los pide el spec; el manifiesto ya trae `theme_color`.

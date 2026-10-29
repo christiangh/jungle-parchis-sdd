@@ -8,11 +8,11 @@
 
 ## 1. Resumen
 
-Da personalidad a la partida de SPEC 006 con los diseños de `docs/design/mascotas`, `avisos-y-campeon` y `fondo-jungla`. Cada equipo tiene su mascota: el jaguar amarillo, el loro rojo, el hipopótamo azul y la rana verde. Las fichas y las casas las muestran, y la casa del equipo en turno se resalta y se anima. El cartel de turno pasa a decir solo la acción, con la mascota del equipo en turno, y la última jugada se muestra en una pestaña colgada debajo, con la mascota de quien la hizo. El fondo se suaviza, las tipografías Caprasimo y Figtree pasan a formar parte de la aplicación, y el equipo y el nombre de una ficha se obtienen de su identificador en un único punto compartido.
+Da personalidad a la partida de SPEC 006 con los diseños de `docs/design/mascotas`, `avisos-y-campeon` y `fondo-jungla`. Cada equipo tiene su mascota: el jaguar amarillo, el loro rojo, el hipopótamo azul y la rana verde. Las fichas y las casas las muestran, cada casa lleva el medallón de su mascota en la esquina exterior, y la casa del equipo en turno y su medallón se resaltan y se animan. El cartel de turno pasa a decir solo la acción, con la mascota del equipo en turno, y la última jugada se muestra en una pestaña colgada debajo, con la mascota de quien la hizo. El fondo se suaviza, las tipografías Caprasimo y Figtree pasan a formar parte de la aplicación, y el equipo y el nombre de una ficha se obtienen de su identificador en un único punto compartido. La aplicación estrena además su favicon, sus iconos y su manifiesto.
 
 ## 2. Contexto y problema
 
-Tras SPEC 006 la partida se juega entera, pero los equipos solo se distinguen por el color, el cartel repite «Turno de…» en cada estado y la línea de última jugada es una frase oscura y suelta que nombra a todos los que actúan. El fondo de jungla es oscuro y pesa alrededor del tablero. Ya existen los diseños de las mascotas, de los avisos en dos niveles y de una versión suavizada del fondo. Además, el tablero y la línea de última jugada sacan cada uno por su cuenta el equipo y el número de una ficha de su identificador, y la pestaña nueva necesitará lo mismo.
+Tras SPEC 006 la partida se juega entera, pero los equipos solo se distinguen por el color, el cartel repite «Turno de…» en cada estado y la línea de última jugada es una frase oscura y suelta que nombra a todos los que actúan. El fondo de jungla es oscuro y pesa alrededor del tablero. Ya existen los diseños de las mascotas, de los avisos en dos niveles y de una versión suavizada del fondo. Además, el tablero y la línea de última jugada sacan cada uno por su cuenta el equipo y el número de una ficha de su identificador, y la pestaña nueva necesitará lo mismo. La pestaña del navegador muestra el icono por defecto de Angular, y no hay iconos para la pantalla de inicio del móvil.
 
 ## 3. Objetivos y alcance
 
@@ -22,18 +22,21 @@ Tras SPEC 006 la partida se juega entera, pero los equipos solo se distinguen po
 - Que el cartel diga qué hacer y la pestaña qué pasó y quién lo hizo, sin repetir información.
 - Que el fondo no compita con el tablero y que los textos usen las tipografías del diseño.
 - Que el equipo y el nombre de una ficha se obtengan siempre del mismo modo.
+- Que la aplicación se reconozca por su icono en la pestaña del navegador y en la pantalla de inicio.
 
 ### Entra
 
 - Mascota de cada equipo, reconstruida con la paleta del tablero a partir de las variantes elegidas en el diseño.
 - Fichas con la mascota de su equipo en el recorrido, el pasillo, la meta y la casa, con todos los estados de SPEC 006.
 - Casas decoradas con su escena, con la del equipo en turno resaltada y sus fichas animadas.
+- Medallón con la mascota de cada equipo en la esquina exterior de su casa, resaltado y animado el del equipo en turno.
 - Cartel de turno nuevo: mascota animada del equipo en turno y solo la acción, con el turno como texto para el lector de pantalla.
 - Pestaña de última jugada: color oscurecido y mascota de quien hizo la jugada, con los eventos sin nombrar a quien actúa ni el cambio de turno.
 - Fondo suavizado y su color de carga como token de la paleta.
 - Tipografías Caprasimo y Figtree incluidas en la aplicación.
 - Un único punto que obtiene el equipo y el nombre de una ficha a partir de su identificador.
 - Adaptación de las pruebas en navegador de SPEC 006 a los textos nuevos.
+- Favicon, icono para la pantalla de inicio y manifiesto de la aplicación, con rutas relativas.
 
 ### Fuera de alcance (para specs futuros)
 
@@ -42,6 +45,7 @@ Tras SPEC 006 la partida se juega entera, pero los equipos solo se distinguen po
 - Accesibilidad completa de la partida con teclado y lector de pantalla (P-15).
 - Aviso «Forma un puente», que necesita un evento nuevo en el motor.
 - Animación de las fichas que están fuera de casa.
+- Aplicación instalable sin conexión (service worker) y despliegue en GitHub Pages.
 
 ## 4. Usuarios y actores
 
@@ -56,6 +60,7 @@ Se mantienen los términos de SPEC 006 (pantalla de partida, cartel de turno, in
 - **Ficha-mascota**: ficha pintada con la cara de la mascota de su equipo, sobre el color del equipo.
 - **Animación de la mascota**: bucle corto con pausa propio de cada mascota: sonrisa y reflejo en las gafas del jaguar, el loro que se mueve al ritmo, el chapuzón del hipopótamo y la corona que se le ladea a la rana.
 - **Casa en turno**: casa del equipo al que le toca jugar o tirar, incluida la tirada inicial.
+- **Medallón**: círculo con la mascota de un equipo en la esquina exterior de su casa, fuera de sus huecos; se ve siempre, haya o no fichas en casa.
 - **Pestaña de última jugada**: tablón más pequeño colgado debajo del cartel, en el color oscurecido de quien hizo la última acción y con su mascota, que resume los eventos de esa acción.
 - **Equipo que actúa**: jugador que envió al motor la última acción.
 
@@ -88,8 +93,10 @@ Se mantienen los términos de SPEC 006 (pantalla de partida, cartel de turno, in
 **Criterios de aceptación**
 
 1. **Dado** el turno de azul, **cuando** se muestra el tablero, **entonces** la casa azul está resaltada, las otras tres no se atenúan y solo las fichas en casa azules se animan.
-2. **Dado** el turno de amarillo con todas sus fichas fuera de casa, **cuando** se muestra el tablero, **entonces** la casa amarilla está resaltada y sus huecos están vacíos.
-3. **Dado** movimiento reducido activado en el sistema, **cuando** es el turno de verde, **entonces** la casa verde está resaltada y ninguna mascota se anima.
+2. **Dado** el turno de amarillo con todas sus fichas fuera de casa, **cuando** se muestra el tablero, **entonces** la casa amarilla está resaltada, sus huecos están vacíos y su medallón muestra el jaguar resaltado y animado.
+3. **Dado** movimiento reducido activado en el sistema, **cuando** es el turno de verde, **entonces** la casa verde y su medallón están resaltados y ninguna mascota se anima.
+4. **Dado** el turno de rojo, **cuando** se muestra el tablero, **entonces** cada casa lleva el medallón de su mascota en su esquina exterior, sin tapar ningún hueco, y solo el medallón rojo está resaltado y animado.
+5. **Dado** una partida terminada, **cuando** se muestra el tablero, **entonces** los cuatro medallones se ven sin resaltar y sin animar.
 
 ### HU-04: Saber qué tengo que hacer (P1)
 
@@ -115,6 +122,16 @@ Se mantienen los términos de SPEC 006 (pantalla de partida, cartel de turno, in
 3. **Dado** que verde come una ficha azul, **cuando** se aplica el movimiento, **entonces** la pestaña, en verde oscurecido y con la rana, dice que se come una ficha de Azul y que cuenta 20.
 4. **Dado** un tercer 6 seguido de amarillo, **cuando** termina el giro, **entonces** la pestaña, con el jaguar, dice en una sola frase que son tres seises y si su ficha vuelve a casa, y el cartel pasa al siguiente equipo (R-032).
 
+### HU-06: Reconocer la aplicación por su icono (P3)
+
+**Como** jugador, **quiero** ver el icono del parchís de la jungla en la pestaña del navegador y al añadir la aplicación a la pantalla de inicio, **para** encontrarla entre otras pestañas y aplicaciones.
+
+**Criterios de aceptación**
+
+1. **Dado** un navegador de escritorio, **cuando** abro la aplicación, **entonces** la pestaña muestra el favicon del diseño.
+2. **Dado** un móvil, **cuando** añado la aplicación a la pantalla de inicio, **entonces** se usa el icono del diseño y el nombre «Parchís».
+3. **Dado** la aplicación servida en una subruta, como en GitHub Pages, **cuando** se carga, **entonces** el favicon, los iconos y el manifiesto se encuentran igual.
+
 ## 7. Requisitos funcionales
 
 - **RF-001**: La pantalla de partida debe mostrar el fondo de jungla suavizado del diseño como loseta repetible, con una versión para pantallas estrechas y otra para anchas, y con el color salvia de carga mientras la imagen no ha cargado. Sustituye las imágenes y el color de carga de RF-001 de SPEC 006.
@@ -130,6 +147,8 @@ Se mantienen los términos de SPEC 006 (pantalla de partida, cartel de turno, in
 - **RF-011**: Tras cada acción, debajo del cartel debe colgar la pestaña de última jugada, en el color oscurecido del equipo que actúa y con su ficha-mascota sin animar; antes de la primera acción no hay pestaña, pero su hueco se mantiene reservado. Sustituye la línea de última jugada de RF-005 de SPEC 006.
 - **RF-012**: La pestaña debe resumir en una sola frase todos los eventos de la última acción, en el orden en que el motor los produjo, sin nombrar al equipo que actúa y sin el cambio de turno, y nombrando a los demás equipos afectados («Se come una ficha de Azul»). Cada tipo de evento de RF-006 de SPEC 006 conserva su texto, adaptado a esta regla. Sustituye RF-006 de SPEC 006.
 - **RF-013**: Las pruebas en navegador de SPEC 006 deben seguir jugando los mismos escenarios y comprobar los textos nuevos del cartel y de la pestaña.
+- **RF-014**: Cada casa debe mostrar en su esquina exterior el medallón con la mascota de su equipo, como en la variante `e` del diseño, sin tapar los huecos y aunque no haya fichas en casa. El medallón de la casa en turno se resalta y su mascota se anima; los demás quedan quietos y sin resaltar, y con la partida terminada ninguno se resalta ni se anima. Los medallones son decorativos para el lector de pantalla.
+- **RF-015**: La aplicación debe declarar el favicon, el icono para la pantalla de inicio y el manifiesto del diseño, con su nombre y sus iconos, todo con rutas relativas a la base de la aplicación.
 
 ## 8. Requisitos no funcionales
 
@@ -143,13 +162,14 @@ Se mantienen los términos de SPEC 006 (pantalla de partida, cartel de turno, in
 - **RNF-008**: La aplicación no pide tipografías ni otros recursos a servicios externos al cargarse (P-16).
 - **RNF-009**: Las mascotas se reconstruyen con componentes propios de la aplicación y no se usan los archivos de `docs/design` en producción; no se añade ninguna dependencia nueva salvo que se justifique en el plan de la parte que la necesite (P-17).
 - **RNF-010**: El tablero no cambia de tamaño ni de posición cuando la pestaña aparece, cambia de texto o no tiene mensaje: su hueco se reserva siempre con la altura de la pestaña más larga, en cada una de las ventanas de RNF-004.
+- **RNF-011**: El favicon, los iconos y el manifiesto se sirven desde la propia aplicación y se encuentran tanto en la raíz del dominio como en una subruta, sin cambiar sus rutas (P-16).
 
 ## 9. Entidades clave
 
 - **Equipo**: color del jugador; tiene una mascota, un color de cartel y un color oscurecido de pestaña.
 - **Mascota**: animal de un equipo, con su ficha-mascota y su animación.
 - **Ficha**: identificada por su equipo y su número; se pinta como ficha-mascota.
-- **Casa**: zona de salida de un equipo, con su escena y un hueco por ficha.
+- **Casa**: zona de salida de un equipo, con su escena, un hueco por ficha y el medallón de su mascota.
 
 ## 10. Casos límite
 
@@ -160,8 +180,8 @@ Se mantienen los términos de SPEC 006 (pantalla de partida, cartel de turno, in
 - Tres seises sin ficha que volver a casa → la pestaña solo dice que son tres seises (R-032).
 - Última acción cuyo único evento es el cambio de turno → no se muestra pestaña y su hueco sigue reservado.
 - Premio perdido porque ninguna ficha puede usarlo → la pestaña lo dice y el cartel sigue con la acción que toque (R-080).
-- Partida terminada → cartel del ganador con su mascota animada, ninguna casa resaltada y la pestaña con la última jugada.
-- Equipo en turno con todas sus fichas fuera de casa → su casa se resalta con los huecos vacíos y no hay ninguna animación en el tablero.
+- Partida terminada → cartel del ganador con su mascota animada, ninguna casa ni medallón resaltados, ningún medallón animado y la pestaña con la última jugada.
+- Equipo en turno con todas sus fichas fuera de casa → su casa se resalta con los huecos vacíos, y en el tablero solo se anima la mascota de su medallón.
 - Tipografías todavía sin cargar → los textos se ven con una tipografía de respaldo y cambian al cargar, sin desplazar el tablero.
 - Pestaña con muchos eventos en una pantalla estrecha → el texto ocupa varias líneas dentro del hueco reservado y la pantalla sigue sin scroll.
 
@@ -178,6 +198,8 @@ Se mantienen los términos de SPEC 006 (pantalla de partida, cartel de turno, in
 - **CE-09**: La pantalla se ve entera sin scroll en las cuatro ventanas de RNF-004.
 - **CE-10**: Solo un punto de la aplicación descompone el identificador de una ficha, y los nombres accesibles de las fichas siguen siendo los de SPEC 006.
 - **CE-11**: Una prueba en navegador comprueba, en las cuatro ventanas de RNF-004, que el tamaño y la posición del tablero son los mismos antes de la primera acción, con una pestaña corta y con la pestaña más larga.
+- **CE-12**: Un test comprueba que hay un medallón por casa con la mascota de su equipo, que no se solapa con ningún hueco, que solo el de la casa en turno se resalta y se anima, y que con ganador ninguno; la prueba en navegador de CE-07 incluye los medallones.
+- **CE-13**: Una prueba en navegador comprueba que el favicon, el icono para la pantalla de inicio, el manifiesto y los iconos del manifiesto se declaran con rutas relativas y se cargan desde el mismo origen.
 
 ## 12. Supuestos y dependencias
 
@@ -188,6 +210,7 @@ Se mantienen los términos de SPEC 006 (pantalla de partida, cartel de turno, in
 - Caprasimo y Figtree tienen una licencia libre que permite incluirlas en el proyecto.
 - Las animaciones de cada mascota son las elegidas en el diseño: jaguar `c`, loro `c`, hipopótamo `b` y rana `c`.
 - El valor del dado no aparece en el cartel: lo muestra la cara del dado.
+- El favicon, los iconos y el manifiesto vienen ya hechos del diseño; la aplicación solo los incluye y los declara.
 
 ## 13. Decisiones tomadas y descartadas
 
@@ -200,13 +223,15 @@ Se mantienen los términos de SPEC 006 (pantalla de partida, cartel de turno, in
 - **Sí:** casas con su escena y la casa en turno resaltada sin atenuar las demás. Indica el turno sin apagar el tablero.
 - **No:** atenuar las casas que no tienen el turno, ni casas sin indicar el turno.
 - **Sí:** los huecos de la casa siguen al estado: muestran las fichas que están en casa. El tablero nunca enseña fichas que no existen.
-- **No:** una mascota decorativa fija en la casa con las fichas aparte. Duplica la mascota y deja las fichas en casa pequeñas.
+- **Sí:** el medallón de la mascota en la esquina exterior de cada casa, como en la variante `e` del diseño. No tapa los huecos y mantiene la mascota visible aunque la casa esté vacía. Revierte la decisión inicial, que descartaba una mascota decorativa fija en la casa por duplicar la mascota y dejar pequeñas las fichas en casa: el medallón queda fuera de los huecos y las fichas conservan su tamaño.
 - **Sí:** el turno sigue como texto oculto para el lector de pantalla. Quitar «Turno de…» del cartel no debe empeorar lo que había en SPEC 006.
 - **Sí:** el hueco de la pestaña se reserva siempre, aunque no haya mensaje. Si aparece y desaparece, el tablero cambia de tamaño y las fichas saltan.
 - **Sí:** SPEC 006 no se modifica; este spec dice qué requisitos suyos sustituye. SPEC 006 queda como registro de lo que se implementó.
 - **Sí:** el refactor del identificador de ficha entra aquí, porque la pestaña necesita el equipo de la ficha igual que el tablero.
 - **No:** el aviso «Forma un puente» del diseño. El motor no produce ese evento y la aplicación no puede deducirlo sin decidir reglas (RNF-007).
 - **Sí:** tres partes: ambientación y refactor, mascotas en el tablero, y cartel y pestaña. Cada una se entrega y prueba sola.
+- **Sí:** una cuarta parte, añadida tras cerrar las tres primeras, con el medallón y los iconos. Son detalles del diseño que no cambian lo ya entregado.
+- **Sí:** rutas relativas para el favicon, los iconos y el manifiesto. Así funcionan igual en la raíz y en una subruta como la de GitHub Pages; el despliegue en sí queda fuera.
 
 ## 14. Riesgos
 
@@ -245,9 +270,17 @@ Se mantienen los términos de SPEC 006 (pantalla de partida, cartel de turno, in
 - **Depende de**: PARTE-01, PARTE-02
 - **Hecho cuando**: se cumplen los criterios de HU-04 y HU-05, y CE-01, CE-02, CE-03, CE-05, CE-06, CE-07, CE-09 y CE-11.
 
+### PARTE-04: Medallones de las casas e iconos de la aplicación
+
+- **Objetivo**: que la mascota de cada equipo se vea siempre en su casa y que la aplicación tenga su propio icono.
+- **Alcance**: medallón de cada casa con su resalte y su animación en el turno, y favicon, icono para la pantalla de inicio y manifiesto con rutas relativas.
+- **Cubre**: HU-03, HU-06 · RF-014, RF-015 · RNF-002, RNF-011
+- **Depende de**: PARTE-02
+- **Hecho cuando**: se cumplen los criterios de HU-03 y HU-06, y CE-07, CE-12 y CE-13.
+
 **Transversales**: RNF-006, RNF-007, RNF-009
 
-**Orden sugerido**: PARTE-01 → PARTE-02 → PARTE-03
+**Orden sugerido**: PARTE-01 → PARTE-02 → PARTE-03 → PARTE-04
 
 ## 16. Preguntas abiertas
 
@@ -261,5 +294,6 @@ Se mantienen los términos de SPEC 006 (pantalla de partida, cartel de turno, in
 - Accesibilidad completa de la partida con teclado y lector de pantalla (P-15).
 - Aviso «Forma un puente», que necesita un evento nuevo en el motor.
 - Animación de las fichas que están fuera de casa.
+- Aplicación instalable sin conexión (service worker) y despliegue en GitHub Pages.
 
 Cada uno de estos, si llega, irá en su propio spec.
