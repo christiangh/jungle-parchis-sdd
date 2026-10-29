@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import {
+  applyAction,
   Color,
   COLORS,
   GameState,
@@ -14,8 +15,11 @@ import {
 import { Board } from './board';
 import {
   goals,
+  HOME_PIECE_RADIUS,
+  homeMedallions,
   homes,
   laneSquares,
+  MEDALLION_RADIUS,
   PIECE_RADIUS,
   Point,
   SQUARE_LENGTH,
@@ -23,7 +27,9 @@ import {
   trackSquares,
 } from './board-geometry';
 import { NEW_GAME, newGame, rolled, stateWith } from './board-test-utils';
+import { homeScenes } from './home-scenes';
 import { movePreview } from './move-preview';
+import { MASCOTS } from '../shared/mascot';
 
 async function render(state: GameState = NEW_GAME): Promise<HTMLElement> {
   const fixture = TestBed.createComponent(Board);
@@ -47,9 +53,9 @@ function pieceOf(root: HTMLElement, id: PieceId): Element {
   return piece!;
 }
 
-/** Centre shared by all the circles of a piece. */
+/** Centre shared by all the circles of a piece, not counting those of its mascot. */
 function centerOf(piece: Element): Point {
-  const circles = Array.from(piece.querySelectorAll('circle'));
+  const circles = Array.from(piece.querySelectorAll(':scope > circle'));
   expect(circles.length, piece.getAttribute('data-piece')!).toBeGreaterThan(0);
   const [center] = circles.map((c) => ({
     x: Number(c.getAttribute('cx')),
@@ -64,6 +70,28 @@ function centerOf(piece: Element): Point {
 
 function radiusOf(piece: Element, part: 'rim' | 'disc'): number {
   return Number(piece.querySelector(`[data-part="${part}"]`)?.getAttribute('r'));
+}
+
+function mascotOf(piece: Element): Element {
+  const mascot = piece.querySelector(':scope > [data-mascot]');
+  expect(mascot, piece.getAttribute('data-piece') ?? undefined).not.toBeNull();
+  return mascot!;
+}
+
+/** A mascot piece of its team: mascot, disc and border of the team, white rim, of this radius. */
+function expectMascotPiece(piece: Element, radius: number): void {
+  const id = piece.getAttribute('data-piece')!;
+  const color = piece.getAttribute('data-color') as Color;
+  const disc = piece.querySelector('[data-part="disc"]');
+  const center = centerOf(piece);
+  expect(mascotOf(piece).getAttribute('data-mascot'), id).toBe(MASCOTS[color]);
+  expect(mascotOf(piece).getAttribute('transform'), id).toBe(`translate(${center.x} ${center.y})`);
+  expect(disc?.classList.contains(`fill-team-${color}-dark`), id).toBe(true);
+  expect(disc?.classList.contains(`stroke-team-${color}`), id).toBe(true);
+  expect(Number(disc?.getAttribute('stroke-width')), id).toBeGreaterThan(0);
+  expect(piece.querySelector('[data-part="rim"]')?.classList.contains('fill-white'), id).toBe(true);
+  expect(radiusOf(piece, 'rim'), id).toBe(radius);
+  expect(radiusOf(piece, 'disc'), id).toBeLessThan(radius);
 }
 
 function trackPlank(square: number) {
@@ -220,21 +248,236 @@ describe('Board', () => {
     expect(pieces?.nextElementSibling).toBeNull();
   });
 
-  it('RF-009: cada ficha es un disco de su color con borde oscuro y reborde claro', async () => {
+  it('RF-005: en una partida nueva cada ficha es la ficha-mascota de su equipo y llena su hueco', async () => {
     const root = await render();
     const pieces = all(root, '[data-piece]');
     expect(pieces).toHaveLength(NEW_GAME.pieces.length);
     for (const piece of pieces) {
-      const color = piece.getAttribute('data-color');
-      const disc = piece.querySelector('[data-part="disc"]');
-      const rim = piece.querySelector('[data-part="rim"]');
-      expect(disc?.classList.contains(`fill-team-${color}`), color!).toBe(true);
-      expect(Number(disc?.getAttribute('stroke-width')), color!).toBeGreaterThan(0);
-      expect(disc?.classList.contains('stroke-ink'), color!).toBe(true);
-      expect(rim?.classList.contains('fill-white'), color!).toBe(true);
-      expect(radiusOf(piece, 'rim'), color!).toBe(PIECE_RADIUS);
-      expect(radiusOf(piece, 'disc'), color!).toBeLessThan(PIECE_RADIUS);
+      expectMascotPiece(piece, HOME_PIECE_RADIUS);
     }
+  });
+
+  it('RF-005: en el recorrido, el pasillo y la meta la ficha-mascota tiene el tamaño de SPEC 006', async () => {
+    const root = await render(
+      stateWith([
+        ['yellow-0', { kind: 'track', square: 5 }],
+        ['red-1', { kind: 'track', square: 30 }],
+        ['blue-2', { kind: 'lane', square: 3 }],
+        ['green-3', { kind: 'goal' }],
+      ]),
+    );
+    for (const id of ['yellow-0', 'red-1', 'blue-2', 'green-3'] as const) {
+      expectMascotPiece(pieceOf(root, id), PIECE_RADIUS);
+    }
+    expectMascotPiece(pieceOf(root, 'red-0'), HOME_PIECE_RADIUS);
+  });
+
+  it('RF-005: una ficha roja comida vuelve a su hueco de la casa roja con el loro', async () => {
+    const state = rolled(
+      [
+        ['red-0', { kind: 'track', square: 13 }],
+        ['yellow-0', { kind: 'track', square: 10 }],
+      ],
+      'yellow',
+      3,
+    );
+    const outcome = applyAction(state, { type: 'move', player: 'yellow', pieceId: 'yellow-0' });
+    expect(outcome.ok).toBe(true);
+    const root = await render(outcome.ok ? outcome.value.state : state);
+    const red = pieceOf(root, 'red-0');
+    const home = homes().find((h) => h.color === 'red')!;
+
+    expect(centerOf(red)).toEqual(home.slots[0]);
+    expect(mascotOf(red).getAttribute('data-mascot')).toBe('parrot');
+    expectMascotPiece(red, HOME_PIECE_RADIUS);
+  });
+
+  it('RF-007: solo se animan las fichas en casa del equipo en turno', async () => {
+    const animated = async (state: GameState) =>
+      all(await render(state), '[data-piece]')
+        .filter((piece) => mascotOf(piece).hasAttribute('data-animated'))
+        .map((piece) => piece.getAttribute('data-piece'));
+
+    expect(await animated(NEW_GAME)).toEqual(['yellow-0', 'yellow-1', 'yellow-2', 'yellow-3']);
+    expect(await animated(rolled([['blue-0', { kind: 'track', square: 22 }]], 'blue', 3))).toEqual([
+      'blue-1',
+      'blue-2',
+      'blue-3',
+    ]);
+  });
+
+  it('RF-006: cada casa tiene la escena de su equipo y un decorado en cada hueco', async () => {
+    const root = await render();
+    for (const { color, scene, slots } of homeScenes()) {
+      const home = root.querySelector(`[data-home="${color}"]`)!;
+      const drawn = all(home as HTMLElement, '[data-part="scene"] > path');
+      expect(
+        drawn.map((path) => path.getAttribute('transform')),
+        color,
+      ).toEqual(scene.map((shape) => shape.transform));
+      expect(
+        drawn.map((path) => path.getAttribute('class')),
+        color,
+      ).toEqual(scene.map((shape) => shape.paint));
+      expect(
+        all(home as HTMLElement, '[data-home-slot]').map((slot) => slot.getAttribute('transform')),
+        color,
+      ).toEqual(slots.map((slot) => slot.transform));
+      expect(
+        all(home as HTMLElement, '[data-home-slot]').every((slot) => slot.children.length > 0),
+        color,
+      ).toBe(true);
+    }
+  });
+
+  it('RF-006: el hueco de una ficha que ha salido queda vacío', async () => {
+    const root = await render(stateWith([['red-0', { kind: 'track', square: 30 }]]));
+    const home = homes().find((h) => h.color === 'red')!;
+    const atHome = all(root, '[data-piece][data-color="red"]')
+      .filter((piece) => piece.getAttribute('data-piece') !== 'red-0')
+      .map(centerOf);
+
+    expect(atHome).toEqual(home.slots.slice(1));
+    expect(centerOf(pieceOf(root, 'red-0'))).toEqual(trackPlank(30).center);
+  });
+
+  it('RF-007, CE-04: solo la casa en turno se resalta y las demás no se atenúan', async () => {
+    const root = await render({ ...NEW_GAME, initialRoll: null, turn: 'blue' });
+    expect(all(root, '[data-home][data-turn]').map((h) => h.getAttribute('data-home'))).toEqual([
+      'blue',
+    ]);
+    for (const home of all(root, '[data-home]')) {
+      const color = home.getAttribute('data-home')!;
+      expect(home.hasAttribute('opacity'), color).toBe(false);
+      expect(home.getAttribute('class') ?? '', color).not.toMatch(/opacity/);
+    }
+  });
+
+  it('RF-007: la casa en turno lleva borde y brillo fijos, y el pulso solo con movimiento permitido', async () => {
+    const root = await render();
+    const home = root.querySelector('[data-home="yellow"]')!;
+    const pulse = home.querySelector('[data-part="turn-pulse"]');
+
+    expect(home.querySelector('[data-part="turn-glow"]')).not.toBeNull();
+    expect(paintedWith(home.querySelector('[data-part="turn-ring"]')!, 'stroke-white')).toBe(true);
+    expect(pulse?.classList.contains('motion-safe:animate-home-pulse')).toBe(true);
+    expect(pulse?.classList.contains('opacity-0')).toBe(true);
+    for (const color of ['blue', 'red', 'green']) {
+      expect(root.querySelector(`[data-home="${color}"] [data-part^="turn-"]`), color).toBeNull();
+    }
+  });
+
+  it('RF-007, CE-04: con ganador no se resalta ninguna casa', async () => {
+    const root = await render({ ...NEW_GAME, initialRoll: null, turn: 'blue', winner: 'red' });
+    expect(all(root, '[data-home][data-turn]')).toHaveLength(0);
+    expect(all(root, '[data-part^="turn-"]')).toHaveLength(0);
+  });
+
+  it('HU-03: la casa amarilla se resalta con los huecos vacíos si todas sus fichas han salido', async () => {
+    const root = await render(
+      rolled(
+        [
+          ['yellow-0', { kind: 'track', square: 5 }],
+          ['yellow-1', { kind: 'track', square: 12 }],
+          ['yellow-2', { kind: 'track', square: 20 }],
+          ['yellow-3', { kind: 'lane', square: 2 }],
+        ],
+        'yellow',
+        3,
+      ),
+    );
+    const home = homes().find((h) => h.color === 'yellow')!;
+    const centers = all(root, '[data-piece]').map(centerOf);
+
+    expect(all(root, '[data-home][data-turn]').map((h) => h.getAttribute('data-home'))).toEqual([
+      'yellow',
+    ]);
+    for (const slot of home.slots) {
+      expect(centers).not.toContainEqual(slot);
+    }
+  });
+
+  it('RF-014, HU-03: cada casa tiene un medallón decorativo con la mascota de su equipo, debajo de las fichas', async () => {
+    const root = await render();
+    const group = root.querySelector('[data-layer="game"] [data-medallions]');
+    expect(group?.getAttribute('aria-hidden')).toBe('true');
+    expect(
+      group!.compareDocumentPosition(root.querySelector('[data-pieces]')!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(all(root, '[data-medallion]')).toHaveLength(4);
+    for (const { color, center } of homeMedallions()) {
+      const medallion = root.querySelector(`[data-medallions] [data-medallion="${color}"]`)!;
+      const disc = medallion.querySelector('[data-part="medallion-disc"]');
+      const mascot = medallion.querySelector('[data-mascot]');
+      expect(mascot?.getAttribute('data-mascot'), color).toBe(MASCOTS[color]);
+      expect(mascot?.getAttribute('transform'), color).toBe(`translate(${center.x} ${center.y})`);
+      expect(Number(disc?.getAttribute('cx')), color).toBe(center.x);
+      expect(Number(disc?.getAttribute('cy')), color).toBe(center.y);
+      expect(Number(disc?.getAttribute('r')), color).toBe(MEDALLION_RADIUS);
+      expect(disc?.classList.contains(`fill-team-${color}-dark`), color).toBe(true);
+      expect(disc?.classList.contains(`stroke-team-${color}`), color).toBe(true);
+    }
+  });
+
+  it('RF-014, HU-03: solo el medallón de la casa en turno se resalta y su mascota se anima', async () => {
+    const root = await render({ ...NEW_GAME, initialRoll: null, turn: 'blue' });
+    const blue = root.querySelector('[data-medallion="blue"]')!;
+    const pulse = blue.querySelector('[data-part="medallion-pulse"]');
+
+    expect(
+      all(root, '[data-medallion][data-turn]').map((m) => m.getAttribute('data-medallion')),
+    ).toEqual(['blue']);
+    expect(blue.querySelector('[data-part="medallion-glow"]')).not.toBeNull();
+    expect(paintedWith(blue.querySelector('[data-part="medallion-ring"]')!, 'stroke-white')).toBe(
+      true,
+    );
+    expect(pulse?.classList.contains('motion-safe:animate-medallion-pulse')).toBe(true);
+    expect(pulse?.classList.contains('opacity-0')).toBe(true);
+    expect(
+      blue
+        .querySelector('[data-part="medallion-badge"]')
+        ?.classList.contains('motion-safe:animate-medallion-breath'),
+    ).toBe(true);
+    expect(blue.querySelector('[data-mascot]')?.hasAttribute('data-animated')).toBe(true);
+    expect(blue.querySelector('[data-part="medallion-shadow"]')).toBeNull();
+    for (const color of ['yellow', 'red', 'green']) {
+      const medallion = root.querySelector(`[data-medallion="${color}"]`)!;
+      expect(medallion.querySelector('[data-part="medallion-shadow"]'), color).not.toBeNull();
+      expect(medallion.querySelector('[data-part="medallion-glow"]'), color).toBeNull();
+      expect(medallion.querySelector('[data-part="medallion-ring"]'), color).toBeNull();
+      expect(medallion.querySelector('[data-part="medallion-pulse"]'), color).toBeNull();
+      expect(medallion.querySelector('[class*="animate-"]'), color).toBeNull();
+      expect(medallion.querySelector('[data-mascot]')?.hasAttribute('data-animated'), color).toBe(
+        false,
+      );
+    }
+  });
+
+  it('RF-014, HU-03: con ganador ningún medallón se resalta ni se anima', async () => {
+    const root = await render({ ...NEW_GAME, initialRoll: null, turn: 'blue', winner: 'red' });
+    expect(all(root, '[data-medallion][data-turn]')).toHaveLength(0);
+    expect(all(root, '[data-medallion] [data-part="medallion-shadow"]')).toHaveLength(4);
+    expect(all(root, '[data-medallion] [class*="animate-"]')).toHaveLength(0);
+    expect(all(root, '[data-medallion] [data-mascot][data-animated]')).toHaveLength(0);
+  });
+
+  it('RF-014, HU-03: con todas sus fichas fuera de casa, el medallón amarillo sigue resaltado y animado', async () => {
+    const root = await render(
+      rolled(
+        [
+          ['yellow-0', { kind: 'track', square: 5 }],
+          ['yellow-1', { kind: 'track', square: 12 }],
+          ['yellow-2', { kind: 'track', square: 20 }],
+          ['yellow-3', { kind: 'lane', square: 2 }],
+        ],
+        'yellow',
+        3,
+      ),
+    );
+    const yellow = root.querySelector('[data-medallion="yellow"]')!;
+    expect(yellow.hasAttribute('data-turn')).toBe(true);
+    expect(yellow.querySelector('[data-mascot]')?.hasAttribute('data-animated')).toBe(true);
   });
 
   it('RF-010: en una partida nueva hay 4 fichas en cada casa, en puestos distintos', async () => {
@@ -260,8 +503,8 @@ describe('Board', () => {
     const root = await render(stateWith([['yellow-0', { kind: 'track', square: 5 }]]));
     const piece = pieceOf(root, 'yellow-0');
     expect(centerOf(piece)).toEqual(trackPlank(5).center);
-    expect(paintedWith(piece, 'fill-team-yellow')).toBe(true);
-    expect(piece.querySelector('[data-part="disc"]')?.classList.contains('stroke-ink')).toBe(true);
+    expect(paintedWith(piece, 'fill-team-yellow-dark')).toBe(true);
+    expect(paintedWith(piece, 'stroke-team-yellow')).toBe(true);
     expect(piece.querySelector('[data-part="rim"]')?.classList.contains('fill-white')).toBe(true);
   });
 
@@ -462,6 +705,18 @@ describe('Board, al elegir movimiento', () => {
     expect(ghost.matches('.opacity-60')).toBe(false);
     expect(centerOf(ghostPiece(root))).toEqual(trackPlank(13).center);
     expect(ghost.querySelector('[data-mark]')).toBeNull();
+    expectMascotPiece(selected, PIECE_RADIUS + 3);
+  });
+
+  it('RF-005: la réplica lleva la mascota de su equipo, sin animar, con el borde discontinuo', async () => {
+    const { root } = await renderChoosing(TWO_MOVES, 'yellow-0');
+    const mascot = ghostPiece(root).querySelector(':scope > [data-mascot]');
+    const disc = ghostPiece(root).querySelector(':scope > [stroke-dasharray]');
+
+    expect(mascot?.getAttribute('data-mascot')).toBe('jaguar');
+    expect(mascot?.hasAttribute('data-animated')).toBe(false);
+    expect(paintedWith(disc!, 'fill-team-yellow-dark')).toBe(true);
+    expect(paintedWith(disc!, 'stroke-team-yellow')).toBe(true);
   });
 
   it('RF-014: la réplica de un movimiento que come lleva la diana +20', async () => {

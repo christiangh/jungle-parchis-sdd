@@ -1,5 +1,22 @@
 @import 'tailwindcss';
 
+/* Design fonts (docs/design/avisos-y-campeon), served by the app: latin subset, only the weights used. */
+@font-face {
+  font-family: 'Caprasimo';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/caprasimo-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/figtree-latin-600-normal.woff2') format('woff2');
+}
+
 /*
  * Jungle board palette ("claro" variant of docs/design/tablero).
  * `static` emits every variable so the SVG can use them even when no utility does.
@@ -47,8 +64,84 @@
   --color-canopy: #33702a;
   --color-canopy-light: #62a03d;
 
-  /* Loading color of the jungle background tile (docs/design/fondo-jungla). */
-  --color-jungle: #264018;
+  /* Team mascots (docs/design/mascotas): jaguar, parrot, hippo and frog (RF-004). */
+  --color-mascot-ink: #2b1d0f;
+  --color-mascot-pupil: #15120e;
+  --color-mascot-gold: #f2c14e;
+  --color-mascot-gold-dark: #c98a1e;
+  --color-mascot-gem: #fff3a8;
+  --color-mascot-blush: #f08a6a;
+
+  --color-mascot-jaguar: var(--color-team-yellow);
+  --color-mascot-jaguar-ochre: #b9811c;
+  --color-mascot-jaguar-cream: #fbeed2;
+  --color-mascot-jaguar-lens: #1e1a14;
+  --color-mascot-jaguar-nose: #6e2e1e;
+
+  --color-mascot-parrot: #d8432a;
+  --color-mascot-parrot-face: #fbf3e6;
+  --color-mascot-parrot-beak: #efe6d2;
+  --color-mascot-parrot-beak-dark: #2b2420;
+  --color-mascot-parrot-tongue: #e86a7a;
+  --color-mascot-parrot-note: #f5ead8;
+  --color-mascot-mic: #d9dcde;
+  --color-mascot-mic-grille: #8a9094;
+  --color-mascot-mic-stand: #9aa0a4;
+
+  --color-mascot-hippo: #7c9cc4;
+  --color-mascot-hippo-light: #9bb6d8;
+  --color-mascot-hippo-dark: #5d7fa8;
+  --color-mascot-hippo-pink: #f2a8a0;
+  --color-mascot-hippo-nostril: #2b3a52;
+  --color-mascot-buoy: #f07aa0;
+  --color-mascot-buoy-stripe: #fff5f0;
+  --color-mascot-buoy-rope: #e8dcc0;
+  --color-mascot-water: #8fd0ea;
+
+  --color-mascot-frog: #7cc242;
+  --color-mascot-frog-dark: #5aa232;
+  --color-mascot-frog-belly: #e6efa0;
+  --color-mascot-frog-eye: #f2e27a;
+
+  /* Home scenes and slot decorations, variant `e` of docs/design/mascotas (RF-006). */
+  --color-home-red-branch: #5a3418;
+  --color-home-red-leaf: #2e7a32;
+  --color-home-red-nest: #7a4a22;
+  --color-home-red-nest-dark: #3e220e;
+  --color-home-red-twig-1: #a6743e;
+  --color-home-red-twig-2: #8a5a2b;
+  --color-home-red-twig-3: #c4935a;
+  --color-home-red-twig-4: #6e4220;
+
+  --color-home-blue-wave: #bfe3f2;
+  --color-home-blue-stripe: #7fd0e8;
+  --color-home-blue-towel-edge: #1f4566;
+
+  --color-home-yellow-spot: var(--color-mascot-gold-dark);
+  --color-home-yellow-nest: #b8862a;
+  --color-home-yellow-nest-dark: #6b4a0c;
+  --color-home-yellow-nest-hole: #8a5e1a;
+  --color-home-yellow-straw-1: #f2d27a;
+  --color-home-yellow-straw-2: var(--color-team-yellow);
+  --color-home-yellow-straw-3: #d9a440;
+  --color-home-yellow-straw-4: #f7e2a0;
+  --color-home-yellow-straw-5: #c9922e;
+
+  --color-home-green-reed: #1f5a2e;
+  --color-home-green-ripple: #bfe8c8;
+  --color-home-green-pad: var(--color-mascot-frog-dark);
+  --color-home-green-pad-shine: #a6dc6a;
+
+  /* Home in turn: fixed border and glow, seen without motion too (RF-007, RNF-002). */
+  --color-home-turn-glow: #fff6c8;
+  --color-home-turn-ring: var(--color-mascot-gem);
+
+  /* Caprasimo for the turn banner, Figtree for every other text (RF-002). */
+  --font-display: 'Caprasimo', ui-serif, Georgia, serif;
+  --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+
+  /* Loading color of the softened jungle background tile (docs/design/fondo-jungla). */
+  --color-jungle: #a9b18c;
 
   /* Dice on the central log (RF-008, RF-009): the spin lasts DICE_SPIN_MS. */
   --animate-dice-spin: dice-spin 0.5s ease-out;
@@ -56,6 +149,45 @@
 
   /* Halo of the pieces the player can move (RF-012): only opacity, so the pieces keep still. */
   --animate-piece-halo: piece-halo 1.2s ease-in-out infinite;
+
+  /* Pulse of the home in turn (RF-007): a ring that grows and fades, only with motion allowed. */
+  --animate-home-pulse: home-pulse 1.6s ease-out infinite;
+
+  @keyframes home-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(1.12);
+      opacity: 0;
+    }
+  }
+
+  /* Medallion in turn (RF-014): a ring that grows to the edge of the glow and fades, and a slow breath. */
+  --animate-medallion-pulse: medallion-pulse 1.6s ease-out infinite;
+  --animate-medallion-breath: medallion-breath 1.6s ease-in-out infinite;
+
+  @keyframes medallion-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(1.07);
+      opacity: 0;
+    }
+  }
+
+  @keyframes medallion-breath {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.04);
+    }
+  }
 
   @keyframes piece-halo {
     0%,

@@ -1,5 +1,5 @@
 <div
-  class="bg-plank relative flex items-center gap-3 rounded-xl border-4 px-6 py-2 shadow-lg shadow-black/40 sm:gap-4 sm:px-8"
+  class="bg-plank relative flex items-center gap-3 rounded-xl border-4 py-1.5 pr-6 pl-2 shadow-lg shadow-black/40 sm:gap-4 sm:pr-8"
   [class]="[fill(), edge()]"
   [attr.data-color]="headline().color"
   data-plank
@@ -14,16 +14,20 @@
     aria-hidden="true"
     data-nail
   ></span>
-  <span
-    class="size-7 shrink-0 rounded-full border-4 border-white ring-2 ring-ink sm:size-9"
-    [class]="fill()"
+  <div
+    class="size-10 shrink-0 rounded-full shadow-md shadow-black/35 sm:size-13"
+    [class]="badge()"
     aria-hidden="true"
-    data-dot
-  ></span>
-  <div class="text-outline-ink font-serif text-white" data-text>
-    <p class="text-xl/tight font-bold sm:text-3xl/tight" data-title>{{ headline().title }}</p>
-    @if (headline().instruction; as instruction) {
-      <p class="text-base/tight sm:text-xl/tight" data-instruction>{{ instruction }}</p>
+    data-badge
+  >
+    <svg class="size-full" viewBox="-24 -24 48 48">
+      <g jp-mascot [color]="headline().color" [radius]="mascotRadius" [animated]="true" />
+    </svg>
+  </div>
+  <div class="text-outline-ink font-display flex-1 text-center text-white" data-text>
+    @if (headline().turn; as turn) {
+      <p class="sr-only" data-turn>{{ turn }}</p>
     }
+    <p class="text-xl/tight sm:text-3xl/tight" data-title>{{ headline().action }}</p>
   </div>
 </div>

@@ -83,6 +83,9 @@ export const HOME_SIZE = 320;
 /** Radius of a piece, rim included. */
 export const PIECE_RADIUS = 17;
 
+/** Radius of a piece at home, rim included: it fills its slot. */
+export const HOME_PIECE_RADIUS = 28;
+
 /** Gap between a home's corner and its painted square. */
 export const HOME_INSET = 30;
 
@@ -241,6 +244,34 @@ export function homes(): readonly Home[] {
       { x: cx + HOME_SLOT_OFFSET, y: cy + HOME_SLOT_OFFSET },
     ];
     return { color, x, y, slots };
+  });
+}
+
+/** Medallion of a home: its team's mascot in the home's outer corner (RF-014). */
+export interface Medallion {
+  readonly color: Color;
+  readonly center: Point;
+}
+
+/** Radius of the mascot in a medallion. */
+export const MEDALLION_RADIUS = 44;
+
+/** Radius of the medallion's glow in turn, its widest part. */
+export const MEDALLION_GLOW_RADIUS = 62;
+
+/** Gap along each axis between a home's outer corner and its medallion's centre. */
+const MEDALLION_INSET = 22;
+
+/** Each home's medallion, in the corner of the home that is also a corner of the board. */
+export function homeMedallions(): readonly Medallion[] {
+  return homes().map((home) => {
+    // Towards the board's edge on each axis, away from its centre.
+    const outward = (start: number, centre: number): number =>
+      start < centre ? start + MEDALLION_INSET : start + HOME_SIZE - MEDALLION_INSET;
+    return {
+      color: home.color,
+      center: { x: outward(home.x, BOARD_CENTER.x), y: outward(home.y, BOARD_CENTER.y) },
+    };
   });
 }
 

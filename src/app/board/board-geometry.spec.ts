@@ -3,8 +3,11 @@ import {
   BOARD_CENTER,
   BOARD_SIZE,
   goals,
+  HOME_PIECE_RADIUS,
   HOME_SIZE,
+  homeMedallions,
   homes,
+  MEDALLION_GLOW_RADIUS,
   laneSquares,
   PIECE_RADIUS,
   plankCorners,
@@ -256,6 +259,53 @@ describe('board geometry', () => {
         expect(slot.y).toBeLessThan(home.y + HOME_SIZE);
       }
     }
+  });
+
+  it('RF-014: cada casa tiene un medallón a 22 del vértice de la casa que es esquina del tablero', () => {
+    expect(homeMedallions().map((m) => m.color)).toEqual(homes().map((h) => h.color));
+    for (const home of homes()) {
+      const corners = [home.x, home.x + HOME_SIZE].flatMap((x) =>
+        [home.y, home.y + HOME_SIZE].map((y) => ({ x, y })),
+      );
+      const outer = corners.reduce((a, b) =>
+        distance(b, BOARD_CENTER) > distance(a, BOARD_CENTER) ? b : a,
+      );
+      const inward = {
+        x: Math.sign(BOARD_CENTER.x - outer.x),
+        y: Math.sign(BOARD_CENTER.y - outer.y),
+      };
+      const medallion = homeMedallions().find((m) => m.color === home.color);
+      expect(medallion?.center, home.color).toEqual({
+        x: outer.x + 22 * inward.x,
+        y: outer.y + 22 * inward.y,
+      });
+    }
+  });
+
+  it('RF-014: el brillo del medallón cabe en el tablero dibujado', () => {
+    // Same margin as the board's viewBox, -40 -40 1080 1080.
+    const margin = 40;
+    for (const { color, center } of homeMedallions()) {
+      expect(center.x - MEDALLION_GLOW_RADIUS, color).toBeGreaterThanOrEqual(-margin);
+      expect(center.y - MEDALLION_GLOW_RADIUS, color).toBeGreaterThanOrEqual(-margin);
+      expect(center.x + MEDALLION_GLOW_RADIUS, color).toBeLessThanOrEqual(BOARD_SIZE + margin);
+      expect(center.y + MEDALLION_GLOW_RADIUS, color).toBeLessThanOrEqual(BOARD_SIZE + margin);
+    }
+  });
+
+  it('RF-014, CE-12: el brillo del medallón no se solapa con ninguna ficha en su casa', () => {
+    for (const home of homes()) {
+      const medallion = homeMedallions().find((m) => m.color === home.color);
+      for (const slot of home.slots) {
+        expect(medallion && distance(medallion.center, slot), home.color).toBeGreaterThanOrEqual(
+          MEDALLION_GLOW_RADIUS + HOME_PIECE_RADIUS,
+        );
+      }
+    }
+  });
+
+  it('RF-014: los medallones son los mismos en cada llamada', () => {
+    expect(homeMedallions()).toEqual(homeMedallions());
   });
 
   it('RF-004, R-005: la casilla de salida de cada color está junto a su casa', () => {

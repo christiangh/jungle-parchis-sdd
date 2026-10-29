@@ -1,0 +1,520 @@
+/*
+ * Mascot loops from docs/design/mascotas (jaguar `c`, parrot `c`, hippo `b`, frog `c`):
+ * 3 s with a pause, only with `animated` and when the system allows motion (RNF-002, RNF-003).
+ * The rules outside the media query are the first frame of each loop, which is the still mascot.
+ */
+
+/* Jaguar: head tilt, glint across the glasses, grin and a sparkle. */
+.tilt {
+  transform-box: view-box;
+  transform-origin: 0 30px;
+}
+
+.glint {
+  transform: translateX(-30px);
+}
+
+.grin {
+  opacity: 0;
+}
+
+.ting {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+}
+
+/* Parrot: sings to the beat, opening its beak, with two notes. */
+.head {
+  transform-box: view-box;
+  transform-origin: -4px 16px;
+}
+
+.body {
+  transform-box: view-box;
+  transform-origin: -4px 46px;
+}
+
+.beak-open,
+.note-1,
+.note-2 {
+  opacity: 0;
+}
+
+.note-1,
+.note-2 {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Hippo: dives through its buoy, with bubbles and splashes. */
+.hippo {
+  transform-box: view-box;
+  transform-origin: 0 20px;
+}
+
+.bubble-1,
+.bubble-2,
+.bubble-3,
+.drop-1,
+.drop-2 {
+  opacity: 0;
+}
+
+/* Frog: its crown wobbles, it winks and blushes, with a sparkle. */
+.crown {
+  transform-box: view-box;
+  transform-origin: 0 -22px;
+}
+
+.wink {
+  opacity: 0;
+}
+
+.spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :host([data-animated]) .tilt {
+    animation: jaguar-tilt 3s ease-in-out infinite;
+  }
+  :host([data-animated]) .glint {
+    animation: jaguar-glint 3s ease-in-out infinite;
+  }
+  :host([data-animated]) .smirk {
+    animation: jaguar-smirk 3s ease-in-out infinite;
+  }
+  :host([data-animated]) .grin {
+    animation: jaguar-grin 3s ease-in-out infinite;
+  }
+  :host([data-animated]) .ting {
+    animation: jaguar-ting 3s ease-out infinite;
+  }
+
+  :host([data-animated]) .head {
+    animation: parrot-head 3s ease-in-out infinite;
+  }
+  :host([data-animated]) .body {
+    animation: parrot-body 3s ease-in-out infinite;
+  }
+  :host([data-animated]) .beak-open {
+    animation: parrot-beak-open 3s ease-in-out infinite;
+  }
+  :host([data-animated]) .beak-shut {
+    animation: parrot-beak-shut 3s ease-in-out infinite;
+  }
+  :host([data-animated]) .note-1 {
+    animation: parrot-note 3s ease-out infinite;
+  }
+  :host([data-animated]) .note-2 {
+    animation: parrot-note 3s ease-out 0.72s infinite;
+  }
+
+  :host([data-animated]) .hippo {
+    animation: hippo-dive 3s ease-in-out infinite;
+  }
+  :host([data-animated]) .buoy {
+    animation: hippo-buoy 3s ease-in-out infinite;
+  }
+  :host([data-animated]) .bubble-1,
+  :host([data-animated]) .bubble-2,
+  :host([data-animated]) .bubble-3 {
+    animation: hippo-bubble 3s ease-in infinite;
+  }
+  :host([data-animated]) .bubble-2 {
+    animation-delay: 0.18s;
+  }
+  :host([data-animated]) .bubble-3 {
+    animation-delay: 0.36s;
+  }
+  :host([data-animated]) .drop-1 {
+    animation: hippo-drop-left 3s ease-out infinite;
+  }
+  :host([data-animated]) .drop-2 {
+    animation: hippo-drop-right 3s ease-out infinite;
+  }
+
+  :host([data-animated]) .crown {
+    animation: frog-crown 3s ease-in-out infinite;
+  }
+  :host([data-animated]) .wink {
+    animation: frog-wink 3s ease-in-out infinite;
+  }
+  :host([data-animated]) .eye-open {
+    animation: frog-eye-open 3s ease-in-out infinite;
+  }
+  :host([data-animated]) .blush {
+    animation: frog-blush 3s ease-in-out infinite;
+  }
+  :host([data-animated]) .spark {
+    animation: frog-spark 3s ease-out infinite;
+  }
+}
+
+@keyframes jaguar-tilt {
+  0%,
+  14% {
+    transform: rotate(0);
+  }
+  26%,
+  62% {
+    transform: rotate(-7deg);
+  }
+  74%,
+  100% {
+    transform: rotate(0);
+  }
+}
+
+@keyframes jaguar-glint {
+  0%,
+  26% {
+    transform: translateX(-30px);
+  }
+  50%,
+  100% {
+    transform: translateX(30px);
+  }
+}
+
+@keyframes jaguar-smirk {
+  0%,
+  24% {
+    opacity: 1;
+  }
+  30%,
+  64% {
+    opacity: 0;
+  }
+  70%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes jaguar-grin {
+  0%,
+  24% {
+    opacity: 0;
+  }
+  30%,
+  64% {
+    opacity: 1;
+  }
+  70%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes jaguar-ting {
+  0%,
+  36% {
+    transform: scale(0) rotate(0);
+  }
+  44% {
+    transform: scale(1.2) rotate(30deg);
+  }
+  56%,
+  100% {
+    transform: scale(0) rotate(60deg);
+  }
+}
+
+@keyframes parrot-head {
+  0% {
+    transform: translate(0, 0) rotate(0);
+  }
+  12% {
+    transform: translate(-4px, 1px) rotate(-8deg);
+  }
+  24% {
+    transform: translate(1px, 0) rotate(4deg);
+  }
+  36% {
+    transform: translate(-4px, 1px) rotate(-8deg);
+  }
+  48% {
+    transform: translate(1px, 0) rotate(4deg);
+  }
+  62%,
+  100% {
+    transform: translate(0, 0) rotate(0);
+  }
+}
+
+/* The body follows the head with a quarter of its turn. */
+@keyframes parrot-body {
+  0% {
+    transform: rotate(0);
+  }
+  12% {
+    transform: rotate(-2deg);
+  }
+  24% {
+    transform: rotate(1deg);
+  }
+  36% {
+    transform: rotate(-2deg);
+  }
+  48% {
+    transform: rotate(1deg);
+  }
+  62%,
+  100% {
+    transform: rotate(0);
+  }
+}
+
+@keyframes parrot-beak-open {
+  0%,
+  18% {
+    opacity: 0;
+  }
+  21%,
+  28% {
+    opacity: 1;
+  }
+  31%,
+  42% {
+    opacity: 0;
+  }
+  45%,
+  52% {
+    opacity: 1;
+  }
+  55%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes parrot-beak-shut {
+  0%,
+  18% {
+    opacity: 1;
+  }
+  21%,
+  28% {
+    opacity: 0;
+  }
+  31%,
+  42% {
+    opacity: 1;
+  }
+  45%,
+  52% {
+    opacity: 0;
+  }
+  55%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes parrot-note {
+  0%,
+  20% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(2px, -6px) scale(1.15);
+  }
+  38% {
+    opacity: 0;
+    transform: translate(5px, -16px) scale(1);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes hippo-dive {
+  0%,
+  8% {
+    transform: translateY(0) rotate(0);
+  }
+  20%,
+  40% {
+    transform: translateY(21px) rotate(0);
+  }
+  52% {
+    transform: translateY(-4px) rotate(0);
+  }
+  57% {
+    transform: translateY(0) rotate(-7deg);
+  }
+  63% {
+    transform: translateY(0) rotate(7deg);
+  }
+  69% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  75%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+}
+
+@keyframes hippo-buoy {
+  0%,
+  8% {
+    transform: translateY(0);
+  }
+  20%,
+  40% {
+    transform: translateY(3px);
+  }
+  52% {
+    transform: translateY(-1.5px);
+  }
+  62%,
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes hippo-bubble {
+  0%,
+  20% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  24% {
+    opacity: 1;
+  }
+  42% {
+    opacity: 0;
+    transform: translateY(-26px);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes hippo-drop-left {
+  0%,
+  56% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  60% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 0;
+    transform: translate(-14px, -10px);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes hippo-drop-right {
+  0%,
+  60% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  64% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 0;
+    transform: translate(14px, -12px);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes frog-crown {
+  0%,
+  14% {
+    transform: rotate(0);
+  }
+  18% {
+    transform: rotate(-7deg);
+  }
+  22% {
+    transform: rotate(7deg);
+  }
+  26% {
+    transform: rotate(-6deg);
+  }
+  30% {
+    transform: rotate(6deg);
+  }
+  34% {
+    transform: rotate(-3deg);
+  }
+  38%,
+  100% {
+    transform: rotate(0);
+  }
+}
+
+@keyframes frog-wink {
+  0%,
+  30% {
+    opacity: 0;
+  }
+  35%,
+  50% {
+    opacity: 1;
+  }
+  56%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes frog-eye-open {
+  0%,
+  30% {
+    opacity: 1;
+  }
+  35%,
+  50% {
+    opacity: 0;
+  }
+  56%,
+  100% {
+    opacity: 1;
+  }
+}
+
+/* On each cheek, from the still mascot's half opacity. */
+@keyframes frog-blush {
+  0%,
+  28% {
+    opacity: 0.5;
+  }
+  40%,
+  54% {
+    opacity: 0.95;
+  }
+  66%,
+  100% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes frog-spark {
+  0%,
+  40% {
+    transform: scale(0) rotate(0);
+  }
+  48% {
+    transform: scale(1.2) rotate(45deg);
+  }
+  58%,
+  100% {
+    transform: scale(0) rotate(90deg);
+  }
+}

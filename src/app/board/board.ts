@@ -6,9 +6,14 @@ import {
   goals,
   Home,
   HOME_INSET,
+  HOME_PIECE_RADIUS,
   HOME_SIZE,
+  homeMedallions,
   homes,
   laneSquares,
+  Medallion,
+  MEDALLION_GLOW_RADIUS,
+  MEDALLION_RADIUS,
   PIECE_RADIUS,
   Point,
   rotation,
@@ -23,8 +28,12 @@ import {
   TEAM_DARK_FILL,
   TEAM_DARK_STROKE,
   TEAM_FILL,
+  TEAM_STROKE,
 } from './board-palette';
-import { COLOR_NAMES } from '../shared/color-names';
+import { animatedPieces, homeInTurn } from './board-turn';
+import { HomeScene, homeScenes, SceneShape, SlotDecor } from './home-scenes';
+import { Mascot } from '../shared/mascot';
+import { pieceName } from '../shared/piece-id';
 import { Ghost, movePreview, PiecePreview } from './move-preview';
 
 /** A wooden or painted plank: plain track squares and lane squares. */
@@ -67,24 +76,43 @@ export interface GoalView extends Goal {
   readonly fill: string;
 }
 
+/** A home with its scene and the decoration under each slot (RF-006). */
 export interface HomeView extends Home {
   readonly fill: string;
+  readonly scene: readonly SceneShape[];
+  readonly decor: readonly SlotDecor[];
+}
+
+/** A home's medallion: its team's mascot on the team's dark tone, with a border of its colour (RF-014). */
+export interface MedallionView extends Medallion {
+  readonly fill: string;
+  readonly stroke: string;
+  /** Moves the mascot, drawn around the origin, to the medallion's centre. */
+  readonly transform: string;
 }
 
 /**
- * A piece: a disc of its colour with an ink border, on a white rim. Ink and white
- * are 14.5:1 apart, so one of them reaches 3:1 on any background (RNF-004).
+ * A mascot piece: its team's mascot on a disc of the team's dark tone, with a border of
+ * the team's colour, on a white rim (RF-005).
  */
 export interface PieceView extends PiecePreview {
   readonly fill: string;
+  readonly stroke: string;
   readonly rimRadius: number;
   readonly discRadius: number;
+  readonly mascotRadius: number;
+  /** Moves the mascot, drawn around the origin, to the piece's centre. */
+  readonly transform: string;
   readonly halo: boolean;
+  readonly animated: boolean;
 }
 
 /** Translucent copy of the selected piece, with its badges and pair mark. */
 export interface GhostView extends Ghost {
   readonly fill: string;
+  readonly stroke: string;
+  readonly mascotRadius: number;
+  readonly transform: string;
   /** Centre of the +20 or +10 badge, next to the ghost. */
   readonly badge: Point;
   /** SVG transform that lays the pair mark along the plank. */
@@ -101,15 +129,32 @@ export interface TouchAreaView {
 /** The selected piece grows by this much, still inside the width of its plank. */
 const SELECTED_GROWTH = 3;
 
+/** Width of the white rim around the disc. */
+const RIM_WIDTH = 4;
+
+/** Width of the disc's border; the mascot fills the disc inside it. */
+const BORDER_WIDTH = 3;
+
+/** Shadow of a medallion out of turn. */
+const MEDALLION_SHADOW_RADIUS = 54;
+
+/** White ring of the medallion in turn; its pulse grows from the shadow's radius to the glow's. */
+const MEDALLION_RING_RADIUS = 50;
+
+function mascotRadius(discRadius: number): number {
+  return discRadius - BORDER_WIDTH / 2;
+}
+
+function translation(center: Point): string {
+  return `translate(${center.x} ${center.y})`;
+}
+
 /** Offset of the ghost badges from its centre, up and to the right. */
 const BADGE_OFFSET = 15;
 
 const decor = boardDecor();
 
-/** A piece as players read it: `yellow-0` is "1 de Amarillo". */
-function pieceName(id: PieceId, color: Color): string {
-  return `${Number(id.split('-')[1]) + 1} de ${COLOR_NAMES[color]}`;
-}
+const scenes = new Map<Color, HomeScene>(homeScenes().map((s) => [s.color, s]));
 
 function pointsOf(polygon: readonly Point[]): string {
   return polygon.map((p) => `${p.x},${p.y}`).join(' ');
@@ -118,6 +163,7 @@ function pointsOf(polygon: readonly Point[]): string {
 /** Jungle board drawn in SVG ("claro" variant of docs/design/tablero). */
 @Component({
   selector: 'jp-board',
+  imports: [Mascot],
   templateUrl: './board.html',
   host: { class: 'relative block size-full' },
 })
@@ -139,6 +185,8 @@ export class Board {
   protected readonly bladeStroke = BLADE_STROKE;
   protected readonly canopyFill = CANOPY_FILL;
   protected readonly pieceRadius = PIECE_RADIUS;
+  protected readonly ghostDiscRadius = PIECE_RADIUS - RIM_WIDTH;
+  protected readonly borderWidth = BORDER_WIDTH;
 
   /** Heights of the board lines painted across each home. */
   protected readonly homeBoards = [1, 2, 3, 4, 5].map(
@@ -213,24 +261,53 @@ export class Board {
   protected readonly homes: readonly HomeView[] = homes().map((h) => ({
     ...h,
     fill: TEAM_FILL[h.color],
+    scene: scenes.get(h.color)!.scene,
+    decor: scenes.get(h.color)!.slots,
   }));
+
+  protected readonly medallions: readonly MedallionView[] = homeMedallions().map((m) => ({
+    ...m,
+    fill: TEAM_DARK_FILL[m.color],
+    stroke: TEAM_STROKE[m.color],
+    transform: translation(m.center),
+  }));
+
+  protected readonly medallionRadius = MEDALLION_RADIUS;
+  protected readonly medallionMascotRadius = mascotRadius(MEDALLION_RADIUS);
+  protected readonly medallionShadowRadius = MEDALLION_SHADOW_RADIUS;
+  protected readonly medallionRingRadius = MEDALLION_RING_RADIUS;
+  protected readonly medallionGlowRadius = MEDALLION_GLOW_RADIUS;
+
+  /** Home highlighted for the team in turn; none once there is a winner (RF-007). */
+  protected readonly homeTurn = computed(() => homeInTurn(this.state()));
 
   private readonly preview = computed(() =>
     movePreview(this.state(), this.moves(), this.selected()),
   );
 
-  protected readonly pieces = computed<readonly PieceView[]>(() =>
-    this.preview().pieces.map((p) => {
+  protected readonly pieces = computed<readonly PieceView[]>(() => {
+    const state = this.state();
+    const atHome = new Set(
+      state.pieces.filter((piece) => piece.position.kind === 'home').map((piece) => piece.id),
+    );
+    const animated = animatedPieces(state);
+    return this.preview().pieces.map((p) => {
       const growth = p.mode === 'selected' ? SELECTED_GROWTH : 0;
+      const rimRadius = (atHome.has(p.id) ? HOME_PIECE_RADIUS : PIECE_RADIUS) + growth;
+      const discRadius = rimRadius - RIM_WIDTH;
       return {
         ...p,
-        fill: TEAM_FILL[p.color],
-        rimRadius: PIECE_RADIUS + growth,
-        discRadius: PIECE_RADIUS - 4 + growth,
+        fill: TEAM_DARK_FILL[p.color],
+        stroke: TEAM_STROKE[p.color],
+        rimRadius,
+        discRadius,
+        mascotRadius: mascotRadius(discRadius),
+        transform: translation(p.center),
         halo: p.mode === 'highlighted' || p.mode === 'selected',
+        animated: animated.has(p.id),
       };
-    }),
-  );
+    });
+  });
 
   protected readonly ghost = computed<GhostView | null>(() => {
     const ghost = this.preview().ghost;
@@ -240,7 +317,10 @@ export class Board {
     const { pair } = ghost;
     return {
       ...ghost,
-      fill: TEAM_FILL[ghost.color],
+      fill: TEAM_DARK_FILL[ghost.color],
+      stroke: TEAM_STROKE[ghost.color],
+      mascotRadius: mascotRadius(PIECE_RADIUS - RIM_WIDTH),
+      transform: translation(ghost.center),
       badge: { x: ghost.center.x + BADGE_OFFSET, y: ghost.center.y - BADGE_OFFSET },
       pairTransform: pair
         ? `translate(${pair.center.x} ${pair.center.y}) rotate(${pair.rotation})`
@@ -257,7 +337,7 @@ export class Board {
             {
               target: p.id,
               points: pointsOf(p.touchArea),
-              label: `Ficha ${pieceName(p.id, p.color)}`,
+              label: `Ficha ${pieceName(p.id)}`,
             },
           ],
     );
@@ -265,7 +345,7 @@ export class Board {
       areas.push({
         target: 'ghost',
         points: pointsOf(ghost.touchArea),
-        label: `Mover la ficha ${pieceName(ghost.pieceId, ghost.color)} aquí`,
+        label: `Mover la ficha ${pieceName(ghost.pieceId)} aquí`,
       });
     }
     return areas;

@@ -1,0 +1,19 @@
+<div
+  class="flex items-center gap-2 rounded-b-xl border-2 border-t-0 border-black/40 py-1.5 pr-4 pl-2 shadow-md shadow-black/35"
+  [class]="fill()"
+  [attr.data-color]="play().color"
+  data-tab
+>
+  <div
+    class="size-6 shrink-0 rounded-full shadow-sm shadow-black/35 sm:size-7"
+    aria-hidden="true"
+    data-badge
+  >
+    <svg class="size-full" viewBox="-24 -24 48 48">
+      <g jp-mascot [color]="play().color" [radius]="mascotRadius" />
+    </svg>
+  </div>
+  <p class="text-sm/tight font-semibold text-white sm:text-base/tight" data-text>
+    {{ play().text }}
+  </p>
+</div>

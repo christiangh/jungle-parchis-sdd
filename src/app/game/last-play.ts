@@ -1,64 +1,71 @@
-import { Color, GameEvent, PieceId } from '@engine';
+import { Color, GameEvent } from '@engine';
 import { COLOR_NAMES } from '../shared/color-names';
-
-/** Colour of a piece as an adjective, to agree with «ficha». */
-const PIECE_COLORS: Readonly<Record<Color, string>> = {
-  yellow: 'amarilla',
-  blue: 'azul',
-  red: 'roja',
-  green: 'verde',
-};
-
-function colorOf(pieceId: PieceId): Color {
-  return pieceId.split('-')[0] as Color;
-}
+import { pieceColor } from '../shared/piece-id';
 
 function names(colors: readonly Color[]): string {
   const all = colors.map((color) => COLOR_NAMES[color]);
   return all.length > 1 ? `${all.slice(0, -1).join(', ')} y ${all.at(-1)}` : all.join('');
 }
 
-/** Text of each kind of event, read only from the event itself (RF-006, RNF-005). */
-function fragment(event: GameEvent): string {
+/**
+ * Text of each kind of event, read only from the event itself, or `null` for the turn changes the
+ * banner already shows (RF-012, RNF-007).
+ */
+function fragment(event: GameEvent): string | null {
   switch (event.type) {
     case 'initial-roll':
-      return `${COLOR_NAMES[event.player]} saca ${event.value}`;
+      return `saca ${event.value}`;
     case 'initial-roll-tie':
       return `empate entre ${names(event.players)}`;
     case 'first-player':
-      return `empieza ${COLOR_NAMES[event.player]}`;
+      return null;
     case 'piece-left-home':
-      return `${COLOR_NAMES[colorOf(event.pieceId)]} saca una ficha de casa`;
+      return 'saca una ficha de casa';
     case 'piece-advanced':
-      return `${COLOR_NAMES[colorOf(event.pieceId)]} mueve una ficha`;
+      return 'mueve una ficha';
     case 'piece-captured':
-      return `come una ficha ${PIECE_COLORS[colorOf(event.pieceId)]}`;
+      return `se come una ficha de ${COLOR_NAMES[pieceColor(event.pieceId)]}`;
     case 'piece-reached-goal':
-      return 'llega a meta';
+      return 'llega a la meta';
     case 'bonus-earned':
       return `cuenta ${event.amount}`;
     case 'bonus-lost':
       return `pierde el +${event.amount}`;
     case 'roll-lost':
-      return `${COLOR_NAMES[event.player]} saca ${event.value} y pierde la tirada`;
+      return `saca ${event.value} y pierde la tirada`;
     case 'roll-again':
-      return `${COLOR_NAMES[event.player]} repite`;
-    case 'three-sixes': {
-      const sixes = `tres seises de ${COLOR_NAMES[event.player]}`;
-      return event.pieceId === null ? sixes : `${sixes} y su ficha vuelve a casa`;
-    }
+      return 'repite';
+    case 'three-sixes':
+      return event.pieceId === null ? 'tres seises' : 'tres seises y su ficha vuelve a casa';
     case 'turn-changed':
-      return `turno de ${COLOR_NAMES[event.player]}`;
+      return null;
     case 'game-over':
-      return `gana ${COLOR_NAMES[event.winner]}`;
+      return 'gana la partida';
   }
 }
 
-/** Sentence of the last play line: every event of the last action, in order (RF-005, RF-006). */
-export function lastPlay(events: readonly GameEvent[]): string {
-  if (events.length === 0) {
-    return '';
+/** What the last play tab says: the team that acted and what happened, without naming it. */
+export interface LastPlay {
+  readonly color: Color;
+  readonly text: string;
+}
+
+/**
+ * Longest sentence the tab can show, used to reserve its space (RNF-010): a capture with a 6 whose
+ * bonus no piece can use, naming the longest team name.
+ */
+export const LONGEST_PLAY =
+  'Mueve una ficha, se come una ficha de Amarillo, cuenta 20, pierde el +20, repite.';
+
+/**
+ * Sentence of the last play tab: every event of the last action, in order, without the team that
+ * acted nor the turn change (RF-011, RF-012).
+ */
+export function lastPlay(player: Color | null, events: readonly GameEvent[]): LastPlay | null {
+  const fragments = events.map(fragment).filter((text) => text !== null);
+  if (player === null || fragments.length === 0) {
+    return null;
   }
-  const sentence = events.map(fragment).join(', ');
-  return `${sentence[0].toUpperCase()}${sentence.slice(1)}.`;
+  const sentence = fragments.join(', ');
+  return { color: player, text: `${sentence[0].toUpperCase()}${sentence.slice(1)}.` };
 }

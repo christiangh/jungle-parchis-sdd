@@ -113,7 +113,7 @@
 
   <g data-layer="game">
     @for (home of homes; track home.color) {
-      <g [attr.data-home]="home.color">
+      <g [attr.data-home]="home.color" [attr.data-turn]="home.color === homeTurn() ? '' : null">
         <clipPath [attr.id]="'jp-board-home-' + home.color">
           <rect
             [attr.x]="home.x + homeInset"
@@ -123,6 +123,18 @@
             rx="54"
           />
         </clipPath>
+        @if (home.color === homeTurn()) {
+          <rect
+            data-part="turn-glow"
+            [attr.x]="home.x + homeInset - 12"
+            [attr.y]="home.y + homeInset - 12"
+            [attr.width]="homeSize - 2 * homeInset + 24"
+            [attr.height]="homeSize - 2 * homeInset + 24"
+            rx="66"
+            class="fill-home-turn-glow"
+            opacity=".55"
+          />
+        }
         <rect
           [attr.x]="home.x + homeInset + 3"
           [attr.y]="home.y + homeInset + 7"
@@ -159,6 +171,19 @@
               stroke-width="1"
             />
           }
+          <g data-part="scene" stroke-linecap="round">
+            @for (shape of home.scene; track $index) {
+              <path
+                [attr.d]="shape.path"
+                [attr.transform]="shape.transform"
+                [class]="shape.paint"
+                [attr.stroke-width]="shape.width || null"
+                [attr.stroke-dasharray]="shape.dash"
+                [attr.stroke-linecap]="shape.dash ? 'butt' : null"
+                [attr.opacity]="shape.opacity"
+              />
+            }
+          </g>
         </g>
         <rect
           [attr.x]="home.x + homeInset"
@@ -178,16 +203,113 @@
           class="fill-none stroke-white/20"
           stroke-width="2"
         />
-        @for (slot of home.slots; track $index) {
-          <g data-home-slot>
-            <circle [attr.cx]="slot.x" [attr.cy]="slot.y" r="37" class="fill-white/20" />
-            <circle [attr.cx]="slot.x" [attr.cy]="slot.y - 1.5" r="34" class="fill-black/30" />
-            <circle [attr.cx]="slot.x" [attr.cy]="slot.y + 2" r="31" [class]="home.fill" />
-            <circle [attr.cx]="slot.x" [attr.cy]="slot.y + 2" r="31" class="fill-black/10" />
+        @if (home.color === homeTurn()) {
+          <rect
+            data-part="turn-ring"
+            [attr.x]="home.x + homeInset"
+            [attr.y]="home.y + homeInset"
+            [attr.width]="homeSize - 2 * homeInset"
+            [attr.height]="homeSize - 2 * homeInset"
+            rx="54"
+            class="fill-none stroke-white"
+            stroke-width="5"
+          />
+          <rect
+            data-part="turn-pulse"
+            [attr.x]="home.x + homeInset"
+            [attr.y]="home.y + homeInset"
+            [attr.width]="homeSize - 2 * homeInset"
+            [attr.height]="homeSize - 2 * homeInset"
+            rx="54"
+            class="origin-center fill-none stroke-home-turn-ring opacity-0 [transform-box:fill-box] motion-safe:animate-home-pulse"
+            stroke-width="7"
+          />
+        }
+        @for (slot of home.decor; track $index) {
+          <g
+            data-home-slot
+            [attr.transform]="slot.transform"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            @for (shape of slot.shapes; track $index) {
+              <path
+                [attr.d]="shape.path"
+                [class]="shape.paint"
+                [attr.stroke-width]="shape.width || null"
+                [attr.opacity]="shape.opacity"
+              />
+            }
           </g>
         }
       </g>
     }
+
+    <g data-medallions aria-hidden="true">
+      @for (medallion of medallions; track medallion.color) {
+        @let inTurn = medallion.color === homeTurn();
+        <g [attr.data-medallion]="medallion.color" [attr.data-turn]="inTurn ? '' : null">
+          @if (inTurn) {
+            <circle
+              data-part="medallion-glow"
+              [attr.cx]="medallion.center.x"
+              [attr.cy]="medallion.center.y"
+              [attr.r]="medallionGlowRadius"
+              class="fill-home-turn-glow"
+              opacity=".55"
+            />
+            <circle
+              data-part="medallion-pulse"
+              [attr.cx]="medallion.center.x"
+              [attr.cy]="medallion.center.y"
+              [attr.r]="medallionShadowRadius"
+              class="origin-center fill-none stroke-home-turn-ring opacity-0 [transform-box:fill-box] motion-safe:animate-medallion-pulse"
+              stroke-width="7"
+            />
+            <circle
+              data-part="medallion-ring"
+              [attr.cx]="medallion.center.x"
+              [attr.cy]="medallion.center.y"
+              [attr.r]="medallionRingRadius"
+              class="fill-none stroke-white"
+              stroke-width="5"
+            />
+          } @else {
+            <circle
+              data-part="medallion-shadow"
+              [attr.cx]="medallion.center.x"
+              [attr.cy]="medallion.center.y"
+              [attr.r]="medallionShadowRadius"
+              class="fill-black/25"
+            />
+          }
+          <g
+            data-part="medallion-badge"
+            [class]="
+              inTurn
+                ? 'origin-center [transform-box:fill-box] motion-safe:animate-medallion-breath'
+                : ''
+            "
+          >
+            <circle
+              data-part="medallion-disc"
+              [attr.cx]="medallion.center.x"
+              [attr.cy]="medallion.center.y"
+              [attr.r]="medallionRadius"
+              [class]="medallion.fill + ' ' + medallion.stroke"
+              [attr.stroke-width]="borderWidth"
+            />
+            <g
+              jp-mascot
+              [attr.transform]="medallion.transform"
+              [color]="medallion.color"
+              [radius]="medallionMascotRadius"
+              [animated]="inTurn"
+            />
+          </g>
+        </g>
+      }
+    </g>
 
     @for (goal of goals; track goal.color) {
       <g [attr.data-goal]="goal.color" [attr.transform]="goal.transform">
@@ -364,8 +486,15 @@
             [attr.cx]="piece.center.x"
             [attr.cy]="piece.center.y"
             [attr.r]="piece.discRadius"
-            [class]="piece.fill + ' stroke-ink'"
-            stroke-width="3"
+            [class]="piece.fill + ' ' + piece.stroke"
+            [attr.stroke-width]="borderWidth"
+          />
+          <g
+            jp-mascot
+            [attr.transform]="piece.transform"
+            [color]="piece.color"
+            [radius]="piece.mascotRadius"
+            [animated]="piece.animated"
           />
         </g>
       }
@@ -406,10 +535,16 @@
           <circle
             [attr.cx]="ghost.center.x"
             [attr.cy]="ghost.center.y"
-            [attr.r]="pieceRadius - 4"
-            [class]="ghost.fill + ' stroke-ink'"
-            stroke-width="3"
+            [attr.r]="ghostDiscRadius"
+            [class]="ghost.fill + ' ' + ghost.stroke"
+            [attr.stroke-width]="borderWidth"
             stroke-dasharray="5 4"
+          />
+          <g
+            jp-mascot
+            [attr.transform]="ghost.transform"
+            [color]="ghost.color"
+            [radius]="ghost.mascotRadius"
           />
         </g>
         @if (ghost.captures) {

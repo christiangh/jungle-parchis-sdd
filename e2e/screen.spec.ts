@@ -8,7 +8,7 @@ const SIZES = [
   { width: 1920, height: 1080 },
 ];
 
-// Initial roll tie, so the last play line shows one of its longer sentences.
+// Initial roll tie, so the last play tab shows one of its longer sentences.
 const TIE = [6, 2, 6, 1];
 
 async function expectInside(page: Page, locator: Locator, name: string): Promise<void> {
@@ -37,7 +37,8 @@ for (const size of SIZES) {
     }));
     expect(overflow).toEqual({ x: 0, y: 0 });
     await expectInside(page, page.locator('[data-plank]'), 'cartel');
-    await expectInside(page, page.locator('[data-last-play]'), 'última jugada');
+    await expectInside(page, page.locator('[data-last-play-slot]'), 'hueco de la pestaña');
+    await expectInside(page, page.locator('[data-last-play]'), 'pestaña de última jugada');
     await expectInside(
       page,
       page.getByRole('img', { name: 'Tablero de parchís de la jungla' }),
