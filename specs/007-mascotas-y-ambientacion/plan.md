@@ -168,7 +168,7 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 
 ## PARTE-03: Cartel y pestaña de última jugada
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
