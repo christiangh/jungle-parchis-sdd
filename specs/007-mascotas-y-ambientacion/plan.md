@@ -360,7 +360,7 @@ El manifiesto ya usa rutas relativas para sus iconos, que se resuelven contra la
   - Con ganador, ninguno resaltado ni animado.
   - Con todas las fichas del equipo en turno fuera de casa, su medallón sigue resaltado y animado (HU-03.2).
   - Los tests de casas y fichas de PARTE-02 siguen pasando sin cambios.
-- [ ] 4. Pruebas en navegador en `e2e/mascots.spec.ts` (CE-07, CE-12, RNF-002):
+- [x] 4. Pruebas en navegador en `e2e/mascots.spec.ts` (CE-07, CE-12, RNF-002):
   - Al empezar, solo el medallón amarillo tiene animaciones en marcha; tras pasar el turno, solo el del nuevo equipo.
   - Con movimiento reducido, ningún medallón tiene animaciones en marcha y el de la casa en turno sigue con el brillo y el aro.
   - Revisión en navegador a 320 × 568 y 1920 × 1080: los medallones no tapan los huecos ni se recortan en las esquinas.

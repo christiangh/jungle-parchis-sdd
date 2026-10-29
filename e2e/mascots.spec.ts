@@ -2,7 +2,7 @@ import { expect, Page, test } from '@playwright/test';
 import { fixDice, roll } from './dice';
 
 // Mascot animations of the pieces at home of the team in turn (HU-03) and of the turn banner
-// (HU-04): RF-007, RF-008, RNF-002, CE-07.
+// (HU-04), and of the home medallions: RF-007, RF-008, RF-014, RNF-002, CE-07.
 
 /** Pieces whose mascot has an animation running, in board order. */
 function animatedPieces(page: Page): Promise<string[]> {
@@ -15,6 +15,19 @@ function animatedPieces(page: Page): Promise<string[]> {
           .some((animation) => animation.playState === 'running'),
       )
       .map((piece) => piece.getAttribute('data-piece')!),
+  );
+}
+
+/** Home medallions with an animation running, in board order. */
+function animatedMedallions(page: Page): Promise<string[]> {
+  return page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-medallions] [data-medallion]'))
+      .filter((medallion) =>
+        medallion
+          .getAnimations({ subtree: true })
+          .some((animation) => animation.playState === 'running'),
+      )
+      .map((medallion) => medallion.getAttribute('data-medallion')!),
   );
 }
 
@@ -60,6 +73,17 @@ test('RF-007: al pasar el turno, solo se animan las fichas en casa del nuevo equ
   await expect.poll(() => animatedPieces(page)).toEqual(['blue-0', 'blue-1', 'blue-2', 'blue-3']);
 });
 
+test('RF-014, CE-07: solo se anima el medallón del equipo en turno, al empezar y al pasar el turno', async ({
+  page,
+}) => {
+  await fixDice(page, [3]);
+  await page.goto('/');
+
+  await expect.poll(() => animatedMedallions(page)).toEqual(['yellow']);
+  await roll(page);
+  await expect.poll(() => animatedMedallions(page)).toEqual(['blue']);
+});
+
 test.describe('con movimiento reducido', () => {
   test.use({ reducedMotion: 'reduce' });
 
@@ -79,6 +103,18 @@ test.describe('con movimiento reducido', () => {
       .locator('[data-part="turn-pulse"]')
       .evaluate((ring) => ring.getAnimations().length);
     expect(pulse).toBe(0);
+  });
+
+  test('RNF-002, RF-014: ningún medallón se anima y el de la casa en turno sigue con brillo y aro', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    const medallion = page.locator('[data-medallion][data-turn]');
+    await expect(medallion).toHaveAttribute('data-medallion', 'yellow');
+    await expect(medallion.locator('[data-part="medallion-glow"]')).toBeVisible();
+    await expect(medallion.locator('[data-part="medallion-ring"]')).toBeVisible();
+    expect(await animatedMedallions(page)).toEqual([]);
   });
 
   test('RNF-002, CE-07: la mascota del cartel no se anima', async ({ page }) => {
