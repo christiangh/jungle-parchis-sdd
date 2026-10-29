@@ -230,7 +230,7 @@ Los textos se unen con «, », con mayúscula inicial y punto final: «Mueve una
 ### Pasos
 
 - [x] 1. Tests de `headline.ts`, con un esqueleto que compila y los hace fallar. Un test por estado, con su color, su acción y su texto de turno: tirar, tirada inicial y desempate, elegir ficha, premio pendiente de 10 y de 20, y ganador. Con ganador, `turn` es `null` (RF-009, RF-010, CE-02, CE-03).
-- [ ] 2. `headline.ts`, hasta que pasen los tests del paso 1.
+- [x] 2. `headline.ts`, hasta que pasen los tests del paso 1. Los tests de SPEC 006 del cartel en `app.spec.ts` pasan a las acciones nuevas; el turno se comprueba por el color del cartel hasta que el paso 5 añade el texto para el lector.
 - [ ] 3. Tests de `last-play.ts` y de `lastPlayer`, con un esqueleto que compila y los hace fallar (RF-011, RF-012):
   - Un test por tipo de evento con su texto de la tabla, sin nombrar al equipo que actúa ni el turno (CE-01).
   - Varios eventos en una frase, en el orden del motor.
@@ -250,7 +250,7 @@ Los textos se unen con «, », con mayúscula inicial y punto final: «Mueve una
   - Antes de la primera acción no hay pestaña, pero sí el hueco y su copia invisible.
   - Región `aria-live` fija.
   - HU-04.1 a HU-04.4, HU-05.2 y HU-05.3 sobre la pantalla.
-  - Los tests de SPEC 006 del cartel y de la línea pasan a los textos nuevos.
+  - Los tests de SPEC 006 de la línea pasan a los textos nuevos de la pestaña.
 - [ ] 7. Pruebas en navegador de SPEC 006 adaptadas (RF-013, CE-06, CE-09, RNF-004):
   - `game.spec.ts`: los mismos escenarios, con las acciones y frases nuevas y el color de la pestaña.
   - `ambience.spec.ts` y `screen.spec.ts`: selectores nuevos y hueco reservado dentro de la ventana.
