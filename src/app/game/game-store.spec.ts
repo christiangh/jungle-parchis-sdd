@@ -307,6 +307,31 @@ describe('GameStore', () => {
     });
   });
 
+  it('RF-011: el último jugador empieza en null y pasa al de cada acción aceptada', () => {
+    const store = storeWith(3, 5, 2, 1, 5);
+    expect(store.lastPlayer()).toBeNull();
+
+    rollTimes(store, 1);
+    expect(store.lastPlayer()).toBe('yellow');
+
+    rollTimes(store, 3);
+    expect(store.lastPlayer()).toBe('green');
+
+    // Blue starts, rolls a 5 and takes a piece out of home.
+    rollTimes(store, 1);
+    expect(store.lastPlayer()).toBe('blue');
+    store.select('blue-0');
+    store.confirm();
+    expect(store.lastPlayer()).toBe('blue');
+    expect(store.state().turn).toBe('red');
+  });
+
+  it('RF-011: una acción rechazada no cambia el último jugador', () => {
+    const store = storeWith(3, 7);
+    rollTimes(store, 2);
+    expect(store.lastPlayer()).toBe('yellow');
+  });
+
   it('RF-022: una tirada rechazada no cambia el estado ni la cara', () => {
     const store = storeWith(3, 7);
     rollTimes(store, 1);

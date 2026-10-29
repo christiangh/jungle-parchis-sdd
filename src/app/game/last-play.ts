@@ -51,11 +51,23 @@ function fragment(event: GameEvent): string {
   }
 }
 
-/** Sentence of the last play line: every event of the last action, in order (RF-005, RF-006). */
-export function lastPlay(events: readonly GameEvent[]): string {
-  if (events.length === 0) {
-    return '';
+/** What the last play tab says: the team that acted and what happened, without naming it. */
+export interface LastPlay {
+  readonly color: Color;
+  readonly text: string;
+}
+
+/** Longest sentence the tab can show, used to reserve its space (RNF-010). */
+export const LONGEST_PLAY = '';
+
+/**
+ * Sentence of the last play tab: every event of the last action, in order, without the team that
+ * acted nor the turn change (RF-011, RF-012).
+ */
+export function lastPlay(player: Color | null, events: readonly GameEvent[]): LastPlay | null {
+  if (player === null || events.length === 0) {
+    return null;
   }
   const sentence = events.map(fragment).join(', ');
-  return `${sentence[0].toUpperCase()}${sentence.slice(1)}.`;
+  return { color: player, text: `${sentence[0].toUpperCase()}${sentence.slice(1)}.` };
 }

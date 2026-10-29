@@ -2,6 +2,7 @@ import { computed, DOCUMENT, inject, Service, signal } from '@angular/core';
 import {
   Action,
   applyAction,
+  Color,
   COLORS,
   createGame,
   GameEvent,
@@ -40,6 +41,7 @@ export class GameStore {
 
   private readonly state$ = signal(newGame());
   private readonly lastEvents$ = signal<readonly GameEvent[]>([]);
+  private readonly lastPlayer$ = signal<Color | null>(null);
   private readonly face$ = signal(INITIAL_FACE);
   private readonly rolling$ = signal(false);
   private readonly selected$ = signal<PieceId | null>(null);
@@ -47,6 +49,8 @@ export class GameStore {
   readonly state = this.state$.asReadonly();
   /** Events of the last accepted action, in the order the engine produced them. */
   readonly lastEvents = this.lastEvents$.asReadonly();
+  /** Player of the last accepted action, or `null` before the first one (RF-011). */
+  readonly lastPlayer = this.lastPlayer$.asReadonly();
   readonly legalMoves = computed(() => legalMoves(this.state$()));
   /** Face of the last roll, shown from the moment the dice is touched (RF-007). */
   readonly face = this.face$.asReadonly();

@@ -21,5 +21,7 @@ import { TurnBanner } from './game/turn-banner';
 export class App {
   protected readonly store = inject(GameStore);
   protected readonly headline = computed(() => headline(this.store.state()));
-  protected readonly lastPlay = computed(() => lastPlay(this.store.lastEvents()));
+  protected readonly lastPlay = computed(
+    () => lastPlay(this.store.lastPlayer(), this.store.lastEvents())?.text,
+  );
 }

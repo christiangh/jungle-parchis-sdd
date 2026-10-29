@@ -94,6 +94,7 @@ function storeShowing(state: GameState): Partial<GameStore> {
   return {
     state: signal(state).asReadonly(),
     lastEvents: signal([]).asReadonly(),
+    lastPlayer: signal(null).asReadonly(),
     legalMoves: computed(() => legalMoves(state)),
     face: signal(6).asReadonly(),
     rolling: signal(false).asReadonly(),
