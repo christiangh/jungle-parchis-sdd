@@ -10,16 +10,26 @@ const CAPTURE = [3, 5, 2, 1, 2, 5, 5, 4, 4, 6, 2, 3, 2, 5, 6, 6];
 // Blue starts and loses a 4, takes blue-0 out with a 5 and rolls three sixes.
 const SIXES = [3, 5, 2, 1, 4, 1, 1, 1, 5, 1, 1, 1, 6, 6, 6];
 
-function title(page: Page) {
+function action(page: Page) {
   return page.locator('[data-title]');
 }
 
-function instruction(page: Page) {
-  return page.locator('[data-instruction]');
+/** Turn text for screen readers, before the action. */
+function turn(page: Page) {
+  return page.locator('jp-turn-banner [data-turn]');
+}
+
+function banner(page: Page) {
+  return page.locator('[data-plank]');
 }
 
 function lastPlay(page: Page) {
   return page.locator('[data-last-play]');
+}
+
+/** Tab of the last play, painted in the colour of the team that made it. */
+function lastPlayTab(page: Page) {
+  return page.locator('[data-last-play] [data-tab]');
 }
 
 function ghost(page: Page) {
@@ -55,33 +65,43 @@ async function play(page: Page, rolls: readonly number[]): Promise<void> {
   }
 }
 
-test('RF-023: tirada inicial con empate, salir con un 5, cambiar, cancelar y confirmar la selección', async ({
+test('RF-013: tirada inicial con empate, salir con un 5, cambiar, cancelar y confirmar la selección', async ({
   page,
 }) => {
   await fixDice(page, MOVE);
   await page.goto('/');
-  await expect(title(page)).toHaveText('Tirada inicial · Amarillo');
+  await expect(banner(page)).toHaveAttribute('data-color', 'yellow');
+  await expect(turn(page)).toHaveText('Tirada inicial, turno de Amarillo.');
+  await expect(action(page)).toHaveText('Toca el dado');
+  await expect(lastPlay(page)).toHaveCount(0);
 
   await roll(page, 4);
-  await expect(lastPlay(page)).toHaveText('Verde saca 1, empate entre Amarillo y Rojo.');
-  await expect(title(page)).toHaveText('Tirada inicial · Amarillo');
+  await expect(lastPlay(page)).toHaveText('Saca 1, empate entre Amarillo y Rojo.');
+  await expect(lastPlayTab(page)).toHaveAttribute('data-color', 'green');
+  await expect(turn(page)).toHaveText('Tirada inicial, turno de Amarillo.');
+  await expect(banner(page)).toHaveAttribute('data-color', 'yellow');
 
   await roll(page, 2);
-  await expect(lastPlay(page)).toHaveText('Rojo saca 4, empieza Rojo.');
-  await expect(title(page)).toHaveText('Turno de Rojo');
+  await expect(lastPlay(page)).toHaveText('Saca 4.');
+  await expect(lastPlayTab(page)).toHaveAttribute('data-color', 'red');
+  await expect(turn(page)).toHaveText('Turno de Rojo.');
+  await expect(action(page)).toHaveText('Toca el dado');
 
   await roll(page);
   await expect(dice(page)).toHaveAttribute('aria-label', 'Dado, cara 5');
-  await expect(title(page)).toHaveText('Turno de Rojo · 5');
+  await expect(action(page)).toHaveText('Elige una ficha');
   await expect(highlighted(page)).toHaveCount(1);
   await touch(page, 'red-0');
   await expect(ghost(page)).toHaveAttribute('data-ghost', 'red-0');
   await touch(page, 'ghost');
-  await expect(lastPlay(page)).toHaveText('Rojo saca una ficha de casa, turno de Verde.');
+  await expect(lastPlay(page)).toHaveText('Saca una ficha de casa.');
+  await expect(lastPlayTab(page)).toHaveAttribute('data-color', 'red');
+  await expect(banner(page)).toHaveAttribute('data-color', 'green');
 
   await play(page, [1, 1, 1, 5, 1, 1, 1]);
   await roll(page);
-  await expect(title(page)).toHaveText('Turno de Rojo · 3');
+  await expect(turn(page)).toHaveText('Turno de Rojo.');
+  await expect(action(page)).toHaveText('Elige una ficha');
   await expect(highlighted(page)).toHaveCount(2);
 
   await touch(page, 'red-0');
@@ -94,12 +114,14 @@ test('RF-023: tirada inicial con empate, salir con un 5, cambiar, cancelar y con
 
   await touch(page, 'red-1');
   await touch(page, 'ghost');
-  await expect(lastPlay(page)).toHaveText('Rojo mueve una ficha, turno de Verde.');
+  await expect(lastPlay(page)).toHaveText('Mueve una ficha.');
+  await expect(lastPlayTab(page)).toHaveAttribute('data-color', 'red');
   await expect(highlighted(page)).toHaveCount(0);
-  await expect(title(page)).toHaveText('Turno de Verde');
+  await expect(turn(page)).toHaveText('Turno de Verde.');
+  await expect(banner(page)).toHaveAttribute('data-color', 'green');
 });
 
-test('RF-023: comer, no poder tirar con el +20 pendiente y usarlo', async ({ page }) => {
+test('RF-013: comer, no poder tirar con el +20 pendiente y usarlo', async ({ page }) => {
   await fixDice(page, CAPTURE);
   await page.goto('/');
 
@@ -109,37 +131,43 @@ test('RF-023: comer, no poder tirar con el +20 pendiente y usarlo', async ({ pag
   await expect(ghost(page).locator('[data-mark="target"]')).toBeVisible();
   await touch(page, 'ghost');
 
-  await expect(lastPlay(page)).toHaveText('Rojo mueve una ficha, come una ficha verde, cuenta 20.');
-  await expect(instruction(page)).toHaveText('Usa tu +20');
+  await expect(lastPlay(page)).toHaveText(
+    'Mueve una ficha, se come una ficha de Verde, cuenta 20.',
+  );
+  await expect(lastPlayTab(page)).toHaveAttribute('data-color', 'red');
+  await expect(action(page)).toHaveText('Usa tu +20');
   await expect(dice(page)).toBeDisabled();
 
   await touch(page, 'red-0');
   await touch(page, 'ghost');
-  await expect(lastPlay(page)).toHaveText('Rojo mueve una ficha, Rojo repite.');
-  await expect(title(page)).toHaveText('Turno de Rojo');
-  await expect(instruction(page)).toHaveText('Toca el dado');
+  await expect(lastPlay(page)).toHaveText('Mueve una ficha, repite.');
+  await expect(turn(page)).toHaveText('Turno de Rojo.');
+  await expect(action(page)).toHaveText('Toca el dado');
   await expect(dice(page)).toBeEnabled();
 });
 
-test('RF-023: tirada perdida, repetir con un 6 y tres seises', async ({ page }) => {
+test('RF-013: tirada perdida, repetir con un 6 y tres seises', async ({ page }) => {
   await fixDice(page, SIXES);
   await page.goto('/');
 
   await roll(page, 5);
-  await expect(lastPlay(page)).toHaveText('Azul saca 4 y pierde la tirada, turno de Rojo.');
-  await expect(title(page)).toHaveText('Turno de Rojo');
+  await expect(lastPlay(page)).toHaveText('Saca 4 y pierde la tirada.');
+  await expect(lastPlayTab(page)).toHaveAttribute('data-color', 'blue');
+  await expect(turn(page)).toHaveText('Turno de Rojo.');
+  await expect(banner(page)).toHaveAttribute('data-color', 'red');
 
   await play(page, [1, 1, 1, 5, 1, 1, 1, 6]);
-  await expect(lastPlay(page)).toHaveText('Azul mueve una ficha, Azul repite.');
-  await expect(title(page)).toHaveText('Turno de Azul');
-  await expect(instruction(page)).toHaveText('Toca el dado');
+  await expect(lastPlay(page)).toHaveText('Mueve una ficha, repite.');
+  await expect(lastPlayTab(page)).toHaveAttribute('data-color', 'blue');
+  await expect(turn(page)).toHaveText('Turno de Azul.');
+  await expect(action(page)).toHaveText('Toca el dado');
 
   await play(page, [6]);
   await roll(page);
-  await expect(lastPlay(page)).toHaveText(
-    'Tres seises de Azul y su ficha vuelve a casa, turno de Rojo.',
-  );
-  await expect(title(page)).toHaveText('Turno de Rojo');
+  await expect(lastPlay(page)).toHaveText('Tres seises y su ficha vuelve a casa.');
+  await expect(lastPlayTab(page)).toHaveAttribute('data-color', 'blue');
+  await expect(turn(page)).toHaveText('Turno de Rojo.');
+  await expect(banner(page)).toHaveAttribute('data-color', 'red');
   await expect(highlighted(page)).toHaveCount(0);
 
   const home = (await page.locator('[data-home="blue"]').boundingBox())!;

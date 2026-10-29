@@ -12,7 +12,7 @@ test('RF-001: con las imágenes del fondo bloqueadas, la página se ve con el co
   await expect(page.locator('main')).toHaveCSS('background-color', 'rgb(169, 177, 140)');
 });
 
-test('RF-002: el cartel se pinta con Caprasimo y la línea de última jugada con Figtree', async ({
+test('RF-002: el cartel se pinta con Caprasimo y la pestaña de última jugada con Figtree', async ({
   page,
 }) => {
   await fixDice(page, [6]);
@@ -20,7 +20,7 @@ test('RF-002: el cartel se pinta con Caprasimo y la línea de última jugada con
   await roll(page);
 
   await expect(page.locator('[data-title]')).toHaveCSS('font-family', /^Caprasimo,/);
-  await expect(page.locator('[data-last-play]')).toHaveCSS('font-family', /^Figtree,/);
+  await expect(page.locator('[data-last-play] [data-text]')).toHaveCSS('font-family', /^Figtree,/);
   const loaded = await page.evaluate(async () => {
     await document.fonts.ready;
     return [document.fonts.check('400 20px Caprasimo'), document.fonts.check('600 16px Figtree')];

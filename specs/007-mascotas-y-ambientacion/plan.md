@@ -251,7 +251,7 @@ Los textos se unen con «, », con mayúscula inicial y punto final: «Mueve una
   - Región `aria-live` fija.
   - HU-04.1 a HU-04.4, HU-05.2 y HU-05.3 sobre la pantalla.
   - Los tests de SPEC 006 de la línea pasan a la pestaña.
-- [ ] 7. Pruebas en navegador de SPEC 006 adaptadas (RF-013, CE-06, CE-09, RNF-004):
+- [x] 7. Pruebas en navegador de SPEC 006 adaptadas (RF-013, CE-06, CE-09, RNF-004):
   - `game.spec.ts`: los mismos escenarios, con las acciones y frases nuevas y el color de la pestaña.
   - `ambience.spec.ts` y `screen.spec.ts`: selectores nuevos y hueco reservado dentro de la ventana.
 - [ ] 8. Pruebas en navegador nuevas:
