@@ -165,3 +165,145 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** el resalte de la casa en turno es un brillo claro alrededor del cuadrado pintado y un borde blanco, fijos, más un anillo que crece hasta 1,12 y se desvanece en 1,6 s, solo con movimiento permitido. Sin movimiento, el anillo no se ve. El diseño escala 1,45 el anillo del medallón, que en un cuadrado de 260 se saldría de la casa.
 - **Sí:** las rayas de la toalla del hipopótamo son trazos con las esquinas redondeadas en la primera y la última, en lugar de un recorte, para no añadir un `clipPath` por hueco. Los anillos discontinuos de las manchas del jaguar llevan `dash` y extremos rectos; el resto de trazos, extremos redondeados.
 - **Sí:** en `e2e/mascots.spec.ts`, una mascota está animada si tiene alguna animación en marcha (`getAnimations({ subtree: true })`). Con movimiento reducido se comprueba además que el pulso de la casa no tiene animaciones y que el borde y el brillo se ven.
+
+## PARTE-03: Cartel y pestaña de última jugada
+
+**Estado:** Pendiente
+
+### Enfoque
+
+El cartel y la pestaña siguen saliendo de funciones puras sobre el motor, como en SPEC 006, pero con otra forma:
+
+- `headline(state)` devuelve `{ color, action, turn }`:
+  - `color`: el del equipo en turno, o el del ganador.
+  - `action`: solo la acción («Toca el dado», «Elige una ficha», «Usa tu +N», «¡Gana X!»).
+  - `turn`: el texto del turno para el lector de pantalla («Turno de Azul.», «Tirada inicial, turno de Amarillo.»), o `null` con ganador.
+- `lastPlay(player, events)` devuelve `{ color, text }` o `null`. El color es el del equipo que actúa; la frase junta los eventos sin nombrarlo y sin el cambio de turno.
+
+Para saber quién actúa, `GameStore` guarda el jugador de la última acción aceptada (`lastPlayer`) junto a sus eventos.
+
+`TurnBanner` se redibuja como en el diseño:
+
+- Tablón del color del equipo, con su borde oscuro.
+- A la izquierda, la mascota animada en una placa redonda del tono oscuro: un `<svg>` pequeño con `g[jp-mascot]`.
+- La acción en Caprasimo, con el contorno de tinta.
+- Antes de la acción, el turno en un `sr-only`.
+
+Un componente nuevo, `LastPlayTab`, pinta la pestaña: un tablón más pequeño del color oscurecido (`bg-team-*-dark`, el mismo tono de las fichas-mascota), colgado bajo el cartel, con la mascota quieta y la frase en Figtree.
+
+El hueco de la pestaña se reserva siempre (RNF-010). En `app.html`, la pestaña real y una copia invisible con la frase más larga (`LONGEST_PLAY`, con `aria-hidden` e `invisible`) ocupan la misma celda de una rejilla. Así el hueco mide lo mismo que la pestaña más larga en cada ancho de ventana, haya pestaña o no. La región `aria-live` es el contenedor fijo del hueco, para que el lector de pantalla anuncie cada frase nueva.
+
+### Textos de la pestaña (RF-012)
+
+| Evento | Texto |
+| --- | --- |
+| `initial-roll` | saca 5 |
+| `initial-roll-tie` | empate entre Amarillo y Rojo |
+| `first-player` | — (es el cambio de turno de la tirada inicial) |
+| `piece-left-home` | saca una ficha de casa |
+| `piece-advanced` | mueve una ficha |
+| `piece-captured` | se come una ficha de Azul |
+| `piece-reached-goal` | llega a la meta |
+| `bonus-earned` | cuenta 20 |
+| `bonus-lost` | pierde el +10 |
+| `roll-lost` | saca 4 y pierde la tirada |
+| `roll-again` | repite |
+| `three-sixes` | tres seises; si su ficha vuelve, «tres seises y su ficha vuelve a casa» |
+| `turn-changed` | — |
+| `game-over` | gana la partida |
+
+Los textos se unen con «, », con mayúscula inicial y punto final: «Mueve una ficha, se come una ficha de Verde, cuenta 20.». No hay pestaña si todavía no hay ninguna acción o si la última acción solo cambió el turno.
+
+### Archivos
+
+- `src/app/game/headline.ts`, `headline.spec.ts`: nueva forma `{ color, action, turn }` (RF-009, RF-010).
+- `src/app/game/last-play.ts`, `last-play.spec.ts`: `lastPlay(player, events)` devuelve `{ color, text } | null`, con los textos nuevos y `LONGEST_PLAY` (RF-011, RF-012).
+- `src/app/game/game-store.ts`, `game-store.spec.ts`: señal `lastPlayer`.
+- `src/app/game/turn-banner.ts`, `turn-banner.html`, `turn-banner.spec.ts`: cartel nuevo con `Mascot` (RF-008, RF-010).
+- `src/app/game/last-play-tab.ts`, `last-play-tab.html`, `last-play-tab.spec.ts` (nuevos): pestaña (RF-011).
+- `src/app/app.ts`, `app.html`, `app.spec.ts`: hueco reservado con la pestaña y su copia invisible; los tests de SPEC 006 del cartel y de la línea, adaptados a los textos nuevos.
+- `e2e/game.spec.ts`, `e2e/ambience.spec.ts`, `e2e/screen.spec.ts`: textos y selectores nuevos (RF-013).
+- `e2e/notices.spec.ts` (nuevo): contraste en los cuatro colores y tablero quieto al aparecer la pestaña (CE-05, CE-11).
+- `e2e/mascots.spec.ts`: la mascota del cartel se anima, y con movimiento reducido queda quieta (CE-07).
+- `docs/design/README.md`: las filas de `mascotas/` y `avisos-y-campeon/` pasan a SPEC 007 (la pantalla de campeón sigue pendiente).
+
+### Pasos
+
+- [ ] 1. Tests de `headline.ts`, con un esqueleto que compila y los hace fallar. Un test por estado, con su color, su acción y su texto de turno: tirar, tirada inicial y desempate, elegir ficha, premio pendiente de 10 y de 20, y ganador. Con ganador, `turn` es `null` (RF-009, RF-010, CE-02, CE-03).
+- [ ] 2. `headline.ts`, hasta que pasen los tests del paso 1.
+- [ ] 3. Tests de `last-play.ts` y de `lastPlayer`, con un esqueleto que compila y los hace fallar (RF-011, RF-012):
+  - Un test por tipo de evento con su texto de la tabla, sin nombrar al equipo que actúa ni el turno (CE-01).
+  - Varios eventos en una frase, en el orden del motor.
+  - Sin jugador, o con solo el cambio de turno: `null`.
+  - El color es el del equipo que actúa.
+  - Tres seises en una sola frase (HU-05.4).
+  - En 200 partidas aleatorias, con dados de una semilla fija, ninguna frase es más larga que `LONGEST_PLAY`.
+  - En `game-store.spec.ts`: `lastPlayer` empieza en `null`, pasa al jugador de cada acción aceptada y no cambia con una acción rechazada.
+- [ ] 4. `last-play.ts` y `lastPlayer` en `GameStore`, hasta que pasen los tests del paso 3.
+- [ ] 5. `TurnBanner` nuevo: tablón del color con borde oscuro y clavos, placa con la mascota animada, acción con `font-display` y contorno de tinta, y turno en `sr-only` antes de la acción. Tests en `turn-banner.spec.ts` en el mismo paso (RF-008, RF-010, HU-04):
+  - Color y mascota de cada equipo, con la mascota animada.
+  - Acción visible, sin «Turno de».
+  - Texto del turno antes de la acción, y sin él con ganador.
+  - Mascota y clavos decorativos.
+- [ ] 6. `LastPlayTab` y hueco reservado en `app.html`. Tests en `last-play-tab.spec.ts` y `app.spec.ts` en el mismo paso (RF-011, HU-05):
+  - Pestaña en el tono oscuro y con la mascota quieta de quien actúa.
+  - Antes de la primera acción no hay pestaña, pero sí el hueco y su copia invisible.
+  - Región `aria-live` fija.
+  - HU-04.1 a HU-04.4, HU-05.2 y HU-05.3 sobre la pantalla.
+  - Los tests de SPEC 006 del cartel y de la línea pasan a los textos nuevos.
+- [ ] 7. Pruebas en navegador de SPEC 006 adaptadas (RF-013, CE-06, CE-09, RNF-004):
+  - `game.spec.ts`: los mismos escenarios, con las acciones y frases nuevas y el color de la pestaña.
+  - `ambience.spec.ts` y `screen.spec.ts`: selectores nuevos y hueco reservado dentro de la ventana.
+- [ ] 8. Pruebas en navegador nuevas:
+  - `e2e/notices.spec.ts`, contraste (CE-05, RNF-001): recorriendo los cuatro colores en la tirada inicial, el texto mide al menos 4,5:1 contra su fondo inmediato. En el cartel, ese fondo es el contorno de tinta; en la pestaña, el tono oscuro.
+  - `e2e/notices.spec.ts`, tablero quieto (CE-11, RNF-010): en las cuatro ventanas, la caja del tablero es la misma antes de la primera acción, con una pestaña corta y con un empate de cuatro.
+  - `e2e/mascots.spec.ts` (CE-07, RNF-002): la mascota del cartel tiene animaciones en marcha, y con movimiento reducido no tiene ninguna.
+  - Revisión en navegador a 320 × 568 y 1920 × 1080 frente a `docs/design/avisos-y-campeon/capturas/avisos.png`.
+  - Filas de `docs/design/README.md`.
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+| --- | --- | --- |
+| HU-04.1 (amarillo, jaguar animado, «Toca el dado») | 1, 2, 5, 6 | `headline.spec.ts`; `turn-banner.spec.ts`; `app.spec.ts` en una partida nueva |
+| HU-04.2 (rojo, loro, «Elige una ficha») | 1, 2, 6, 7 | `headline.spec.ts`; `app.spec.ts`; `game.spec.ts` |
+| HU-04.3 («Usa tu +20» tras comer) | 1, 2, 6, 7 | `headline.spec.ts`; `app.spec.ts`; `game.spec.ts` (escenario de comer) |
+| HU-04.4 (verde, rana, «¡Gana Verde!») | 1, 2, 6 | `headline.spec.ts`; `app.spec.ts` con ganador verde |
+| HU-04.5 (lector: turno antes de la acción) | 1, 2, 5 | `turn-banner.spec.ts`: `sr-only` «Turno de Azul.» antes de `[data-action]` |
+| HU-05.1 (sin pestaña, hueco reservado) | 6, 8 | `app.spec.ts`; `notices.spec.ts` |
+| HU-05.5 (tablero quieto al aparecer la pestaña) | 6, 8 | `notices.spec.ts` (CE-11) |
+| HU-05.2 (rojo saca ficha, pasa a verde) | 3, 4, 6, 7 | `last-play.spec.ts`; `app.spec.ts`; `game.spec.ts`: cartel verde, pestaña roja con el loro, «Saca una ficha de casa.» |
+| HU-05.3 (verde se come una azul) | 3, 4, 6 | `last-play.spec.ts`; `last-play-tab.spec.ts`: verde oscuro y rana, «…se come una ficha de Azul, cuenta 20.» |
+| HU-05.4 (tercer 6) | 3, 4, 7 | `last-play.spec.ts`; `game.spec.ts` (escenario de tres seises) |
+| RF-008 | 5 | Ver HU-04 |
+| RF-009 | 1, 2 | `headline.spec.ts` (CE-02) |
+| RF-010 | 1, 2, 5 | `headline.spec.ts`, `turn-banner.spec.ts` (CE-03); mascotas con `aria-hidden` |
+| RF-011 | 3, 4, 6 | `last-play.spec.ts`, `game-store.spec.ts`, `last-play-tab.spec.ts`, `app.spec.ts` |
+| RF-012 | 3, 4 | `last-play.spec.ts` (CE-01) |
+| RF-013 | 7 | `game.spec.ts`, `ambience.spec.ts`, `screen.spec.ts` (CE-06) |
+| RNF-001 | 5, 6, 8 | `notices.spec.ts` (CE-05) |
+| RNF-002 | 5, 8 | `mascots.spec.ts` con movimiento reducido (CE-07) |
+| RNF-004 | 7 | `screen.spec.ts` con el hueco reservado (CE-09) |
+| RNF-006 | 5, 6 | Búsqueda de hexadecimales en `src/app/` sin resultados |
+| RNF-007 | 1-4 | El cartel y la pestaña salen solo de `GameState`, de los eventos y del jugador de la acción; el motor no cambia |
+| RNF-010 | 3, 6, 8 | `last-play.spec.ts`: `LONGEST_PLAY` acota las frases; `notices.spec.ts` (CE-11) |
+| Hecho cuando: HU-04, HU-05 y CE-01, 02, 03, 05, 06, 07, 09, 11 | 1-8 | `pnpm check` y `pnpm test:e2e` |
+
+Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerrar la parte.
+
+### Skills y agentes
+
+- `run`: revisión en navegador del cartel y de la pestaña.
+- `caveman:cavecrew-reviewer`: revisión del diff al cerrar la parte, si el usuario la pide.
+
+### Decisiones técnicas
+
+- **Sí:** `GameStore.lastPlayer` guarda el jugador de la última acción aceptada. El spec define al equipo que actúa como quien envió la acción, y no todos los eventos lo llevan.
+- **Sí:** `first-player` no aparece en la pestaña, igual que `turn-changed`: es el cambio de turno con el que acaba la tirada inicial, y ya lo dice el cartel. La pestaña dice el valor y, si lo hay, el empate, como pide el caso límite.
+- **Sí:** «llega a la meta» y «se come una ficha de Azul», como en el diseño. Para `game-over`, «gana la partida», sin nombrar al ganador, que es quien actúa.
+- **Sí:** en la tirada inicial, el texto del turno es «Tirada inicial, turno de Amarillo.», para que el lector de pantalla no pierda lo que el cartel de SPEC 006 mostraba a la vista.
+- **Sí:** el hueco se reserva con una copia invisible de `LONGEST_PLAY` en la misma celda de rejilla que la pestaña. Mide lo mismo que la frase más larga en cada ancho y con la tipografía cargada, sin alturas fijas. Un test de 200 partidas aleatorias comprueba que ninguna frase la supera en caracteres. La copia usa letras anchas, porque dos frases con los mismos caracteres pueden ocupar anchos distintos.
+- **Sí:** la pestaña usa los tokens `team-*-dark` que ya existen, los del fondo de las fichas-mascota, en lugar de los tonos del diseño. Son algo más oscuros, así que el contraste con el blanco es mayor; el más justo, el amarillo, da unos 4,8:1. No hacen falta tokens nuevos.
+- **Sí:** la mascota del cartel y de la pestaña va en una placa redonda del tono oscuro con aro del color, como las fichas-mascota, en lugar del cuadrado redondeado del diseño. `Mascot` ya recorta a un círculo.
+- **Sí:** el contraste del cartel se mide contra el contorno de tinta, que es su fondo inmediato, como en SPEC 006. El de la pestaña se mide contra su tono oscuro, sin las vetas de la madera.
+- **Sí:** cambian los textos esperados de los tests de SPEC 006 del cartel y de la línea (`headline.spec.ts`, `turn-banner.spec.ts`, `last-play.spec.ts`, `app.spec.ts` y las pruebas en navegador), porque RF-008, RF-009, RF-011 y RF-012 sustituyen a los requisitos que probaban. Los escenarios no cambian.
