@@ -3,15 +3,27 @@
 >
   <header class="shrink-0 [@media(orientation:landscape)_and_(max-height:480px)]:max-w-[40%]">
     <jp-turn-banner [headline]="headline()" />
-    @if (lastPlay(); as line) {
-      <p
-        class="bg-ink mx-auto mt-2 w-fit max-w-full rounded-lg px-3 py-1 text-center text-sm/tight font-semibold text-white sm:text-base/tight"
-        aria-live="polite"
-        data-last-play
-      >
-        {{ line }}
-      </p>
-    }
+    <!-- The invisible copy of the longest sentence keeps the tab's space, so the board never moves
+         (RNF-010); the live region is the fixed slot, so each new sentence is announced. -->
+    <div
+      class="mx-auto -mt-1 grid w-fit max-w-[calc(100%-2rem)]"
+      aria-live="polite"
+      data-last-play-slot
+    >
+      <jp-last-play-tab
+        class="invisible col-start-1 row-start-1"
+        [play]="longestPlay"
+        aria-hidden="true"
+        data-longest-play
+      />
+      @if (lastPlay(); as play) {
+        <jp-last-play-tab
+          class="col-start-1 row-start-1 justify-self-center"
+          [play]="play"
+          data-last-play
+        />
+      }
+    </div>
   </header>
   <div
     class="flex min-h-0 w-full min-w-0 flex-1 items-center justify-center self-stretch [container-type:size]"

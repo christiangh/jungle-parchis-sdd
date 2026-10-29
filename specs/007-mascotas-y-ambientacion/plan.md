@@ -245,7 +245,7 @@ Los textos se unen con «, », con mayúscula inicial y punto final: «Mueve una
   - Acción visible, sin «Turno de».
   - Texto del turno antes de la acción, y sin él con ganador.
   - Mascota y clavos decorativos.
-- [ ] 6. `LastPlayTab` y hueco reservado en `app.html`. Tests en `last-play-tab.spec.ts` y `app.spec.ts` en el mismo paso (RF-011, HU-05):
+- [x] 6. `LastPlayTab` y hueco reservado en `app.html`. Tests en `last-play-tab.spec.ts` y `app.spec.ts` en el mismo paso (RF-011, HU-05):
   - Pestaña en el tono oscuro y con la mascota quieta de quien actúa.
   - Antes de la primera acción no hay pestaña, pero sí el hueco y su copia invisible.
   - Región `aria-live` fija.
