@@ -352,7 +352,7 @@ El manifiesto ya usa rutas relativas para sus iconos, que se resuelven contra la
 
 ### Pasos
 
-- [ ] 1. Tests de `homeMedallions()`, con un esqueleto que compila y los hace fallar: un medallón por equipo, centrado a 22 del vértice exterior de su casa; el brillo cabe en el `viewBox` del tablero; el brillo no se solapa con ninguna ficha en su hueco (radio `HOME_PIECE_RADIUS`); la misma geometría en cada llamada (RF-014, CE-12).
+- [x] 1. Tests de `homeMedallions()`, con un esqueleto que compila y los hace fallar: un medallón por equipo, centrado a 22 del vértice exterior de su casa; el brillo cabe en el `viewBox` del tablero; el brillo no se solapa con ninguna ficha en su hueco (radio `HOME_PIECE_RADIUS`); la misma geometría en cada llamada (RF-014, CE-12).
 - [ ] 2. `homeMedallions()`, hasta que pasen los tests del paso 1.
 - [ ] 3. Medallones en `board.html`: mascota sobre el tono oscuro con el borde del color, sombra fuera de turno; en turno, brillo, aro, pulso y respiro, y la mascota animada; `aria-hidden`; tokens de animación en `src/styles.css`. Tests en `board.spec.ts` en el mismo paso (RF-014, HU-03, CE-12):
   - Un medallón por casa con la mascota de su equipo y decorativo.

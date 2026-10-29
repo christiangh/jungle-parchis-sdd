@@ -247,6 +247,26 @@ export function homes(): readonly Home[] {
   });
 }
 
+/** Medallion of a home: its team's mascot in the home's outer corner (RF-014). */
+export interface Medallion {
+  readonly color: Color;
+  readonly center: Point;
+}
+
+/** Radius of the mascot in a medallion. */
+export const MEDALLION_RADIUS = 44;
+
+/** Radius of the medallion's glow in turn, its widest part. */
+export const MEDALLION_GLOW_RADIUS = 62;
+
+/** Each home's medallion, in the corner of the home that is also a corner of the board. */
+export function homeMedallions(): readonly Medallion[] {
+  return homes().map((home) => ({
+    color: home.color,
+    center: { x: home.x + HOME_SIZE / 2, y: home.y + HOME_SIZE / 2 },
+  }));
+}
+
 /** Corners of a plank in board coordinates, from its local top left corner and clockwise. */
 export function plankCorners(plank: Pick<TrackSquare, 'x' | 'y' | 'rotation'>): readonly Point[] {
   const arm = (ARMS.length - plank.rotation / 90) % ARMS.length;
