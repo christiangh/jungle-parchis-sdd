@@ -259,12 +259,20 @@ export const MEDALLION_RADIUS = 44;
 /** Radius of the medallion's glow in turn, its widest part. */
 export const MEDALLION_GLOW_RADIUS = 62;
 
+/** Gap along each axis between a home's outer corner and its medallion's centre. */
+const MEDALLION_INSET = 22;
+
 /** Each home's medallion, in the corner of the home that is also a corner of the board. */
 export function homeMedallions(): readonly Medallion[] {
-  return homes().map((home) => ({
-    color: home.color,
-    center: { x: home.x + HOME_SIZE / 2, y: home.y + HOME_SIZE / 2 },
-  }));
+  return homes().map((home) => {
+    // Towards the board's edge on each axis, away from its centre.
+    const outward = (start: number, centre: number): number =>
+      start < centre ? start + MEDALLION_INSET : start + HOME_SIZE - MEDALLION_INSET;
+    return {
+      color: home.color,
+      center: { x: outward(home.x, BOARD_CENTER.x), y: outward(home.y, BOARD_CENTER.y) },
+    };
+  });
 }
 
 /** Corners of a plank in board coordinates, from its local top left corner and clockwise. */
