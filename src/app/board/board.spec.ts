@@ -16,8 +16,10 @@ import { Board } from './board';
 import {
   goals,
   HOME_PIECE_RADIUS,
+  homeMedallions,
   homes,
   laneSquares,
+  MEDALLION_RADIUS,
   PIECE_RADIUS,
   Point,
   SQUARE_LENGTH,
@@ -393,6 +395,89 @@ describe('Board', () => {
     for (const slot of home.slots) {
       expect(centers).not.toContainEqual(slot);
     }
+  });
+
+  it('RF-014, HU-03: cada casa tiene un medallón decorativo con la mascota de su equipo, debajo de las fichas', async () => {
+    const root = await render();
+    const group = root.querySelector('[data-layer="game"] [data-medallions]');
+    expect(group?.getAttribute('aria-hidden')).toBe('true');
+    expect(
+      group!.compareDocumentPosition(root.querySelector('[data-pieces]')!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(all(root, '[data-medallion]')).toHaveLength(4);
+    for (const { color, center } of homeMedallions()) {
+      const medallion = root.querySelector(`[data-medallions] [data-medallion="${color}"]`)!;
+      const disc = medallion.querySelector('[data-part="medallion-disc"]');
+      const mascot = medallion.querySelector('[data-mascot]');
+      expect(mascot?.getAttribute('data-mascot'), color).toBe(MASCOTS[color]);
+      expect(mascot?.getAttribute('transform'), color).toBe(`translate(${center.x} ${center.y})`);
+      expect(Number(disc?.getAttribute('cx')), color).toBe(center.x);
+      expect(Number(disc?.getAttribute('cy')), color).toBe(center.y);
+      expect(Number(disc?.getAttribute('r')), color).toBe(MEDALLION_RADIUS);
+      expect(disc?.classList.contains(`fill-team-${color}-dark`), color).toBe(true);
+      expect(disc?.classList.contains(`stroke-team-${color}`), color).toBe(true);
+    }
+  });
+
+  it('RF-014, HU-03: solo el medallón de la casa en turno se resalta y su mascota se anima', async () => {
+    const root = await render({ ...NEW_GAME, initialRoll: null, turn: 'blue' });
+    const blue = root.querySelector('[data-medallion="blue"]')!;
+    const pulse = blue.querySelector('[data-part="medallion-pulse"]');
+
+    expect(
+      all(root, '[data-medallion][data-turn]').map((m) => m.getAttribute('data-medallion')),
+    ).toEqual(['blue']);
+    expect(blue.querySelector('[data-part="medallion-glow"]')).not.toBeNull();
+    expect(paintedWith(blue.querySelector('[data-part="medallion-ring"]')!, 'stroke-white')).toBe(
+      true,
+    );
+    expect(pulse?.classList.contains('motion-safe:animate-medallion-pulse')).toBe(true);
+    expect(pulse?.classList.contains('opacity-0')).toBe(true);
+    expect(
+      blue
+        .querySelector('[data-part="medallion-badge"]')
+        ?.classList.contains('motion-safe:animate-medallion-breath'),
+    ).toBe(true);
+    expect(blue.querySelector('[data-mascot]')?.hasAttribute('data-animated')).toBe(true);
+    expect(blue.querySelector('[data-part="medallion-shadow"]')).toBeNull();
+    for (const color of ['yellow', 'red', 'green']) {
+      const medallion = root.querySelector(`[data-medallion="${color}"]`)!;
+      expect(medallion.querySelector('[data-part="medallion-shadow"]'), color).not.toBeNull();
+      expect(medallion.querySelector('[data-part="medallion-glow"]'), color).toBeNull();
+      expect(medallion.querySelector('[data-part="medallion-ring"]'), color).toBeNull();
+      expect(medallion.querySelector('[data-part="medallion-pulse"]'), color).toBeNull();
+      expect(medallion.querySelector('[class*="animate-"]'), color).toBeNull();
+      expect(medallion.querySelector('[data-mascot]')?.hasAttribute('data-animated'), color).toBe(
+        false,
+      );
+    }
+  });
+
+  it('RF-014, HU-03: con ganador ningún medallón se resalta ni se anima', async () => {
+    const root = await render({ ...NEW_GAME, initialRoll: null, turn: 'blue', winner: 'red' });
+    expect(all(root, '[data-medallion][data-turn]')).toHaveLength(0);
+    expect(all(root, '[data-medallion] [data-part="medallion-shadow"]')).toHaveLength(4);
+    expect(all(root, '[data-medallion] [class*="animate-"]')).toHaveLength(0);
+    expect(all(root, '[data-medallion] [data-mascot][data-animated]')).toHaveLength(0);
+  });
+
+  it('RF-014, HU-03: con todas sus fichas fuera de casa, el medallón amarillo sigue resaltado y animado', async () => {
+    const root = await render(
+      rolled(
+        [
+          ['yellow-0', { kind: 'track', square: 5 }],
+          ['yellow-1', { kind: 'track', square: 12 }],
+          ['yellow-2', { kind: 'track', square: 20 }],
+          ['yellow-3', { kind: 'lane', square: 2 }],
+        ],
+        'yellow',
+        3,
+      ),
+    );
+    const yellow = root.querySelector('[data-medallion="yellow"]')!;
+    expect(yellow.hasAttribute('data-turn')).toBe(true);
+    expect(yellow.querySelector('[data-mascot]')?.hasAttribute('data-animated')).toBe(true);
   });
 
   it('RF-010: en una partida nueva hay 4 fichas en cada casa, en puestos distintos', async () => {

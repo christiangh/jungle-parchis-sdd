@@ -8,8 +8,12 @@ import {
   HOME_INSET,
   HOME_PIECE_RADIUS,
   HOME_SIZE,
+  homeMedallions,
   homes,
   laneSquares,
+  Medallion,
+  MEDALLION_GLOW_RADIUS,
+  MEDALLION_RADIUS,
   PIECE_RADIUS,
   Point,
   rotation,
@@ -79,6 +83,14 @@ export interface HomeView extends Home {
   readonly decor: readonly SlotDecor[];
 }
 
+/** A home's medallion: its team's mascot on the team's dark tone, with a border of its colour (RF-014). */
+export interface MedallionView extends Medallion {
+  readonly fill: string;
+  readonly stroke: string;
+  /** Moves the mascot, drawn around the origin, to the medallion's centre. */
+  readonly transform: string;
+}
+
 /**
  * A mascot piece: its team's mascot on a disc of the team's dark tone, with a border of
  * the team's colour, on a white rim (RF-005).
@@ -122,6 +134,12 @@ const RIM_WIDTH = 4;
 
 /** Width of the disc's border; the mascot fills the disc inside it. */
 const BORDER_WIDTH = 3;
+
+/** Shadow of a medallion out of turn. */
+const MEDALLION_SHADOW_RADIUS = 54;
+
+/** White ring of the medallion in turn; its pulse grows from the shadow's radius to the glow's. */
+const MEDALLION_RING_RADIUS = 50;
 
 function mascotRadius(discRadius: number): number {
   return discRadius - BORDER_WIDTH / 2;
@@ -246,6 +264,19 @@ export class Board {
     scene: scenes.get(h.color)!.scene,
     decor: scenes.get(h.color)!.slots,
   }));
+
+  protected readonly medallions: readonly MedallionView[] = homeMedallions().map((m) => ({
+    ...m,
+    fill: TEAM_DARK_FILL[m.color],
+    stroke: TEAM_STROKE[m.color],
+    transform: translation(m.center),
+  }));
+
+  protected readonly medallionRadius = MEDALLION_RADIUS;
+  protected readonly medallionMascotRadius = mascotRadius(MEDALLION_RADIUS);
+  protected readonly medallionShadowRadius = MEDALLION_SHADOW_RADIUS;
+  protected readonly medallionRingRadius = MEDALLION_RING_RADIUS;
+  protected readonly medallionGlowRadius = MEDALLION_GLOW_RADIUS;
 
   /** Home highlighted for the team in turn; none once there is a winner (RF-007). */
   protected readonly homeTurn = computed(() => homeInTurn(this.state()));
