@@ -1,6 +1,6 @@
 # SPEC 007 — Mascotas y ambientación
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 005, SPEC 006
 > **Fecha:** 2026-10-27
 > **Autor:** Christian Garcia
