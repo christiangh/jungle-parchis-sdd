@@ -331,19 +331,17 @@ describe('App', () => {
   it('HU-07.1: una tirada sin movimientos se pierde y el turno pasa al siguiente', async () => {
     const fixture = await render(3, 5, 2, 1, 4);
     roll(fixture, 5);
-    expect(text(fixture, '[data-last-play]')).toBe(
-      'Azul saca 4 y pierde la tirada, turno de Rojo.',
-    );
+    expect(text(fixture, '[data-last-play]')).toBe('Saca 4 y pierde la tirada.');
     expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.red);
   });
 
   it('HU-07.5: cada acción sustituye la frase de la anterior', async () => {
     const fixture = await render(3, 5);
     roll(fixture);
-    expect(text(fixture, '[data-last-play]')).toBe('Amarillo saca 3.');
+    expect(text(fixture, '[data-last-play]')).toBe('Saca 3.');
 
     roll(fixture);
-    expect(text(fixture, '[data-last-play]')).toBe('Azul saca 5.');
+    expect(text(fixture, '[data-last-play]')).toBe('Saca 5.');
   });
 
   it('CE-05: con un ganador, el cartel dice «¡Gana Rojo!» en rojo y nada responde', async () => {

@@ -29,6 +29,9 @@ function seededRandom(seed: number): () => number {
   };
 }
 
+/** The 200 random games take about 3 s alone, close to the default 5 s with the whole suite. */
+const RANDOM_GAMES_TIMEOUT_MS = 30_000;
+
 /** Plays a whole random game and returns each accepted action with its events. */
 function randomGame(seed: number): { player: Color; events: readonly GameEvent[] }[] {
   const random = seededRandom(seed);
@@ -185,24 +188,34 @@ describe('lastPlay', () => {
     ).toBe('Tres seises y su ficha vuelve a casa.');
   });
 
-  it('RNF-010, CE-01: en 200 partidas aleatorias ninguna frase nombra a quien actúa ni pasa de LONGEST_PLAY', () => {
-    let tabs = 0;
-    for (let seed = 1; seed <= 200; seed++) {
-      for (const { player, events } of randomGame(seed)) {
-        const play = lastPlay(player, events);
-        if (play === null) {
-          continue;
-        }
-        tabs++;
-        expect(play.color).toBe(player);
-        expect(play.text.length, play.text).toBeGreaterThan(0);
-        expect(play.text.length, play.text).toBeLessThanOrEqual(LONGEST_PLAY.length);
-        expect(play.text, play.text).not.toMatch(/turno/i);
-        if (!events.some((event) => event.type === 'initial-roll-tie')) {
-          expect(play.text, play.text).not.toContain(COLOR_NAMES[player]);
+  it(
+    'RNF-010, CE-01: en 200 partidas aleatorias ninguna frase nombra a quien actúa ni pasa de LONGEST_PLAY',
+    () => {
+      // Collected and checked once: an assertion per play is too slow for so many games.
+      let tabs = 0;
+      const wrong = new Set<string>();
+      for (let seed = 1; seed <= 200; seed++) {
+        for (const { player, events } of randomGame(seed)) {
+          const play = lastPlay(player, events);
+          if (play === null) {
+            continue;
+          }
+          tabs++;
+          const tie = events.some((event) => event.type === 'initial-roll-tie');
+          if (
+            play.color !== player ||
+            play.text.length === 0 ||
+            play.text.length > LONGEST_PLAY.length ||
+            /turno/i.test(play.text) ||
+            (!tie && play.text.includes(COLOR_NAMES[player]))
+          ) {
+            wrong.add(`${player}: ${play.text}`);
+          }
         }
       }
-    }
-    expect(tabs).toBeGreaterThan(0);
-  });
+      expect([...wrong]).toEqual([]);
+      expect(tabs).toBeGreaterThan(0);
+    },
+    RANDOM_GAMES_TIMEOUT_MS,
+  );
 });

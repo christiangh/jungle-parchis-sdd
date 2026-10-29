@@ -239,7 +239,7 @@ Los textos se unen con «, », con mayúscula inicial y punto final: «Mueve una
   - Tres seises en una sola frase (HU-05.4).
   - En 200 partidas aleatorias, con dados de una semilla fija, ninguna frase es más larga que `LONGEST_PLAY`.
   - En `game-store.spec.ts`: `lastPlayer` empieza en `null`, pasa al jugador de cada acción aceptada y no cambia con una acción rechazada.
-- [ ] 4. `last-play.ts` y `lastPlayer` en `GameStore`, hasta que pasen los tests del paso 3.
+- [x] 4. `last-play.ts` y `lastPlayer` en `GameStore`, hasta que pasen los tests del paso 3. Los tests de SPEC 006 de la línea en `app.spec.ts` pasan a los textos nuevos; la línea sigue siendo la de SPEC 006 hasta el paso 6.
 - [ ] 5. `TurnBanner` nuevo: tablón del color con borde oscuro y clavos, placa con la mascota animada, acción con `font-display` y contorno de tinta, y turno en `sr-only` antes de la acción. Tests en `turn-banner.spec.ts` en el mismo paso (RF-008, RF-010, HU-04):
   - Color y mascota de cada equipo, con la mascota animada.
   - Acción visible, sin «Turno de».
@@ -250,7 +250,7 @@ Los textos se unen con «, », con mayúscula inicial y punto final: «Mueve una
   - Antes de la primera acción no hay pestaña, pero sí el hueco y su copia invisible.
   - Región `aria-live` fija.
   - HU-04.1 a HU-04.4, HU-05.2 y HU-05.3 sobre la pantalla.
-  - Los tests de SPEC 006 de la línea pasan a los textos nuevos de la pestaña.
+  - Los tests de SPEC 006 de la línea pasan a la pestaña.
 - [ ] 7. Pruebas en navegador de SPEC 006 adaptadas (RF-013, CE-06, CE-09, RNF-004):
   - `game.spec.ts`: los mismos escenarios, con las acciones y frases nuevas y el color de la pestaña.
   - `ambience.spec.ts` y `screen.spec.ts`: selectores nuevos y hueco reservado dentro de la ventana.

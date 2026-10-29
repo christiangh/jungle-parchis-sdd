@@ -113,6 +113,7 @@ export class GameStore {
     }
     this.state$.set(result.value.state);
     this.lastEvents$.set(result.value.events);
+    this.lastPlayer$.set(action.player);
     this.selected$.set(null);
     return true;
   }
