@@ -1,6 +1,6 @@
-import { GameState } from '@engine';
-import { animatedPieces, homeInTurn } from './board-turn';
-import { NEW_GAME, rolled, stateWith } from './board-test-utils';
+import { applyAction, GameState, legalMoves } from '@engine';
+import { animatedPieces, homeInTurn, inactiveHomes } from './board-turn';
+import { NEW_GAME, newGame, rolled, stateWith } from './board-test-utils';
 
 /** Game already started, with blue in turn and nothing pending. */
 const BLUE_TURN: GameState = { ...NEW_GAME, initialRoll: null, turn: 'blue' };
@@ -66,5 +66,52 @@ describe('animatedPieces', () => {
 
   it('RF-007: con la partida terminada, ninguna', () => {
     expect(animatedPieces({ ...BLUE_TURN, winner: 'red' })).toEqual(new Set());
+  });
+});
+
+describe('inactiveHomes', () => {
+  it('RF-009: con amarillo, rojo y verde solo está inactiva la casa azul', () => {
+    expect(inactiveHomes(newGame(['yellow', 'red', 'green']))).toEqual(new Set(['blue']));
+  });
+
+  it('HU-04.1: con amarillo y verde están inactivas las casas azul y roja', () => {
+    expect(inactiveHomes(newGame(['yellow', 'green']))).toEqual(new Set(['blue', 'red']));
+  });
+
+  it('RF-009: con los cuatro equipos no hay ninguna casa inactiva', () => {
+    expect(inactiveHomes(NEW_GAME)).toEqual(new Set());
+  });
+
+  it('HU-04.2: en una partida de amarillo y verde nunca está en turno una casa inactiva', () => {
+    let state = newGame(['yellow', 'green']);
+    const inactive = inactiveHomes(state);
+    expect(inactive.size).toBe(2);
+    // Fixed rolls, with a 6 to take pieces out and play some turns.
+    const rolls = [2, 5, 5, 3, 6, 4, 1, 5, 2, 6, 3, 4, 5, 1, 2, 3, 4, 5, 6, 1];
+    const homes = new Set<string>();
+    for (const value of rolls) {
+      const home = homeInTurn(state);
+      expect(home).not.toBeNull();
+      homes.add(home!);
+      expect(inactive.has(home!)).toBe(false);
+      const rolledState = applyAction(state, { type: 'roll', player: state.turn, value });
+      if (!rolledState.ok) {
+        throw new Error(rolledState.error);
+      }
+      state = rolledState.value.state;
+      while (state.pendingRoll !== null || state.pendingBonus !== null) {
+        const [move] = legalMoves(state);
+        const moved = applyAction(state, {
+          type: 'move',
+          player: state.turn,
+          pieceId: move.pieceId,
+        });
+        if (!moved.ok) {
+          throw new Error(moved.error);
+        }
+        state = moved.value.state;
+      }
+    }
+    expect(homes).toEqual(new Set(['yellow', 'green']));
   });
 });

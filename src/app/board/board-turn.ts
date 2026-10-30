@@ -7,6 +7,12 @@ export function homeInTurn(state: GameState): Color | null {
   return state.winner === null ? state.turn : null;
 }
 
+/** Homes of the teams that do not play, shown dimmed and still (SPEC 008 RF-009). */
+export function inactiveHomes(state: GameState): ReadonlySet<Color> {
+  void state;
+  return new Set();
+}
+
 /** Pieces of the team in turn that are at home: the only ones animated. */
 export function animatedPieces(state: GameState): ReadonlySet<PieceId> {
   const home = homeInTurn(state);
