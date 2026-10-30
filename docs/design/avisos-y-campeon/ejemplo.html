@@ -31,19 +31,19 @@
   </div>
   <h2>Pantalla de campeón</h2>
   <div class="botones">
-    <button onclick="mostrarCampeon('amarillo')">Gana Amarillo</button>
-    <button onclick="mostrarCampeon('rojo')">Gana Rojo</button>
-    <button onclick="mostrarCampeon('azul')">Gana Azul</button>
-    <button onclick="mostrarCampeon('verde')">Gana Verde</button>
+    <button onclick="ganar('amarillo')">Gana Amarillo</button>
+    <button onclick="ganar('rojo')">Gana Rojo</button>
+    <button onclick="ganar('azul')">Gana Azul</button>
+    <button onclick="ganar('verde')">Gana Verde</button>
   </div>
-  <p>Pulsa en la capa oscura para cerrarla.</p>
+  <p id="estado">«Nueva partida» cierra la pantalla; en el juego, abre «¿Quién juega?».</p>
 </main>
 <script>
 pintarAviso(document.getElementById('a0'), { turno: 'verde', accion: 'Toca el dado', ultimo: 'rojo', ultimaJugada: 'Saca una ficha de casa' });
 pintarAviso(document.getElementById('a1'), { turno: 'azul', accion: 'Elige una ficha', ultimo: 'verde', ultimaJugada: 'Se come una ficha de Azul' });
 pintarAviso(document.getElementById('a2'), { turno: 'amarillo', accion: 'Toca el dado', ultimo: 'azul', ultimaJugada: 'Llega a la meta' });
 pintarAviso(document.getElementById('a3'), { turno: 'rojo', accion: 'Elige una ficha', ultimo: 'amarillo', ultimaJugada: 'Forma un puente' });
-document.addEventListener('click', e => { if (e.target.classList && e.target.classList.contains('pj-campeon')) ocultarCampeon(); });
+function ganar(eq) { mostrarCampeon(eq, '¡Campeón!', { alNuevaPartida: () => { document.getElementById('estado').textContent = 'Nueva partida: aquí se abre «¿Quién juega?»'; } }); }
 </script>
 </body>
 </html>

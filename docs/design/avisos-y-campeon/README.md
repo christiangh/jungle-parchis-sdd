@@ -4,9 +4,9 @@ Aviso de turno con la última jugada colgada debajo, y pantalla del equipo que g
 
 - `ejemplo.html`: los avisos y la pantalla de campeón funcionando. Usa los componentes de [`../mascotas/`](../mascotas/), así que se abre desde esta carpeta, dentro de `docs/design/`.
 - `alertas.css` y `alertas.js`: el aviso de turno y la última jugada; `pintarAviso(contenedor, { turno, accion, ultimo?, ultimaJugada? })`.
-- `campeon.css`: el tablón y la capa de la pantalla de campeón.
+- `campeon.css`: el tablón, la capa y el botón de nueva partida de la pantalla de campeón.
 - `componentes/ganador-fx.js`: trofeo con brillos, confeti y rayos de sol (`<ganador-trofeo>`, `<ganador-confeti>`, `<ganador-rayos>`).
-- `componentes/campeon.js`: `mostrarCampeon(equipo, texto?)` y `ocultarCampeon()`.
+- `componentes/campeon.js`: `mostrarCampeon(equipo, texto?, { alNuevaPartida })` y `ocultarCampeon()`.
 - `capturas/`: los avisos, y la pantalla de campeón en escritorio y en móvil.
 
 ## Avisos
@@ -33,6 +33,10 @@ El texto blanco de la pestaña tiene un contraste de entre 5,3:1 (amarillo) y 8,
 
 ## Pantalla de campeón
 
-Capa oscura translúcida sobre la partida. En el centro, el tablón del color del equipo con su mascota animada flotando, el trofeo y «¡Campeón!». Detrás giran rayos de sol y cae confeti con la paleta del equipo. Por debajo de 520 px, todo se reduce. No tiene botón de nueva partida, que hará falta en el spec de final de partida.
+Capa oscura translúcida sobre la partida. En el centro, el tablón del color del equipo con su mascota animada flotando, el trofeo y «¡Campeón!». Detrás giran rayos de sol y cae confeti con la paleta del equipo. Por debajo de 520 px, todo se reduce.
+
+Debajo del tablón, un botón «Nueva partida» de madera natural, como el engranaje del menú de [`../inicio-y-menu/`](../inicio-y-menu/), con el icono de reiniciar y el texto en Caprasimo. Recibe el foco al aparecer y es la única salida: al pulsarlo se cierra la pantalla y se vuelve a «¿Quién juega?». Su texto tiene un contraste de 5,7:1.
+
+Con el botón, la pantalla no cabe en ventanas muy bajas: en 568 × 320 el botón queda por debajo del borde. SPEC 008 pide que quepa en esa ventana, así que la aplicación tendrá que compactarla en horizontal (mascota y trofeo más pequeños o el botón al lado del tablón).
 
 La aplicación lo reconstruye con la paleta del tablero y sus propios componentes. Los textos salen del estado y los eventos del motor, las tipografías se incluyen en el proyecto en lugar de cargarlas de Google Fonts, y las animaciones respetan `prefers-reduced-motion`.

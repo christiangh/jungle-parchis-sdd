@@ -1,12 +1,10 @@
 /* Pantalla de campeón · Parchís de la jungla */
-@import url("https://fonts.googleapis.com/css2?family=Caprasimo&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:wght@700&display=swap");
 .pj-campeon__tablon {
   --c: #e3b23a; --borde: #6b4a0c; --sombra: #4a320a;
-  position: relative; display: inline-flex; align-items: center; gap: 12px;
-  padding: 8px 24px 8px 10px; border-radius: 14px;
+  position: relative; display: inline-flex; align-items: center;
   background: var(--c) repeating-linear-gradient(176deg, rgba(0,0,0,0) 0 9px, rgba(0,0,0,.08) 9px 11px, rgba(255,255,255,.07) 11px 12px);
   border: 3px solid var(--borde);
-  box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -4px 0 rgba(0,0,0,.2), 0 8px 16px rgba(10,20,4,.45);
 }
 .pj-campeon__titulo {
   font-family: "Caprasimo", serif; color: #fff; white-space: nowrap;
@@ -16,12 +14,11 @@
 .pj-campeon__tablon.pj-rojo     { --c: #c8452d; --borde: #5e2416; --sombra: #3b1a10; }
 .pj-campeon__tablon.pj-azul     { --c: #3a7cb0; --borde: #1f4566; --sombra: #173450; }
 .pj-campeon__tablon.pj-verde    { --c: #2e8b57; --borde: #17492d; --sombra: #12381f; }
-
 /* Pantalla de campeón */
 .pj-campeon { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: rgba(18,14,8,.64); }
 .pj-campeon[hidden] { display: none; }
 .pj-campeon ganador-confeti { position: absolute; inset: 0; }
-.pj-campeon__centro { position: relative; display: grid; place-items: center; }
+.pj-campeon__centro { position: relative; display: flex; flex-direction: column; align-items: center; }
 .pj-campeon ganador-rayos { position: absolute; width: 560px; height: 560px; left: 50%; top: 50%; margin: -280px 0 0 -280px; }
 .pj-campeon__tablon { flex-direction: column; gap: 6px; padding: 26px 48px 30px; border-radius: 28px; border-width: 4px;
   box-shadow: inset 0 3px 0 rgba(255,255,255,.35), inset 0 -5px 0 rgba(0,0,0,.18), 0 14px 30px rgba(0,0,0,.5); }
@@ -29,6 +26,11 @@
 .pj-campeon mascota-animada { width: 190px; height: 190px; }
 .pj-campeon ganador-trofeo { width: 130px; height: 152px; }
 .pj-campeon__titulo { font-size: 72px; line-height: 1; }
+.pj-campeon__nueva { position: relative; margin-top: 22px; display: inline-flex; align-items: center; gap: 10px; min-height: 56px; padding: 0 30px; border-radius: 16px; background: #c99a62 repeating-linear-gradient(176deg, rgba(0,0,0,0) 0 9px, rgba(0,0,0,.08) 9px 11px, rgba(255,255,255,.07) 11px 12px); border: 3px solid #74491f; color: #3b2412; font-family: "Caprasimo", serif; font-size: 24px; cursor: pointer; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -4px 0 rgba(0,0,0,.2), 0 8px 16px rgba(0,0,0,.45); }
+.pj-campeon__nueva:hover { background-color: #d6a96f; }
+.pj-campeon__nueva:active { transform: translateY(2px); }
+.pj-campeon__nueva:focus-visible { outline: 2px solid #c67139; outline-offset: 2px; }
+.pj-campeon__nueva svg { width: 24px; height: 24px; }
 @media (max-width: 520px) {
   .pj-campeon__tablon { padding: 18px 26px 22px; }
   .pj-campeon mascota-animada { width: 130px; height: 130px; }
