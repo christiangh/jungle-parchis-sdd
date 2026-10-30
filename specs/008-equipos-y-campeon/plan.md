@@ -6,7 +6,7 @@
 
 ## PARTE-01: Pantalla de campeón
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
