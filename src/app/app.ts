@@ -7,14 +7,16 @@ import { headline } from './game/headline';
 import { LastPlay, lastPlay, LONGEST_PLAY } from './game/last-play';
 import { LastPlayTab } from './game/last-play-tab';
 import { TurnBanner } from './game/turn-banner';
+import { Start } from './start/start';
 
 /**
  * Game screen: jungle background, turn banner with the last play tab hanging under it and board
- * with the dice on its log (RF-002, RF-005, RF-011). Once there is a winner, the champion screen
- * covers the game, which stays visible but out of reach (SPEC 008 RF-001, RF-003).
+ * with the dice on its log (RF-002, RF-005, RF-011). The start screen opens over it to choose the
+ * teams, and once there is a winner the champion screen covers it; behind either, the game stays
+ * visible but out of reach (SPEC 008 RF-001, RF-003, RF-004, RF-007).
  */
 @Component({
-  imports: [Board, Champion, Dice, LastPlayTab, TurnBanner],
+  imports: [Board, Champion, Dice, LastPlayTab, Start, TurnBanner],
   selector: 'jp-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
@@ -25,6 +27,10 @@ export class App {
   protected readonly store = inject(GameStore);
   protected readonly headline = computed(() => headline(this.store.state()));
   protected readonly winner = computed(() => this.store.state().winner);
+  /** The start screen or the champion screen is in front of the game. */
+  protected readonly covered = computed(
+    () => this.store.screen() === 'start' || this.winner() !== null,
+  );
   protected readonly lastPlay = computed(() =>
     lastPlay(this.store.lastPlayer(), this.store.lastEvents()),
   );

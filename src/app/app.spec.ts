@@ -3,21 +3,57 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Color, COLORS, GameEvent, GameState, legalMoves, PieceId } from '@engine';
 import { App } from './app';
 import { homes } from './board/board-geometry';
-import { stateWith } from './board/board-test-utils';
+import { newGame, stateWith } from './board/board-test-utils';
 import { DICE_GLOW } from './game/dice';
-import { DICE_SPIN_MS, GameStore } from './game/game-store';
+import { DICE_SPIN_MS, GameStore, Screen } from './game/game-store';
 import { provideRolls } from './game/game-test-utils';
 import { LONGEST_PLAY } from './game/last-play';
 import { TEAM_BG, TEAM_DARK_BG } from './game/turn-banner';
 import { MASCOTS } from './shared/mascot';
 
+/** Opens the application and, unless `teams` is null, starts a game of those teams. */
 async function render(...rolls: number[]): Promise<ComponentFixture<App>> {
+  return renderTeams(COLORS, ...rolls);
+}
+
+async function renderTeams(
+  teams: readonly Color[] | null,
+  ...rolls: number[]
+): Promise<ComponentFixture<App>> {
   TestBed.configureTestingModule({ providers: [provideRolls(...rolls)] });
   const fixture = TestBed.createComponent(App);
   await fixture.whenStable();
+  if (teams !== null) {
+    await startGame(fixture, teams);
+  }
   // Fake timers only from here: `whenStable` waits on real ones.
   vi.useFakeTimers();
   return fixture;
+}
+
+function teamCard(fixture: ComponentFixture<App>, color: Color): HTMLButtonElement {
+  return element(fixture, `jp-start [data-team="${color}"]`) as HTMLButtonElement;
+}
+
+/** Leaves only `teams` switched on in the start screen and touches «¡A jugar!». */
+async function startGame(fixture: ComponentFixture<App>, teams: readonly Color[]): Promise<void> {
+  expect(element(fixture, 'jp-start'), 'start screen').not.toBeNull();
+  for (const color of COLORS) {
+    const on = teamCard(fixture, color).getAttribute('aria-pressed') === 'true';
+    if (on !== teams.includes(color)) {
+      teamCard(fixture, color).click();
+      await fixture.whenStable();
+    }
+  }
+  (element(fixture, 'jp-start [data-play]') as HTMLButtonElement).click();
+  await fixture.whenStable();
+}
+
+/** Teams switched on in the start screen. */
+function switchedOn(fixture: ComponentFixture<App>): string[] {
+  return Array.from(
+    (fixture.nativeElement as HTMLElement).querySelectorAll('jp-start [aria-pressed="true"]'),
+  ).map((card) => card.getAttribute('data-team')!);
 }
 
 function element(fixture: ComponentFixture<App>, selector: string): HTMLElement {
@@ -127,7 +163,9 @@ function storeShowing(
   lastPlayer: Color | null = null,
   lastEvents: readonly GameEvent[] = [],
 ): Partial<GameStore> {
+  const screen = signal<Screen>('game');
   return {
+    screen: screen.asReadonly(),
     state: signal(state).asReadonly(),
     lastEvents: signal(lastEvents).asReadonly(),
     lastPlayer: signal(lastPlayer).asReadonly(),
@@ -141,6 +179,7 @@ function storeShowing(
     confirm: vi.fn(),
     cancel: vi.fn(),
     start: vi.fn(),
+    chooseTeams: vi.fn(() => screen.set('start')),
   };
 }
 
@@ -156,6 +195,20 @@ const GREEN_WON: GameState = {
   turn: 'green',
   winner: 'green',
 };
+
+/** Game of Yellow and Green won by Green, with its four pieces in its goal. */
+const YELLOW_GREEN_WON: GameState = (() => {
+  const game = newGame(['yellow', 'green']);
+  return {
+    ...game,
+    pieces: game.pieces.map((piece) =>
+      piece.color === 'green' ? { ...piece, position: { kind: 'goal' } } : piece,
+    ),
+    initialRoll: null,
+    turn: 'green',
+    winner: 'green',
+  };
+})();
 
 // Blue starts and takes a piece out of home with a 5: a single legal move.
 const EXIT = [3, 5, 2, 1, 5];
@@ -525,6 +578,49 @@ describe('App', () => {
     expect(store.confirm).not.toHaveBeenCalled();
   });
 
+  describe('pantalla de inicio', () => {
+    it('HU-02.2, HU-03.1, RF-004: al cargar aparece con los cuatro equipos activados, fuera de main, y la partida queda inerte', async () => {
+      const fixture = await renderTeams(null);
+
+      expect(element(fixture, 'jp-start')).not.toBeNull();
+      expect(element(fixture, 'main jp-start')).toBeNull();
+      expect(switchedOn(fixture)).toEqual(['red', 'blue', 'green', 'yellow']);
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(true);
+      expect(element(fixture, 'jp-champion')).toBeNull();
+    });
+
+    it('HU-03.3, RF-007: «¡A jugar!» con amarillo y verde empieza esa partida, sin pantalla de inicio ni partida inerte', async () => {
+      const fixture = await renderTeams(['yellow', 'green']);
+
+      expect(element(fixture, 'jp-start')).toBeNull();
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(false);
+      expect(TestBed.inject(GameStore).state().players).toEqual(['yellow', 'green']);
+      expect(touchAreas(fixture)).toEqual([]);
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('jp-board [data-piece]'),
+      ).toHaveLength(8);
+    });
+
+    it('HU-03.3, HU-04.2: la tirada inicial y los turnos son solo entre amarillo y verde', async () => {
+      // Yellow wins the initial roll with a 4; then nobody can take a piece out with a 3.
+      const fixture = await renderTeams(['yellow', 'green'], 4, 2, 3, 3, 3);
+      const turns = [text(fixture, '[data-turn]')];
+      for (let i = 0; i < 5; i++) {
+        roll(fixture);
+        turns.push(text(fixture, '[data-turn]'));
+      }
+
+      expect(turns).toEqual([
+        'Tirada inicial, turno de Amarillo.',
+        'Tirada inicial, turno de Verde.',
+        'Turno de Amarillo.',
+        'Turno de Verde.',
+        'Turno de Amarillo.',
+        'Turno de Verde.',
+      ]);
+    });
+  });
+
   describe('pantalla de campeón', () => {
     it('HU-01.1: con un ganador aparece sobre la partida, fuera de main, y la partida queda inerte', async () => {
       const fixture = await renderShowing(storeShowing(GREEN_WON));
@@ -556,13 +652,18 @@ describe('App', () => {
       expect(store.start).not.toHaveBeenCalled();
     });
 
-    it('RF-002: «Nueva partida» empieza otra partida de los mismos equipos', async () => {
-      const store = storeShowing(GREEN_WON);
+    it('HU-02.1, RF-007: «Nueva partida» lleva a la pantalla de inicio con solo los equipos de la partida activados', async () => {
+      const store = storeShowing(YELLOW_GREEN_WON);
       const fixture = await renderShowing(store);
 
       (element(fixture, 'jp-champion [data-new-game]') as HTMLButtonElement).click();
+      await fixture.whenStable();
 
-      expect(store.start).toHaveBeenCalledExactlyOnceWith(GREEN_WON.players);
+      expect(store.chooseTeams).toHaveBeenCalledOnce();
+      expect(store.start).not.toHaveBeenCalled();
+      expect(element(fixture, 'jp-champion')).toBeNull();
+      expect(element(fixture, 'jp-start')).not.toBeNull();
+      expect(switchedOn(fixture)).toEqual(['green', 'yellow']);
     });
 
     it('RF-002: tras empezar otra, el cartel vuelve a la tirada inicial de Amarillo con las 16 fichas en casa y sin pestaña', async () => {
