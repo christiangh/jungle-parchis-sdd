@@ -31,7 +31,7 @@ Con movimiento reducido no se pinta el confeti, los rayos quedan quietos, la mas
 
 ### Pasos
 
-- [ ] 1. Tokens de la capa, el trofeo, los rayos, el confeti y el botón en `src/styles.css`, con los colores del diseño (reutilizando los que ya existen, como `--color-wood`, `--color-wood-edge`, `--color-ink`, `--color-mascot-gold` o `--color-home-turn-glow`), y sus animaciones; búsqueda de hexadecimales en `src/app/` sin resultados (RNF-007).
+- [x] 1. Tokens de la capa, el trofeo, los rayos, el confeti y el botón en `src/styles.css`, con los colores del diseño (reutilizando los que ya existen, como `--color-wood`, `--color-wood-edge`, `--color-ink`, `--color-mascot-gold` o `--color-home-turn-glow`), y sus animaciones; búsqueda de hexadecimales en `src/app/` sin resultados (RNF-007).
 - [ ] 2. Tests de `reduced-motion.ts`, con un esqueleto que compila y los hace fallar: `true` si `prefers-reduced-motion: reduce` coincide, `false` si no, y `false` sin ventana o sin `matchMedia` (RNF-002).
 - [ ] 3. `reduced-motion.ts`, hasta que pasen los tests del paso 2, y el almacén lo usa en lugar de su método privado; los tests del almacén pasan sin cambios.
 - [ ] 4. Tests de `confettiPieces`, con un esqueleto que compila y los hace fallar: 46 trozos; colores solo de la paleta del equipo y todos usados; posición horizontal entre 0 y 100 %; duración entre 3,6 y 6,6 s con retardo negativo, para que caiga desde el primer instante; mismo resultado en cada llamada (RF-001).
