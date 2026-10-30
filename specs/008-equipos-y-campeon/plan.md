@@ -121,7 +121,7 @@ En ventanas bajas (`max-height: 480px`, la misma variante que la partida y la pa
 
 ### Pasos
 
-- [ ] 1. Tests de `teams.ts`, con un esqueleto que compila y los hace fallar: `toggleTeam` activa un equipo desactivado y desactiva uno activado, y devuelve los equipos en el orden de `COLORS`; `canStart` es falso con 0 y 1 equipos y verdadero con 2, 3 y 4; `teamsStatus` dice «Elige al menos 2 equipos» con menos de 2 y «N equipos listos» con 2 o más (HU-03.4, RF-005).
+- [x] 1. Tests de `teams.ts`, con un esqueleto que compila y los hace fallar: `toggleTeam` activa un equipo desactivado y desactiva uno activado, y devuelve los equipos en el orden de `COLORS`; `canStart` es falso con 0 y 1 equipos y verdadero con 2, 3 y 4; `teamsStatus` dice «Elige al menos 2 equipos» con menos de 2 y «N equipos listos» con 2 o más (HU-03.4, RF-005).
 - [ ] 2. `teams.ts`, hasta que pasen los tests del paso 1.
 - [ ] 3. Tests del almacén en `game-store.spec.ts`, con un esqueleto de `start` y `chooseTeams` que no hace nada: al crearse, `screen` es `'start'` con los cuatro equipos; `start(['yellow', 'green'])` deja el estado igual a `createGame` con esos equipos, la tirada inicial solo entre ellos, sin última jugada, con la cara inicial, sin selección y en `'game'`; `chooseTeams()` vuelve a `'start'` y conserva los equipos de la partida. Los tests de `restart()` de PARTE-01 pasan a `start` (HU-02.1, HU-02.2, HU-03.3, RF-004, RF-007, RF-008).
 - [ ] 4. `start` y `chooseTeams` en el almacén, hasta que pasen los tests del paso 3; sale `restart()`, y `App`, hasta el paso 10, llama a `start` con los mismos equipos.
