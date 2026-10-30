@@ -1,4 +1,4 @@
-import { Color, GameState, PieceId } from '@engine';
+import { Color, COLORS, GameState, PieceId } from '@engine';
 
 // Which home the board highlights and which pieces show their mascot's animation (RF-007).
 
@@ -9,8 +9,7 @@ export function homeInTurn(state: GameState): Color | null {
 
 /** Homes of the teams that do not play, shown dimmed and still (SPEC 008 RF-009). */
 export function inactiveHomes(state: GameState): ReadonlySet<Color> {
-  void state;
-  return new Set();
+  return new Set(COLORS.filter((color) => !state.players.includes(color)));
 }
 
 /** Pieces of the team in turn that are at home: the only ones animated. */
