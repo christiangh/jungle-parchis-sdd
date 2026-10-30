@@ -143,6 +143,21 @@
   --color-champion-button-edge: var(--color-wood-edge);
   --color-champion-focus: #c67139;
 
+  /*
+   * Start screen (docs/design/inicio-y-menu, SPEC 008 RF-004): cream box, switched-off cards with
+   * dashed borders and the «¡A jugar!» button; it shares the overlay and focus of the champion screen.
+   */
+  --color-start-box: #f5ead8;
+  --color-start-text: #201e1d;
+  --color-start-subtitle: #474238;
+  --color-start-muted: #645c50;
+  --color-start-card-off: #ebddc5;
+  --color-start-card-off-edge: #c0b6a5;
+  --color-start-mark-off-edge: #a19786;
+  --color-start-plus: #82796a;
+  --color-start-button: #8c491a;
+  --color-start-button-hover: var(--color-wood-edge);
+
   /* Trophy of the champion screen. */
   --color-trophy-ink: var(--color-mascot-ink);
   --color-trophy-handle: var(--color-team-yellow);

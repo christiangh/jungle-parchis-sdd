@@ -1,0 +1,94 @@
+<!-- In low windows the box turns into a row: title, status and button on the left, cards on the right. -->
+<div
+  class="bg-start-box text-start-text grid w-full max-w-95 gap-4 rounded-[28px] px-4.5 pt-5.5 pb-4.5 font-sans shadow-xl shadow-black/25 [grid-template-areas:'title'_'cards'_'status'_'play'] [@media(orientation:landscape)_and_(max-height:480px)]:max-w-135 [@media(orientation:landscape)_and_(max-height:480px)]:grid-cols-[11rem_1fr] [@media(orientation:landscape)_and_(max-height:480px)]:gap-x-4 [@media(orientation:landscape)_and_(max-height:480px)]:gap-y-2 [@media(orientation:landscape)_and_(max-height:480px)]:p-3.5 [@media(orientation:landscape)_and_(max-height:480px)]:[grid-template-areas:'title_cards'_'status_cards'_'play_cards']"
+  data-box
+>
+  <div class="flex flex-col items-center gap-1 self-end text-center [grid-area:title]" data-heading>
+    <h2 class="font-display text-[30px]/[1.1]" [id]="titleId" data-title>¿Quién juega?</h2>
+    <p class="text-start-subtitle text-[15px]">Elige de 2 a 4 equipos</p>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3 [grid-area:cards]" data-cards>
+    @for (card of cards(); track card.color) {
+      <button
+        #card
+        type="button"
+        class="focus-visible:outline-champion-focus relative flex h-33 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[20px] border-3 focus-visible:outline-2 focus-visible:outline-offset-2 [@media(orientation:landscape)_and_(max-height:480px)]:h-[118px] [@media(orientation:landscape)_and_(max-height:480px)]:gap-1"
+        [class]="card.classes"
+        [attr.aria-pressed]="card.on"
+        [attr.data-team]="card.color"
+        (click)="toggle(card.color)"
+      >
+        <span
+          class="absolute top-2 right-2 grid size-6.5 place-items-center rounded-full"
+          [class]="
+            card.on
+              ? 'bg-white shadow-sm shadow-black/30'
+              : 'border-2 border-dashed border-start-mark-off-edge'
+          "
+          aria-hidden="true"
+          [attr.data-mark]="card.on ? 'check' : 'plus'"
+        >
+          <svg
+            [class]="card.on ? 'size-4 stroke-start-text' : 'size-3.5 stroke-start-plus'"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            @if (card.on) {
+              <svg:path d="M5 12.5l4.5 4.5L19 7.5" />
+            } @else {
+              <svg:path d="M12 5v14M5 12h14" />
+            }
+          </svg>
+        </span>
+        <span
+          class="size-18 rounded-full [@media(orientation:landscape)_and_(max-height:480px)]:size-14"
+          [class]="
+            card.on
+              ? [card.badge, 'shadow-md', 'shadow-black/35']
+              : [card.badge, 'opacity-40', 'grayscale-70']
+          "
+          aria-hidden="true"
+          data-badge
+        >
+          <svg class="size-full" viewBox="-24 -24 48 48">
+            <g
+              jp-mascot
+              [color]="card.color"
+              [radius]="mascotRadius"
+              [animated]="card.animated"
+              [once]="true"
+            />
+          </svg>
+        </span>
+        <span
+          class="font-display text-xl/none"
+          [class]="card.on ? 'text-outline-ink text-white' : 'text-start-muted'"
+          data-name
+          >{{ card.name }}</span
+        >
+      </button>
+    }
+  </div>
+
+  <p
+    class="text-start-muted self-end text-center text-sm [grid-area:status]"
+    aria-live="polite"
+    data-status
+  >
+    {{ status() }}
+  </p>
+
+  <button
+    type="button"
+    class="bg-start-button text-start-box hover:enabled:bg-start-button-hover active:enabled:bg-start-button-hover focus-visible:outline-champion-focus min-h-14 w-full cursor-pointer self-start rounded-full text-xl font-semibold [grid-area:play] focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-45"
+    [disabled]="!ready()"
+    (click)="submit()"
+    data-play
+  >
+    ¡A jugar!
+  </button>
+</div>
