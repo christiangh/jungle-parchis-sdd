@@ -5,6 +5,5 @@ export const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 
 /** Whether `window` asks for reduced motion; `false` without a window or without `matchMedia`. */
 export function prefersReducedMotion(window: Window | null | undefined): boolean {
-  void window;
-  return true;
+  return window?.matchMedia?.(REDUCED_MOTION).matches ?? false;
 }

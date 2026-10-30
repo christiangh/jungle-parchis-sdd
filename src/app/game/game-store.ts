@@ -10,6 +10,7 @@ import {
   legalMoves,
   PieceId,
 } from '@engine';
+import { prefersReducedMotion } from '../shared/reduced-motion';
 import { DiceRoller } from './dice-roller';
 
 /** How long the dice spins before the roll is applied (RF-009, RNF-003). */
@@ -17,8 +18,6 @@ export const DICE_SPIN_MS = 500;
 
 /** Face shown before the first roll (RF-007). */
 export const INITIAL_FACE = 6;
-
-const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 
 /** Whether the player in turn has to roll: no roll or bonus to use and no winner (RF-008). */
 export function waitsForRoll(state: GameState): boolean {
@@ -97,7 +96,7 @@ export class GameStore {
       }
     };
     this.face$.set(value);
-    if (this.reducedMotion()) {
+    if (prefersReducedMotion(this.window)) {
       apply();
       return;
     }
@@ -116,9 +115,5 @@ export class GameStore {
     this.lastPlayer$.set(action.player);
     this.selected$.set(null);
     return true;
-  }
-
-  private reducedMotion(): boolean {
-    return this.window?.matchMedia?.(REDUCED_MOTION).matches ?? false;
   }
 }
