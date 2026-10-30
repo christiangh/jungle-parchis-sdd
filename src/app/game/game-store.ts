@@ -47,7 +47,7 @@ export class GameStore {
   private readonly face$ = signal(INITIAL_FACE);
   private readonly rolling$ = signal(false);
   private readonly selected$ = signal<PieceId | null>(null);
-  private readonly screen$ = signal<Screen>('game');
+  private readonly screen$ = signal<Screen>('start');
 
   /** Screen in front; the start screen shows the teams of `state` as the initial choice. */
   readonly screen = this.screen$.asReadonly();
@@ -110,24 +110,20 @@ export class GameStore {
     setTimeout(apply, DICE_SPIN_MS);
   }
 
-  /** Starts another game with the same teams, from the initial roll (SPEC 008 RF-002). */
-  restart(): void {
-    this.state$.set(newGame(this.state$().players));
+  /** Starts a game of `players`, from the initial roll, and shows it (SPEC 008 RF-007). */
+  start(players: readonly Color[]): void {
+    this.state$.set(newGame(players));
     this.lastEvents$.set([]);
     this.lastPlayer$.set(null);
     this.face$.set(INITIAL_FACE);
     this.rolling$.set(false);
     this.selected$.set(null);
-  }
-
-  /** Starts a game of `players`, from the initial roll, and shows it (SPEC 008 RF-007). */
-  start(players: readonly Color[]): void {
-    void players;
+    this.screen$.set('game');
   }
 
   /** Goes back to the start screen, keeping the teams of the last game (SPEC 008 RF-008). */
   chooseTeams(): void {
-    return;
+    this.screen$.set('start');
   }
 
   /** Applies an action; a rejected one changes nothing (RF-022). */

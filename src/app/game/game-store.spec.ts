@@ -387,7 +387,10 @@ describe('GameStore', () => {
 
       rollTimes(store, 2);
 
-      expect(store.lastEvents()).toEqual([{ type: 'initial-roll', player: 'green', value: 4 }]);
+      expect(store.lastEvents()).toEqual([
+        { type: 'initial-roll', player: 'green', value: 4 },
+        { type: 'first-player', player: 'green' },
+      ]);
       expect(store.state().initialRoll).toBeNull();
       expect(store.state().turn).toBe('green');
     });

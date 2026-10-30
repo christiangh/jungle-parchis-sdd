@@ -51,5 +51,5 @@
   </div>
 </main>
 @if (winner(); as winner) {
-  <jp-champion [winner]="winner" (newGame)="store.restart()" />
+  <jp-champion [winner]="winner" (newGame)="store.start(store.state().players)" />
 }

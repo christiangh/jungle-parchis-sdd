@@ -140,7 +140,7 @@ function storeShowing(
     select: vi.fn(),
     confirm: vi.fn(),
     cancel: vi.fn(),
-    restart: vi.fn(),
+    start: vi.fn(),
   };
 }
 
@@ -553,26 +553,26 @@ describe('App', () => {
 
       expect(element(fixture, 'jp-champion')).not.toBeNull();
       expect(element(fixture, 'main').hasAttribute('inert')).toBe(true);
-      expect(store.restart).not.toHaveBeenCalled();
+      expect(store.start).not.toHaveBeenCalled();
     });
 
-    it('RF-002: «Nueva partida» reinicia la partida', async () => {
+    it('RF-002: «Nueva partida» empieza otra partida de los mismos equipos', async () => {
       const store = storeShowing(GREEN_WON);
       const fixture = await renderShowing(store);
 
       (element(fixture, 'jp-champion [data-new-game]') as HTMLButtonElement).click();
 
-      expect(store.restart).toHaveBeenCalledTimes(1);
+      expect(store.start).toHaveBeenCalledExactlyOnceWith(GREEN_WON.players);
     });
 
-    it('RF-002: tras reiniciar, el cartel vuelve a la tirada inicial de Amarillo con las 16 fichas en casa y sin pestaña', async () => {
+    it('RF-002: tras empezar otra, el cartel vuelve a la tirada inicial de Amarillo con las 16 fichas en casa y sin pestaña', async () => {
       // The initial roll ends and Blue starts, with a tab that tells Green's roll.
       const fixture = await render(3, 5, 2, 1);
       roll(fixture, 4);
       expect(text(fixture, '[data-turn]')).toBe('Turno de Azul.');
       expect(element(fixture, '[data-last-play]')).not.toBeNull();
 
-      TestBed.inject(GameStore).restart();
+      TestBed.inject(GameStore).start(COLORS);
       fixture.detectChanges();
 
       expect(element(fixture, 'jp-champion')).toBeNull();
