@@ -306,12 +306,12 @@ describe('GameStore', () => {
       expect(store.selected()).toBeNull();
     });
 
-    it('RF-002: reiniciar empieza otra partida de los mismos equipos desde la tirada inicial', () => {
+    it('RF-007: empezar con los mismos equipos crea otra partida desde la tirada inicial', () => {
       const store = storeWith(...EXIT, 4);
       play(store, EXIT);
       store.select('blue-0');
 
-      store.restart();
+      store.start(COLORS);
 
       const game = createGame({ players: COLORS });
       expect(game.ok).toBe(true);
@@ -321,12 +321,12 @@ describe('GameStore', () => {
       expect(store.legalMoves()).toEqual([]);
     });
 
-    it('RF-002: reiniciar borra la última jugada, la selección y la cara del dado', () => {
+    it('RF-007: empezar borra la última jugada, la selección y la cara del dado', () => {
       const store = storeWith(...EXIT, 4);
       play(store, EXIT);
       store.select('blue-0');
 
-      store.restart();
+      store.start(COLORS);
 
       expect(store.lastEvents()).toEqual([]);
       expect(store.lastPlayer()).toBeNull();
@@ -335,16 +335,81 @@ describe('GameStore', () => {
       expect(store.rolling()).toBe(false);
     });
 
-    it('RF-002: tras reiniciar el dado responde y la tirada es de Amarillo en la partida nueva', () => {
+    it('RF-007: tras empezar el dado responde y la tirada es de Amarillo en la partida nueva', () => {
       const store = storeWith(...EXIT, 4);
       play(store, EXIT);
 
-      store.restart();
+      store.start(COLORS);
       expect(store.canRoll()).toBe(true);
 
       rollTimes(store, 1);
       expect(store.lastEvents()).toEqual([{ type: 'initial-roll', player: 'yellow', value: 4 }]);
       expect(store.state().initialRoll?.rolls).toEqual([4]);
+    });
+  });
+
+  describe('equipos', () => {
+    it('RF-004: empieza en la pantalla de inicio con los cuatro equipos', () => {
+      const store = storeWith();
+      expect(store.screen()).toBe('start');
+      expect(store.state().players).toEqual(COLORS);
+    });
+
+    it('HU-03.3: empezar con amarillo y verde crea con el motor la partida de esos dos y la muestra', () => {
+      const store = storeWith();
+
+      store.start(['yellow', 'green']);
+
+      const game = createGame({ players: ['yellow', 'green'] });
+      expect(game.ok).toBe(true);
+      expect(store.state()).toEqual((game as { value: GameState }).value);
+      expect(store.state().initialRoll?.contenders).toEqual(['yellow', 'green']);
+      expect(store.screen()).toBe('game');
+    });
+
+    it('RF-007: la partida de amarillo y verde empieza sin última jugada, con la cara inicial y sin selección', () => {
+      const store = storeWith(5, 3);
+      rollTimes(store, 2);
+
+      store.start(['yellow', 'green']);
+
+      expect(store.lastEvents()).toEqual([]);
+      expect(store.lastPlayer()).toBeNull();
+      expect(store.selected()).toBeNull();
+      expect(store.face()).toBe(INITIAL_FACE);
+      expect(store.rolling()).toBe(false);
+      expect(store.canRoll()).toBe(true);
+    });
+
+    it('HU-03.3: la tirada inicial de amarillo y verde es solo entre ellos', () => {
+      const store = storeWith(2, 4);
+      store.start(['yellow', 'green']);
+
+      rollTimes(store, 2);
+
+      expect(store.lastEvents()).toEqual([{ type: 'initial-roll', player: 'green', value: 4 }]);
+      expect(store.state().initialRoll).toBeNull();
+      expect(store.state().turn).toBe('green');
+    });
+
+    it('HU-02.1: volver a elegir equipos muestra la pantalla de inicio y conserva los de la partida', () => {
+      const store = storeWith();
+      store.start(['yellow', 'green']);
+
+      store.chooseTeams();
+
+      expect(store.screen()).toBe('start');
+      expect(store.state().players).toEqual(['yellow', 'green']);
+    });
+
+    it('RF-008: volver a elegir equipos no cambia la partida', () => {
+      const store = storeWith();
+      store.start(['yellow', 'red', 'green']);
+      const before = store.state();
+
+      store.chooseTeams();
+
+      expect(store.state()).toBe(before);
     });
   });
 

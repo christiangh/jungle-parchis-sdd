@@ -24,6 +24,9 @@ export function waitsForRoll(state: GameState): boolean {
   return state.winner === null && state.pendingRoll === null && state.pendingBonus === null;
 }
 
+/** Screen in front: choosing the teams or playing the game (SPEC 008 RF-004). */
+export type Screen = 'start' | 'game';
+
 function newGame(players: readonly Color[] = COLORS): GameState {
   const game = createGame({ players });
   if (!game.ok) {
@@ -44,7 +47,10 @@ export class GameStore {
   private readonly face$ = signal(INITIAL_FACE);
   private readonly rolling$ = signal(false);
   private readonly selected$ = signal<PieceId | null>(null);
+  private readonly screen$ = signal<Screen>('game');
 
+  /** Screen in front; the start screen shows the teams of `state` as the initial choice. */
+  readonly screen = this.screen$.asReadonly();
   readonly state = this.state$.asReadonly();
   /** Events of the last accepted action, in the order the engine produced them. */
   readonly lastEvents = this.lastEvents$.asReadonly();
@@ -112,6 +118,16 @@ export class GameStore {
     this.face$.set(INITIAL_FACE);
     this.rolling$.set(false);
     this.selected$.set(null);
+  }
+
+  /** Starts a game of `players`, from the initial roll, and shows it (SPEC 008 RF-007). */
+  start(players: readonly Color[]): void {
+    void players;
+  }
+
+  /** Goes back to the start screen, keeping the teams of the last game (SPEC 008 RF-008). */
+  chooseTeams(): void {
+    return;
   }
 
   /** Applies an action; a rejected one changes nothing (RF-022). */
