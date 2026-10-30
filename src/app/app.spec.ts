@@ -140,8 +140,22 @@ function storeShowing(
     select: vi.fn(),
     confirm: vi.fn(),
     cancel: vi.fn(),
+    restart: vi.fn(),
   };
 }
+
+/** Game won by Green, with its four pieces in its goal. */
+const GREEN_WON: GameState = {
+  ...stateWith([
+    ['green-0', { kind: 'goal' }],
+    ['green-1', { kind: 'goal' }],
+    ['green-2', { kind: 'goal' }],
+    ['green-3', { kind: 'goal' }],
+  ]),
+  initialRoll: null,
+  turn: 'green',
+  winner: 'green',
+};
 
 // Blue starts and takes a piece out of home with a 5: a single legal move.
 const EXIT = [3, 5, 2, 1, 5];
@@ -509,5 +523,67 @@ describe('App', () => {
     );
     expect(store.select).not.toHaveBeenCalled();
     expect(store.confirm).not.toHaveBeenCalled();
+  });
+
+  describe('pantalla de campeón', () => {
+    it('HU-01.1: con un ganador aparece sobre la partida, fuera de main, y la partida queda inerte', async () => {
+      const fixture = await renderShowing(storeShowing(GREEN_WON));
+      const champion = element(fixture, 'jp-champion');
+
+      expect(champion.getAttribute('data-color')).toBe('green');
+      expect(element(fixture, 'main jp-champion')).toBeNull();
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(true);
+      expect(element(fixture, 'main jp-board')).not.toBeNull();
+    });
+
+    it('RF-003: sin ganador no hay pantalla de campeón y la partida no está inerte', async () => {
+      const fixture = await render();
+
+      expect(element(fixture, 'jp-champion')).toBeNull();
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(false);
+    });
+
+    it('HU-01.3: Escape y un toque en la capa no la quitan', async () => {
+      const store = storeShowing(GREEN_WON);
+      const fixture = await renderShowing(store);
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      element(fixture, 'jp-champion').click();
+      await fixture.whenStable();
+
+      expect(element(fixture, 'jp-champion')).not.toBeNull();
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(true);
+      expect(store.restart).not.toHaveBeenCalled();
+    });
+
+    it('RF-002: «Nueva partida» reinicia la partida', async () => {
+      const store = storeShowing(GREEN_WON);
+      const fixture = await renderShowing(store);
+
+      (element(fixture, 'jp-champion [data-new-game]') as HTMLButtonElement).click();
+
+      expect(store.restart).toHaveBeenCalledTimes(1);
+    });
+
+    it('RF-002: tras reiniciar, el cartel vuelve a la tirada inicial de Amarillo con las 16 fichas en casa y sin pestaña', async () => {
+      // The initial roll ends and Blue starts, with a tab that tells Green's roll.
+      const fixture = await render(3, 5, 2, 1);
+      roll(fixture, 4);
+      expect(text(fixture, '[data-turn]')).toBe('Turno de Azul.');
+      expect(element(fixture, '[data-last-play]')).not.toBeNull();
+
+      TestBed.inject(GameStore).restart();
+      fixture.detectChanges();
+
+      expect(element(fixture, 'jp-champion')).toBeNull();
+      expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.yellow);
+      expect(text(fixture, '[data-title]')).toBe('Toca el dado');
+      expect(text(fixture, '[data-turn]')).toBe('Tirada inicial, turno de Amarillo.');
+      expect(element(fixture, '[data-last-play]')).toBeNull();
+      const pieces = TestBed.inject(GameStore).state().pieces;
+      expect(pieces).toHaveLength(16);
+      expect(pieces.every((piece) => piece.position.kind === 'home')).toBe(true);
+      expect(dice(fixture).disabled).toBe(false);
+    });
   });
 });

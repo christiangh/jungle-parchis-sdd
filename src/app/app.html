@@ -1,5 +1,8 @@
+<!-- With a winner, the game stays behind the champion screen, out of reach of keyboard and
+     screen readers (SPEC 008 RF-003). -->
 <main
   class="bg-jungle bg-jungle-tile flex h-dvh flex-col items-center gap-2 overflow-hidden p-2 sm:gap-4 sm:p-4 [@media(orientation:landscape)_and_(max-height:480px)]:flex-row"
+  [attr.inert]="winner() === null ? null : ''"
 >
   <header class="shrink-0 [@media(orientation:landscape)_and_(max-height:480px)]:max-w-[40%]">
     <jp-turn-banner [headline]="headline()" />
@@ -47,3 +50,6 @@
     </div>
   </div>
 </main>
+@if (winner(); as winner) {
+  <jp-champion [winner]="winner" (newGame)="store.restart()" />
+}

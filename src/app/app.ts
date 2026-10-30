@@ -1,5 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { Board } from './board/board';
+import { Champion } from './game/champion';
 import { Dice } from './game/dice';
 import { GameStore } from './game/game-store';
 import { headline } from './game/headline';
@@ -9,10 +10,11 @@ import { TurnBanner } from './game/turn-banner';
 
 /**
  * Game screen: jungle background, turn banner with the last play tab hanging under it and board
- * with the dice on its log (RF-002, RF-005, RF-011).
+ * with the dice on its log (RF-002, RF-005, RF-011). Once there is a winner, the champion screen
+ * covers the game, which stays visible but out of reach (SPEC 008 RF-001, RF-003).
  */
 @Component({
-  imports: [Board, Dice, LastPlayTab, TurnBanner],
+  imports: [Board, Champion, Dice, LastPlayTab, TurnBanner],
   selector: 'jp-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
@@ -22,6 +24,7 @@ import { TurnBanner } from './game/turn-banner';
 export class App {
   protected readonly store = inject(GameStore);
   protected readonly headline = computed(() => headline(this.store.state()));
+  protected readonly winner = computed(() => this.store.state().winner);
   protected readonly lastPlay = computed(() =>
     lastPlay(this.store.lastPlayer(), this.store.lastEvents()),
   );
