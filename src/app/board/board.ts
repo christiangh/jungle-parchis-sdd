@@ -30,7 +30,7 @@ import {
   TEAM_FILL,
   TEAM_STROKE,
 } from './board-palette';
-import { animatedPieces, homeInTurn } from './board-turn';
+import { animatedPieces, homeInTurn, inactiveHomes } from './board-turn';
 import { HomeScene, homeScenes, SceneShape, SlotDecor } from './home-scenes';
 import { Mascot } from '../shared/mascot';
 import { pieceName } from '../shared/piece-id';
@@ -125,6 +125,9 @@ export interface TouchAreaView {
   readonly points: string;
   readonly label: string;
 }
+
+/** Homes and medallions of teams that do not play: faded and grey (SPEC 008 RF-009). */
+export const INACTIVE_CLASS = 'opacity-50 grayscale';
 
 /** The selected piece grows by this much, still inside the width of its plank. */
 const SELECTED_GROWTH = 3;
@@ -277,6 +280,10 @@ export class Board {
   protected readonly medallionShadowRadius = MEDALLION_SHADOW_RADIUS;
   protected readonly medallionRingRadius = MEDALLION_RING_RADIUS;
   protected readonly medallionGlowRadius = MEDALLION_GLOW_RADIUS;
+
+  protected readonly inactiveClass = INACTIVE_CLASS;
+  /** Homes of the teams that do not play (SPEC 008 RF-009). */
+  protected readonly inactive = computed(() => inactiveHomes(this.state()));
 
   /** Home highlighted for the team in turn; none once there is a winner (RF-007). */
   protected readonly homeTurn = computed(() => homeInTurn(this.state()));

@@ -12,7 +12,7 @@ import {
   START_SQUARE,
   TRACK_LENGTH,
 } from '@engine';
-import { Board } from './board';
+import { Board, INACTIVE_CLASS } from './board';
 import {
   goals,
   HOME_PIECE_RADIUS,
@@ -239,6 +239,46 @@ describe('Board', () => {
       expect(all(root, `[data-piece][data-color="${color}"]`), color).toHaveLength(0);
       expect(root.querySelector(`[data-home="${color}"]`), color).not.toBeNull();
     }
+  });
+
+  it('HU-04.1: con amarillo, rojo y verde, la casa y el medallón azules se ven atenuados, vacíos y quietos', async () => {
+    const root = await render(newGame(['yellow', 'red', 'green']));
+    for (const selector of ['[data-home="blue"]', '[data-medallion="blue"]']) {
+      const blue = root.querySelector(selector)!;
+      expect(blue.hasAttribute('data-inactive'), selector).toBe(true);
+      for (const className of INACTIVE_CLASS.split(' ')) {
+        expect(blue.classList.contains(className), `${selector} ${className}`).toBe(true);
+      }
+      expect(blue.hasAttribute('data-turn'), selector).toBe(false);
+      expect(blue.querySelector('[class*="animate-"]'), selector).toBeNull();
+      expect(blue.querySelector('[data-mascot][data-animated]'), selector).toBeNull();
+    }
+    expect(
+      root.querySelector('[data-medallion="blue"] [data-part="medallion-shadow"]'),
+    ).not.toBeNull();
+    expect(all(root, '[data-piece][data-color="blue"]')).toHaveLength(0);
+    expect(
+      all(root, '[data-inactive]').map(
+        (g) => g.getAttribute('data-home') ?? g.getAttribute('data-medallion'),
+      ),
+    ).toEqual(['blue', 'blue']);
+  });
+
+  it('HU-04.1: las casas y medallones de los equipos que juegan no se atenúan', async () => {
+    const root = await render(newGame(['yellow', 'red', 'green']));
+    for (const color of ['yellow', 'red', 'green']) {
+      for (const selector of [`[data-home="${color}"]`, `[data-medallion="${color}"]`]) {
+        const group = root.querySelector(selector)!;
+        expect(group.hasAttribute('data-inactive'), selector).toBe(false);
+        expect(group.classList.contains('grayscale'), selector).toBe(false);
+      }
+    }
+  });
+
+  it('RF-009: con los cuatro equipos ninguna casa ni medallón está atenuado', async () => {
+    const root = await render();
+    expect(all(root, '[data-inactive]')).toHaveLength(0);
+    expect(all(root, '.grayscale')).toHaveLength(0);
   });
 
   it('RF-005: las fichas se pintan encima de la capa de juego', async () => {
