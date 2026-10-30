@@ -1,5 +1,6 @@
 import { expect, Locator, Page, test } from '@playwright/test';
 import { fixDice, roll } from './dice';
+import { startGame, startScreen } from './start';
 
 const SIZES = [
   { width: 320, height: 568 },
@@ -28,6 +29,7 @@ for (const size of SIZES) {
     await page.setViewportSize(size);
     await fixDice(page, TIE);
     await page.goto('/');
+    await startGame(page);
     await roll(page, TIE.length);
     await expect(page.locator('[data-last-play]')).toBeVisible();
 
@@ -45,5 +47,28 @@ for (const size of SIZES) {
       'tablero',
     );
     await expectInside(page, page.locator('jp-dice button'), 'dado');
+  });
+}
+
+for (const size of SIZES) {
+  test(`RNF-004: a ${size.width} × ${size.height} la pantalla de inicio se ve entera sin scroll`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(size);
+    await page.goto('/');
+    const screen = startScreen(page);
+    await expect(screen).toBeVisible();
+
+    const overflow = await page.evaluate(() => ({
+      x: document.documentElement.scrollWidth - window.innerWidth,
+      y: document.documentElement.scrollHeight - window.innerHeight,
+    }));
+    expect(overflow).toEqual({ x: 0, y: 0 });
+    await expectInside(page, screen.locator('[data-box]'), 'caja');
+    for (const team of ['red', 'blue', 'green', 'yellow']) {
+      await expectInside(page, screen.locator(`[data-team="${team}"]`), `tarjeta ${team}`);
+    }
+    await expectInside(page, screen.locator('[data-status]'), 'estado');
+    await expectInside(page, screen.getByRole('button', { name: '¡A jugar!' }), '¡A jugar!');
   });
 }

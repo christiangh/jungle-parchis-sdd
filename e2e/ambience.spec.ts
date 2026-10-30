@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { fixDice, roll } from './dice';
+import { startGame } from './start';
 
 // Softened background and design fonts (HU-01): RF-001, RF-002 and RNF-008.
 
@@ -8,6 +9,7 @@ test('RF-001: con las imágenes del fondo bloqueadas, la página se ve con el co
 }) => {
   await page.route('**/background/**', (route) => route.abort());
   await page.goto('/');
+  await startGame(page);
 
   await expect(page.locator('main')).toHaveCSS('background-color', 'rgb(169, 177, 140)');
 });
@@ -17,6 +19,7 @@ test('RF-002: el cartel se pinta con Caprasimo y la pestaña de última jugada c
 }) => {
   await fixDice(page, [6]);
   await page.goto('/');
+  await startGame(page);
   await roll(page);
 
   await expect(page.locator('[data-title]')).toHaveCSS('font-family', /^Caprasimo,/);
@@ -41,6 +44,7 @@ test('RNF-008: al cargar y en una tirada, todas las peticiones son al mismo orig
 
   await fixDice(page, [6]);
   await page.goto('/');
+  await startGame(page);
   await page.evaluate(() => document.fonts.ready);
   await roll(page);
   await expect(page.locator('[data-last-play]')).toBeVisible();

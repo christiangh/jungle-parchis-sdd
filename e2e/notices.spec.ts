@@ -1,5 +1,6 @@
 import { expect, Locator, Page, test } from '@playwright/test';
 import { fixDice, roll } from './dice';
+import { startGame } from './start';
 
 // Turn banner and last play tab (HU-04, HU-05): RNF-001 and RNF-010, CE-05 and CE-11.
 
@@ -67,6 +68,7 @@ test('RNF-001, CE-05: el texto del cartel y de la pestaña llega a 4,5:1 con los
   // Initial roll without a tie: yellow, blue, red and green roll in turn, and green starts.
   await fixDice(page, [1, 2, 3, 6]);
   await page.goto('/');
+  await startGame(page);
   const banner = page.locator('[data-plank]');
   const tab = page.locator('[data-last-play] [data-tab]');
 
@@ -95,6 +97,7 @@ for (const size of SIZES) {
     // Yellow rolls a short sentence; the other three tie with it.
     await fixDice(page, [6, 6, 6, 6]);
     await page.goto('/');
+    await startGame(page);
     await page.evaluate(() => document.fonts.ready);
     const board = page.locator('[data-board-slot]');
     const lastPlay = page.locator('[data-last-play]');

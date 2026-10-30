@@ -1,5 +1,6 @@
 import { expect, Page, test } from '@playwright/test';
 import { fixDice, roll } from './dice';
+import { startGame } from './start';
 
 // Mascot animations of the pieces at home of the team in turn (HU-03) and of the turn banner
 // (HU-04), and of the home medallions: RF-007, RF-008, RF-014, RNF-002, CE-07.
@@ -49,12 +50,14 @@ function bannerAnimations(page: Page): Promise<number> {
 
 test('RF-008, CE-07: la mascota del cartel se anima', async ({ page }) => {
   await page.goto('/');
+  await startGame(page);
 
   await expect.poll(() => bannerAnimations(page)).toBeGreaterThan(0);
 });
 
 test('RF-007: al empezar, solo se animan las fichas en casa amarillas', async ({ page }) => {
   await page.goto('/');
+  await startGame(page);
 
   await expect(homeInTurn(page)).toHaveAttribute('data-home', 'yellow');
   await expect
@@ -67,6 +70,7 @@ test('RF-007: al pasar el turno, solo se animan las fichas en casa del nuevo equ
 }) => {
   await fixDice(page, [3]);
   await page.goto('/');
+  await startGame(page);
   await roll(page);
 
   await expect(homeInTurn(page)).toHaveAttribute('data-home', 'blue');
@@ -78,6 +82,7 @@ test('RF-014, CE-07: solo se anima el medallón del equipo en turno, al empezar 
 }) => {
   await fixDice(page, [3]);
   await page.goto('/');
+  await startGame(page);
 
   await expect.poll(() => animatedMedallions(page)).toEqual(['yellow']);
   await roll(page);
@@ -93,6 +98,7 @@ test.describe('con movimiento reducido', () => {
     // Initial roll: green wins with a 6 and starts.
     await fixDice(page, [1, 2, 3, 6]);
     await page.goto('/');
+    await startGame(page);
     await roll(page, 4);
 
     await expect(homeInTurn(page)).toHaveAttribute('data-home', 'green');
@@ -109,6 +115,7 @@ test.describe('con movimiento reducido', () => {
     page,
   }) => {
     await page.goto('/');
+    await startGame(page);
 
     const medallion = page.locator('[data-medallion][data-turn]');
     await expect(medallion).toHaveAttribute('data-medallion', 'yellow');
@@ -119,6 +126,7 @@ test.describe('con movimiento reducido', () => {
 
   test('RNF-002, CE-07: la mascota del cartel no se anima', async ({ page }) => {
     await page.goto('/');
+    await startGame(page);
 
     await expect(page.locator('[data-plank] [data-mascot]')).toBeVisible();
     expect(await bannerAnimations(page)).toBe(0);

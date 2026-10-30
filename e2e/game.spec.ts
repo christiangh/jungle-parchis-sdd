@@ -1,5 +1,6 @@
 import { expect, Page, test } from '@playwright/test';
 import { dice, fixDice, roll } from './dice';
+import { startGame } from './start';
 
 // Roll sequences checked with the engine: each roll before the last one has at most one legal move.
 
@@ -70,6 +71,7 @@ test('RF-013: tirada inicial con empate, salir con un 5, cambiar, cancelar y con
 }) => {
   await fixDice(page, MOVE);
   await page.goto('/');
+  await startGame(page);
   await expect(banner(page)).toHaveAttribute('data-color', 'yellow');
   await expect(turn(page)).toHaveText('Tirada inicial, turno de Amarillo.');
   await expect(action(page)).toHaveText('Toca el dado');
@@ -124,6 +126,7 @@ test('RF-013: tirada inicial con empate, salir con un 5, cambiar, cancelar y con
 test('RF-013: comer, no poder tirar con el +20 pendiente y usarlo', async ({ page }) => {
   await fixDice(page, CAPTURE);
   await page.goto('/');
+  await startGame(page);
 
   await play(page, CAPTURE.slice(0, -1));
   await roll(page);
@@ -149,6 +152,7 @@ test('RF-013: comer, no poder tirar con el +20 pendiente y usarlo', async ({ pag
 test('RF-013: tirada perdida, repetir con un 6 y tres seises', async ({ page }) => {
   await fixDice(page, SIXES);
   await page.goto('/');
+  await startGame(page);
 
   await roll(page, 5);
   await expect(lastPlay(page)).toHaveText('Saca 4 y pierde la tirada.');
@@ -176,4 +180,34 @@ test('RF-013: tirada perdida, repetir con un 6 y tres seises', async ({ page }) 
   expect(piece.y).toBeGreaterThanOrEqual(home.y);
   expect(piece.x + piece.width).toBeLessThanOrEqual(home.x + home.width);
   expect(piece.y + piece.height).toBeLessThanOrEqual(home.y + home.height);
+});
+
+test('HU-03.3, HU-04.1: partida de amarillo y verde, con las casas azul y roja atenuadas', async ({
+  page,
+}) => {
+  // Yellow wins the initial roll with a 4 and starts.
+  await fixDice(page, [4, 2]);
+  await page.goto('/');
+  await startGame(page, ['yellow', 'green']);
+
+  await expect(page.locator('[data-piece]')).toHaveCount(8);
+  for (const color of ['blue', 'red']) {
+    for (const selector of [`[data-home="${color}"]`, `[data-medallion="${color}"]`]) {
+      const inactive = page.locator(selector);
+      await expect(inactive, selector).toHaveAttribute('data-inactive');
+      await expect(inactive, selector).toHaveCSS('opacity', '0.5');
+      await expect(inactive, selector).toHaveCSS('filter', 'grayscale(1)');
+    }
+  }
+  for (const color of ['yellow', 'green']) {
+    await expect(page.locator(`[data-home="${color}"]`)).not.toHaveAttribute('data-inactive');
+  }
+
+  await expect(turn(page)).toHaveText('Tirada inicial, turno de Amarillo.');
+  await roll(page);
+  await expect(turn(page)).toHaveText('Tirada inicial, turno de Verde.');
+  await roll(page);
+  await expect(banner(page)).toHaveAttribute('data-color', 'yellow');
+  await expect(turn(page)).toHaveText('Turno de Amarillo.');
+  await expect(lastPlay(page)).toHaveText('Saca 2.');
 });
