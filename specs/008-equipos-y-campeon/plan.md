@@ -90,7 +90,7 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 
 ## PARTE-02: Pantalla de inicio y partidas de 2 y 3 equipos
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
