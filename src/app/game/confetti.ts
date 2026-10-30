@@ -1,3 +1,4 @@
+import { Component, computed, input } from '@angular/core';
 import { Color } from '@engine';
 
 /** One piece of confetti falling over the champion screen (RF-001). */
@@ -57,4 +58,29 @@ export function confettiPieces(color: Color): readonly ConfettiPiece[] {
     const round = next() < 0.3;
     return { left, width, height, round, color: colors[i % colors.length], duration, delay };
   });
+}
+
+/** Winner's confetti falling over the whole screen; decorative and never in the way of a touch. */
+@Component({
+  selector: 'jp-confetti',
+  template: `
+    @for (piece of pieces(); track $index) {
+      <span
+        class="absolute top-[-6%] motion-safe:animate-confetti-fall"
+        [class]="[piece.color, piece.round ? 'rounded-full' : 'rounded-xs']"
+        [style.left.%]="piece.left"
+        [style.width.px]="piece.width"
+        [style.height.px]="piece.height"
+        [style.animation-duration.s]="piece.duration"
+        [style.animation-delay.s]="piece.delay"
+        data-piece
+      ></span>
+    }
+  `,
+  host: { class: 'pointer-events-none absolute inset-0 overflow-hidden', 'aria-hidden': 'true' },
+})
+export class Confetti {
+  readonly color = input.required<Color>();
+
+  protected readonly pieces = computed(() => confettiPieces(this.color()));
 }
