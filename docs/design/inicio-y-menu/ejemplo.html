@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inicio y menú · Parchís de la Jungla</title>
+<link rel="stylesheet" href="inicio-menu.css">
+<script src="../mascotas/componentes/fichas-animales.js"></script>
+<script src="inicio-menu.js"></script>
+<style>
+  body { margin: 0; min-height: 100vh; background: #a9b18c; font-family: "Figtree", system-ui, sans-serif; display: grid; place-items: center; }
+  .tablero-falso { width: min(90vw, 480px); aspect-ratio: 1; border-radius: 24px; background: #5d8b36; display: grid; place-items: center; color: #fff; font-size: 18px; box-shadow: 0 12px 32px rgba(0,0,0,.25); text-align: center; padding: 20px; box-sizing: border-box; }
+</style>
+</head>
+<body>
+  <div class="tablero-falso" id="tablero">Aquí va el tablero</div>
+<script>
+  const tablero = document.getElementById('tablero');
+  const empezar = (equipos) => { tablero.textContent = 'Partida con: ' + equipos.join(', '); };
+  crearMenu({
+    alNuevaPartida: () => mostrarInicio({ alJugar: empezar }),
+    alConfiguracion: () => alert('Configuración (pendiente de diseño)')
+  });
+  mostrarInicio({ alJugar: empezar });
+</script>
+</body>
+</html>
