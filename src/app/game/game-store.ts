@@ -104,6 +104,11 @@ export class GameStore {
     setTimeout(apply, DICE_SPIN_MS);
   }
 
+  /** Starts another game with the same teams, from the initial roll (SPEC 008 RF-002). */
+  restart(): void {
+    // Skeleton: implemented in the next step.
+  }
+
   /** Applies an action; a rejected one changes nothing (RF-022). */
   private apply(action: Action): boolean {
     const result = applyAction(this.state$(), action);

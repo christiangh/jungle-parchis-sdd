@@ -305,6 +305,47 @@ describe('GameStore', () => {
       vi.advanceTimersByTime(DICE_SPIN_MS);
       expect(store.selected()).toBeNull();
     });
+
+    it('RF-002: reiniciar empieza otra partida de los mismos equipos desde la tirada inicial', () => {
+      const store = storeWith(...EXIT, 4);
+      play(store, EXIT);
+      store.select('blue-0');
+
+      store.restart();
+
+      const game = createGame({ players: COLORS });
+      expect(game.ok).toBe(true);
+      expect(store.state()).toEqual((game as { value: GameState }).value);
+      expect(store.state().turn).toBe('yellow');
+      expect(store.state().initialRoll?.rolls).toEqual([]);
+      expect(store.legalMoves()).toEqual([]);
+    });
+
+    it('RF-002: reiniciar borra la última jugada, la selección y la cara del dado', () => {
+      const store = storeWith(...EXIT, 4);
+      play(store, EXIT);
+      store.select('blue-0');
+
+      store.restart();
+
+      expect(store.lastEvents()).toEqual([]);
+      expect(store.lastPlayer()).toBeNull();
+      expect(store.selected()).toBeNull();
+      expect(store.face()).toBe(INITIAL_FACE);
+      expect(store.rolling()).toBe(false);
+    });
+
+    it('RF-002: tras reiniciar el dado responde y la tirada es de Amarillo en la partida nueva', () => {
+      const store = storeWith(...EXIT, 4);
+      play(store, EXIT);
+
+      store.restart();
+      expect(store.canRoll()).toBe(true);
+
+      rollTimes(store, 1);
+      expect(store.lastEvents()).toEqual([{ type: 'initial-roll', player: 'yellow', value: 4 }]);
+      expect(store.state().initialRoll?.rolls).toEqual([4]);
+    });
   });
 
   it('RF-011: el último jugador empieza en null y pasa al de cada acción aceptada', () => {
