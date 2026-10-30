@@ -24,8 +24,8 @@ export function waitsForRoll(state: GameState): boolean {
   return state.winner === null && state.pendingRoll === null && state.pendingBonus === null;
 }
 
-function newGame(): GameState {
-  const game = createGame({ players: COLORS });
+function newGame(players: readonly Color[] = COLORS): GameState {
+  const game = createGame({ players });
   if (!game.ok) {
     throw new Error(game.error);
   }
@@ -106,7 +106,12 @@ export class GameStore {
 
   /** Starts another game with the same teams, from the initial roll (SPEC 008 RF-002). */
   restart(): void {
-    // Skeleton: implemented in the next step.
+    this.state$.set(newGame(this.state$().players));
+    this.lastEvents$.set([]);
+    this.lastPlayer$.set(null);
+    this.face$.set(INITIAL_FACE);
+    this.rolling$.set(false);
+    this.selected$.set(null);
   }
 
   /** Applies an action; a rejected one changes nothing (RF-022). */
