@@ -152,6 +152,11 @@
   :host([data-animated]) .spark {
     animation: frog-spark 3s ease-out infinite;
   }
+
+  /* With `once`, a single loop; it ends on its last frame, which is the still mascot. */
+  :host([data-animated][data-once]) * {
+    animation-iteration-count: 1;
+  }
 }
 
 @keyframes jaguar-tilt {

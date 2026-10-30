@@ -69,7 +69,8 @@ let nextId = 0;
 /**
  * Mascot of a team, drawn inside an SVG and clipped to a circle of `radius` centred on the origin.
  * Decorative: the piece or the text next to it says what it is. With `animated`, it plays its
- * loop only when the system allows motion (RF-004, RNF-002, RNF-003).
+ * loop only when the system allows motion (RF-004, RNF-002, RNF-003), forever or, with `once`, a
+ * single time (SPEC 008 RF-006).
  */
 @Component({
   selector: 'g[jp-mascot]',
@@ -79,12 +80,15 @@ let nextId = 0;
     'aria-hidden': 'true',
     '[attr.data-mascot]': 'animal()',
     '[attr.data-animated]': 'animated() || null',
+    '[attr.data-once]': 'once() || null',
   },
 })
 export class Mascot {
   readonly color = input.required<Color>();
   readonly radius = input.required<number>();
   readonly animated = input(false);
+  /** With `animated`, plays its loop a single time instead of forever (SPEC 008 RF-006). */
+  readonly once = input(false);
 
   protected readonly animal = computed(() => MASCOTS[this.color()]);
   protected readonly transform = computed(
