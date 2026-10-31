@@ -242,7 +242,7 @@ Hueco del engranaje (decisión del usuario): siempre arriba a la derecha. En ver
   - en `screen.spec.ts`, el engranaje queda dentro de la ventana y su caja no se cruza con el cartel, el hueco de la pestaña, el tablero ni el dado, en las cuatro ventanas.
 
   Cubre CE-05, CE-06 y RNF-004.
-- [ ] 6. Revisión manual en navegador del engranaje, el menú y la confirmación a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080, con y sin movimiento reducido, manejándolos con el teclado y frente a la captura del diseño. Revisa el contraste de textos e iconos, el contorno de foco, el deslizamiento y el hueco del engranaje. El resultado se registra en «Decisiones técnicas» (RNF-001, RNF-002, RNF-003, RNF-004).
+- [x] 6. Revisión manual en navegador del engranaje, el menú y la confirmación a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080, con y sin movimiento reducido, manejándolos con el teclado y frente a la captura del diseño. Revisa el contraste de textos e iconos, el contorno de foco, el deslizamiento y el hueco del engranaje. El resultado se registra en «Decisiones técnicas» (RNF-001, RNF-002, RNF-003, RNF-004).
 
 ### Pruebas y trazabilidad
 
@@ -287,3 +287,17 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** «Configuración» y la sección «Pronto» del diseño no se pintan (RF-010). El pie «Parchís de la Jungla» sí, porque es parte del panel.
 - **Sí:** en vertical, la cabecera es una rejilla `1fr auto minmax(60px, 1fr)`: centrada mientras cabe y, si no, con el hueco del engranaje a la derecha. Medido a 320 × 568, el cartel ocupa de 8 a 252 px y el engranaje de 260 a 308, con la misma altura. La pestaña, más estrecha, ocupa una línea más, y el tablero baja 9 px (de 197 a 206) sin perder tamaño ni hacer scroll. A 568 × 320 el tablero mide 263 px y acaba a 8 px del engranaje. A 768 × 1024 el cartel se desplaza 16 px a la izquierda; a 1920 × 1080 no cambia.
 - **Sí:** al abrir, el panel pasa a visible sin transición de `visibility` y solo anima el deslizamiento; al cerrar, la transición incluye `visibility`, para que se vea mientras sale. Lo encontró la prueba en navegador del paso 5: con `visibility` en la transición, el panel sigue oculto en el instante de darle el foco y «Cerrar» no lo recibe. jsdom no aplica CSS, así que el test unitario no podía verlo.
+- **Revisión manual (paso 6):** script de Playwright en el directorio temporal de la sesión contra `ng serve` de producción, a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080, con y sin movimiento reducido, manejando el menú con el teclado.
+  - Bien a la primera:
+    - El engranaje se alcanza con dos tabulaciones, tras el dado, con contorno de foco de 2 px.
+    - El foco va a «Cerrar» al abrir, a «Seguir jugando» al confirmar y vuelve al engranaje al cerrar.
+    - El panel se desliza en 0,28 s y, con movimiento reducido, sin transición.
+    - La capa es `rgb(18 14 8 / 0.55)`, como en el diseño.
+    - Contraste sobre el panel o la fila:
+      - título y texto de la confirmación 13,95:1, opción y «Seguir jugando» 12,4:1, pie 5,53:1 y «Descartar partida» 5,72:1;
+      - tinta del engranaje sobre la madera, al menos 5,72:1;
+      - flecha 3,21:1, icono blanco sobre el acento 3,61:1 y contorno de foco 13,95:1.
+  - Corregido:
+    - **Sí:** con el menú abierto, el tabulador salía del panel y llegaba al engranaje, tapado por la capa (WCAG 2.4.11). El engranaje queda `inert` mientras el menú está abierto, y al cerrar el foco vuelve a él después de pintar, cuando ya no es inerte. Test nuevo en `menu.spec.ts`, visto fallar antes.
+    - **Sí:** el pie «Parchís de la Jungla» estaba centrado; en el diseño va alineado a la izquierda con el título.
+    - **Sí:** a 568 × 320 la confirmación desbordaba el panel en 49 px y el pie quedaba fuera. En horizontal bajo, el margen superior del panel pasa de 56 a 20 px, el inferior de 24 a 16 y el del pie de 24 a 12; ahora cabe sin scroll (320 de 320).
