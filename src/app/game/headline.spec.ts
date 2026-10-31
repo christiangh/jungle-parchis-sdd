@@ -1,6 +1,6 @@
 import { COLORS, createGame, GameState } from '@engine';
 import { COLOR_NAMES } from '../shared/color-names';
-import { headline } from './headline';
+import { headline, LONGEST_ACTION } from './headline';
 
 function newGame(): GameState {
   const game = createGame({ players: COLORS });
@@ -14,15 +14,15 @@ function newGame(): GameState {
 const PLAYING: GameState = { ...newGame(), initialRoll: null, turn: 'red' };
 
 describe('headline', () => {
-  it('RF-009: en la tirada inicial pide tirar, en el color de quien tira', () => {
+  it('RF-013: en la tirada inicial pide la tirada inicial, en el color de quien tira', () => {
     expect(headline(newGame())).toEqual({
       color: 'yellow',
-      action: 'Toca el dado',
-      turn: 'Tirada inicial, turno de Amarillo.',
+      action: 'Tirada inicial: Toca el dado',
+      turn: 'Turno de Amarillo.',
     });
   });
 
-  it('RF-009: en un desempate pide tirar a quien le toca', () => {
+  it('HU-06.1, RF-013: en un desempate pide la tirada inicial a quien le toca', () => {
     const tie: GameState = {
       ...newGame(),
       turn: 'red',
@@ -30,8 +30,8 @@ describe('headline', () => {
     };
     expect(headline(tie)).toEqual({
       color: 'red',
-      action: 'Toca el dado',
-      turn: 'Tirada inicial, turno de Rojo.',
+      action: 'Tirada inicial: Toca el dado',
+      turn: 'Turno de Rojo.',
     });
   });
 
@@ -73,6 +73,20 @@ describe('headline', () => {
       expect(headline({ ...PLAYING, turn: color }).turn, color).toBe(
         `Turno de ${COLOR_NAMES[color]}.`,
       );
+    }
+  });
+
+  it('RF-013: LONGEST_ACTION es la acción más larga del cartel', () => {
+    const actions = [
+      headline(newGame()),
+      headline(PLAYING),
+      headline({ ...PLAYING, pendingRoll: 4 }),
+      headline({ ...PLAYING, pendingBonus: 20 }),
+      ...COLORS.map((color) => headline({ ...PLAYING, winner: color })),
+    ].map(({ action }) => action);
+    expect(actions).toContain(LONGEST_ACTION);
+    for (const action of actions) {
+      expect(LONGEST_ACTION.length, action).toBeGreaterThanOrEqual(action.length);
     }
   });
 

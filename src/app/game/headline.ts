@@ -13,6 +13,9 @@ export interface Headline {
 const ROLL = 'Toca el dado';
 const CHOOSE_PIECE = 'Elige una ficha';
 
+/** Longest action the banner can show, used to reserve its space (SPEC 008 RF-013). */
+export const LONGEST_ACTION = '';
+
 /** Banner text, derived only from the engine state (RF-009, RF-010, RNF-007). */
 export function headline(state: GameState): Headline {
   if (state.winner !== null) {

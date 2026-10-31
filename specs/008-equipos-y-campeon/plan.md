@@ -349,7 +349,7 @@ En `App`:
 
 ### Pasos
 
-- [ ] 1. Tests de `headline`, con un esqueleto que compila y los hace fallar. Comprueban:
+- [x] 1. Tests de `headline`, con un esqueleto que compila y los hace fallar. Comprueban:
   - en la tirada inicial y en un desempate, la acción es «Tirada inicial: Toca el dado», en el color de quien tira;
   - el turno es «Turno de Rojo.»;
   - `LONGEST_ACTION` es la acción más larga.
