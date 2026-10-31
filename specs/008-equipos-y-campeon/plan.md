@@ -209,7 +209,7 @@ Hueco del engranaje (decisión del usuario): siempre arriba a la derecha. En ver
 
 ### Pasos
 
-- [ ] 1. Tokens del menú en `src/styles.css`, con los colores del diseño y reutilizando los existentes. La búsqueda de hexadecimales en `src/app/` no da resultados (RNF-007).
+- [x] 1. Tokens del menú en `src/styles.css`, con los colores del diseño y reutilizando los existentes. La búsqueda de hexadecimales en `src/app/` no da resultados (RNF-007).
 - [ ] 2. Tests de `Menu` en `menu.spec.ts`, con un esqueleto que solo pinta el engranaje y los hace fallar. Comprueban:
   - el engranaje con nombre «Menú» y `aria-expanded="false"`;
   - al tocarlo, se abre el diálogo modal «Menú», `open` pasa a verdadero, `aria-expanded="true"` y el foco va a cerrar;

@@ -158,6 +158,23 @@
   --color-start-button: #8c491a;
   --color-start-button-hover: var(--color-wood-edge);
 
+  /*
+   * Gear and side menu (docs/design/inicio-y-menu, SPEC 008 RF-010): natural wood gear like the
+   * champion button, and a cream panel with the start screen's colours and its own lighter overlay.
+   */
+  --color-menu-overlay: rgb(18 14 8 / 0.55);
+  --color-menu-gear: var(--color-champion-button);
+  --color-menu-gear-hover: var(--color-champion-button-hover);
+  --color-menu-gear-edge: var(--color-champion-button-edge);
+  --color-menu-gear-ink: var(--color-ink);
+  --color-menu-panel: var(--color-start-box);
+  --color-menu-text: var(--color-start-text);
+  --color-menu-row: var(--color-start-card-off);
+  --color-menu-row-hover: #fff2eb;
+  --color-menu-icon: var(--color-champion-focus);
+  --color-menu-chevron: var(--color-start-plus);
+  --color-menu-footer: var(--color-start-muted);
+
   /* Trophy of the champion screen. */
   --color-trophy-ink: var(--color-mascot-ink);
   --color-trophy-handle: var(--color-team-yellow);
