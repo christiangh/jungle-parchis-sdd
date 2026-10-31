@@ -236,7 +236,7 @@ Hueco del engranaje (decisión del usuario): siempre arriba a la derecha. En ver
   - abrir el menú con el dado girando aplica la tirada igual.
 
   Cubre HU-05.3, HU-05.4, HU-05.5, RF-008, RF-010, RF-011 y RF-012.
-- [ ] 5. Pruebas en navegador:
+- [x] 5. Pruebas en navegador:
   - ayudantes en `e2e/menu.ts`;
   - `e2e/menu.spec.ts` configura una partida de amarillo y verde y hace unas tiradas. Abre el menú, comprueba que solo tiene «Nueva partida» y lo cierra con Escape, con el foco en el engranaje. Pide «Nueva partida», sigue jugando y comprueba que el cartel y las fichas siguen igual. Luego descarta y comprueba que la pantalla de inicio tiene solo amarillo y verde activados. Empieza otra partida y comprueba que vuelve a la tirada inicial de amarillo;
   - en `screen.spec.ts`, el engranaje queda dentro de la ventana y su caja no se cruza con el cartel, el hueco de la pestaña, el tablero ni el dado, en las cuatro ventanas.
@@ -286,3 +286,4 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** el host de `Menu` corta la propagación de los clics, para que abrir, usar o cerrar el menú no cancele la selección de ficha.
 - **Sí:** «Configuración» y la sección «Pronto» del diseño no se pintan (RF-010). El pie «Parchís de la Jungla» sí, porque es parte del panel.
 - **Sí:** en vertical, la cabecera es una rejilla `1fr auto minmax(60px, 1fr)`: centrada mientras cabe y, si no, con el hueco del engranaje a la derecha. Medido a 320 × 568, el cartel ocupa de 8 a 252 px y el engranaje de 260 a 308, con la misma altura. La pestaña, más estrecha, ocupa una línea más, y el tablero baja 9 px (de 197 a 206) sin perder tamaño ni hacer scroll. A 568 × 320 el tablero mide 263 px y acaba a 8 px del engranaje. A 768 × 1024 el cartel se desplaza 16 px a la izquierda; a 1920 × 1080 no cambia.
+- **Sí:** al abrir, el panel pasa a visible sin transición de `visibility` y solo anima el deslizamiento; al cerrar, la transición incluye `visibility`, para que se vea mientras sale. Lo encontró la prueba en navegador del paso 5: con `visibility` en la transición, el panel sigue oculto en el instante de darle el foco y «Cerrar» no lo recibe. jsdom no aplica CSS, así que el test unitario no podía verlo.

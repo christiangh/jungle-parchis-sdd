@@ -22,6 +22,17 @@ async function expectInside(page: Page, locator: Locator, name: string): Promise
   expect(box.y + box.height, name).toBeLessThanOrEqual(height);
 }
 
+/** Checks that the boxes of `a` and `b` do not cross. */
+async function expectApart(a: Locator, b: Locator, name: string): Promise<void> {
+  const [first, second] = [(await a.boundingBox())!, (await b.boundingBox())!];
+  const crosses =
+    first.x < second.x + second.width &&
+    second.x < first.x + first.width &&
+    first.y < second.y + second.height &&
+    second.y < first.y + first.height;
+  expect(crosses, name).toBe(false);
+}
+
 for (const size of SIZES) {
   test(`CE-08: a ${size.width} × ${size.height} la pantalla se ve entera sin scroll`, async ({
     page,
@@ -47,6 +58,22 @@ for (const size of SIZES) {
       'tablero',
     );
     await expectInside(page, page.locator('jp-dice button'), 'dado');
+
+    // RNF-004: the gear fits too, apart from everything else on the screen.
+    const gear = page.getByRole('button', { name: 'Menú' });
+    await expectInside(page, gear, 'engranaje');
+    await expectApart(gear, page.locator('[data-plank]'), 'engranaje y cartel');
+    await expectApart(
+      gear,
+      page.locator('[data-last-play-slot]'),
+      'engranaje y hueco de la pestaña',
+    );
+    await expectApart(
+      gear,
+      page.getByRole('img', { name: 'Tablero de parchís de la jungla' }),
+      'engranaje y tablero',
+    );
+    await expectApart(gear, page.locator('jp-dice button'), 'engranaje y dado');
   });
 }
 
