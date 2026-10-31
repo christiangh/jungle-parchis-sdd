@@ -183,3 +183,105 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** la salida de `Start` se llama `startGame` y no `play`, porque `play` es un evento del DOM y la regla `@angular-eslint/no-output-native` lo prohíbe.
 - **Sí:** el nombre de las tarjetas desactivadas va en `n700` de la paleta del diseño (#645c50, 4,92:1 sobre la tarjeta), el mismo tono que el estado, en lugar de `n600` (#82796a, 3,21:1), que no llega a 4,5:1 en Caprasimo de 20 px. El «+» sigue en `n600`, que como icono necesita 3:1.
 - **Revisión manual (paso 12):** script de Playwright contra `ng serve` de producción, a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080, con y sin movimiento reducido, manejando la pantalla con el teclado (tabulador, espacio y Enter). En las 32 capturas la caja cabe entera; en 568 × 320 se pone en fila, con las tarjetas a la derecha. El foco empieza en la tarjeta roja y su contorno se ve. Al activar un equipo, su mascota arranca sus animaciones y a los 4 s ya no queda ninguna en marcha; con movimiento reducido no arranca ninguna. Con un equipo, el estado dice «Elige al menos 2 equipos» y el botón está desactivado. Los textos tienen al menos 4,5:1 (nombres de tarjetas desactivadas 4,92:1; «¡A jugar!» 5,72:1; nombres activados, blancos con contorno de tinta como el cartel), y el botón desactivado, a la opacidad del diseño, queda exento como control inactivo. En la partida de amarillo y verde, las casas y los medallones rojo y azul se ven atenuados y en gris, también en el SVG. Frente al diseño cambian solo la placa redonda de la mascota y la capa, la de la pantalla de campeón, que deja ver la partida, como ya se decidió.
+
+## PARTE-03: Menú y nueva partida durante el juego
+
+**Estado:** Pendiente
+
+### Enfoque
+
+Un componente nuevo, `Menu` (`src/app/menu/menu.ts`), reconstruye el engranaje y el panel lateral de `docs/design/inicio-y-menu` con la paleta de la aplicación. El engranaje es un botón redondo de madera de 48 × 48 px, fijo arriba a la derecha, con `aria-label="Menú"`, `aria-haspopup="dialog"` y `aria-expanded`. El panel entra desde la derecha. Tiene el título «Menú», el botón de cerrar, una sola fila «Nueva partida» con el icono de reiniciar y la flecha, y el pie «Parchís de la Jungla». Detrás queda una capa oscura. El panel es un diálogo modal propio (`role="dialog"`, `aria-modal="true"`, nombre «Menú»), como las pantallas de inicio y campeón. Al abrirse, el foco pasa a cerrar. Escape, tocar la capa y cerrar lo cierran y devuelven el foco al engranaje. El panel está siempre en el DOM y se oculta con `invisible` y desplazado, para que se deslice al abrir y al cerrar. Con movimiento reducido no hay transición (`motion-safe:`).
+
+«Nueva partida» no sale del panel: su contenido pasa a la confirmación, con el estilo del menú. Muestra el título «¿Empezar otra partida?», el texto «Se perderá la partida en curso.» y dos botones, «Descartar partida» y «Seguir jugando». El foco va a «Seguir jugando», la opción que no pierde nada. Las dos opciones cierran el menú. «Seguir jugando», al igual que Escape, cierra y devuelve el foco al engranaje sin emitir nada. «Descartar partida» cierra y emite `newGame`. Al volver a abrir el menú, se ve otra vez la lista. Siempre se pide confirmación, porque el engranaje solo se puede usar con una partida en curso: en la pantalla de inicio no se pinta y, con ganador, la pantalla de campeón lo tapa y lo deja `inert` (RF-012).
+
+El estado abierto o cerrado vive en `Menu` como `model()` `open`. `App` lo enlaza para añadirlo a `covered()`, así `<main>` queda `inert` con el menú abierto (RF-011). `Menu` se pinta fuera de `<main>` solo en la pantalla de partida. `newGame` llama a `chooseTeams()` del almacén, que ya conserva los equipos de la partida (RF-008). El almacén no cambia. El host de `Menu` corta la propagación de los clics, para que tocar el engranaje, el panel o la capa no llegue al host de `App`, que cancela la selección. Así, al seguir jugando, la selección, la réplica y los resaltados siguen igual (HU-05.5). Si el dado está girando, la tirada se aplica igual detrás del menú.
+
+Hueco del engranaje (decisión del usuario): siempre arriba a la derecha. En vertical, la cabecera deja a la derecha un margen del ancho del engranaje más su separación. A 320 px el cartel pasa de 304 a unos 248 px de ancho y deja de estar centrado cuando no cabe. En horizontal bajo (`[@media(orientation:landscape)_and_(max-height:480px)]:`, la misma variante de siempre), el hueco del tablero reserva ese margen. A 568 × 320 el tablero pasa de 304 a unos 256 px. Ninguna de las dos añade altura.
+
+### Archivos
+
+- `src/styles.css`: tokens del menú (`--color-menu-*`). La mayoría son alias de los de la pantalla de inicio (panel, superficie de las filas, textos, flecha) y de la de campeón (madera, borde y hover del engranaje, acento del icono y del foco). Solo es nuevo el hover de las filas, `accent-100` del diseño.
+- `src/app/menu/menu.ts`, `menu.html`, `menu.spec.ts` (nuevos): engranaje, capa, panel y confirmación, con `open` (`model`) y la salida `newGame`.
+- `src/app/app.ts`, `app.html`, `app.spec.ts`: pinta `Menu` en la pantalla de partida, `inert` con ganador, `covered()` con el menú abierto, `chooseTeams()` al descartar y hueco del engranaje en la cabecera y en el hueco del tablero.
+- `e2e/menu.ts` (nuevo): ayudantes `openMenu(page)` y `menuPanel(page)`.
+- `e2e/menu.spec.ts` (nuevo): CE-05.
+- `e2e/screen.spec.ts`: engranaje dentro de la ventana y sin tocar el cartel, la pestaña, el tablero ni el dado.
+
+### Pasos
+
+- [ ] 1. Tokens del menú en `src/styles.css`, con los colores del diseño y reutilizando los existentes. La búsqueda de hexadecimales en `src/app/` no da resultados (RNF-007).
+- [ ] 2. Tests de `Menu` en `menu.spec.ts`, con un esqueleto que solo pinta el engranaje y los hace fallar. Comprueban:
+  - el engranaje con nombre «Menú» y `aria-expanded="false"`;
+  - al tocarlo, se abre el diálogo modal «Menú», `open` pasa a verdadero, `aria-expanded="true"` y el foco va a cerrar;
+  - la única opción es «Nueva partida»;
+  - Escape, tocar la capa y cerrar lo cierran y devuelven el foco al engranaje;
+  - «Nueva partida» muestra la confirmación con «Descartar partida» y «Seguir jugando», y el foco en «Seguir jugando»;
+  - «Seguir jugando» y Escape cierran sin emitir `newGame`;
+  - «Descartar partida» emite `newGame` una vez y cierra;
+  - al reabrir se ve la lista;
+  - los clics dentro no se propagan;
+  - con movimiento reducido no hay transición;
+  - los controles miden al menos 24 × 24 px.
+
+  Cubre HU-05.1, HU-05.2, HU-05.3, RF-010, RF-011, RF-012, RNF-001, RNF-002 y RNF-005.
+- [ ] 3. `Menu`, hasta que pasen los tests del paso 2.
+- [ ] 4. Menú en `App` y hueco del engranaje, con sus tests en `app.spec.ts`:
+  - en la pantalla de partida hay engranaje, fuera de `<main>`; en la de inicio, no;
+  - con ganador, el menú es `inert`;
+  - con el menú abierto, `<main>` es `inert`;
+  - en una partida de amarillo y verde, «Nueva partida» y «Descartar partida» llevan a la pantalla de inicio con solo esos dos equipos activados.
+
+  Con el almacén real:
+  - con una ficha seleccionada, abrir el menú, pedir «Nueva partida» y «Seguir jugando», o tocar la capa, deja el estado, la selección y la réplica igual;
+  - abrir el menú con el dado girando aplica la tirada igual.
+
+  Cubre HU-05.3, HU-05.4, HU-05.5, RF-008, RF-010, RF-011 y RF-012.
+- [ ] 5. Pruebas en navegador:
+  - ayudantes en `e2e/menu.ts`;
+  - `e2e/menu.spec.ts` configura una partida de amarillo y verde y hace unas tiradas. Abre el menú, comprueba que solo tiene «Nueva partida» y lo cierra con Escape, con el foco en el engranaje. Pide «Nueva partida», sigue jugando y comprueba que el cartel y las fichas siguen igual. Luego descarta y comprueba que la pantalla de inicio tiene solo amarillo y verde activados. Empieza otra partida y comprueba que vuelve a la tirada inicial de amarillo;
+  - en `screen.spec.ts`, el engranaje queda dentro de la ventana y su caja no se cruza con el cartel, el hueco de la pestaña, el tablero ni el dado, en las cuatro ventanas.
+
+  Cubre CE-05, CE-06 y RNF-004.
+- [ ] 6. Revisión manual en navegador del engranaje, el menú y la confirmación a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080, con y sin movimiento reducido, manejándolos con el teclado y frente a la captura del diseño. Revisa el contraste de textos e iconos, el contorno de foco, el deslizamiento y el hueco del engranaje. El resultado se registra en «Decisiones técnicas» (RNF-001, RNF-002, RNF-003, RNF-004).
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+| --- | --- | --- |
+| HU-05.1 (el engranaje abre el menú con solo «Nueva partida») | 2, 3, 5 | `menu.spec.ts`: diálogo «Menú» con una sola opción; `e2e/menu.spec.ts` |
+| HU-05.2 (Escape, fuera y cerrar lo cierran; foco al engranaje) | 2, 3, 5 | `menu.spec.ts`: las tres formas y `document.activeElement`; `e2e/menu.spec.ts`: Escape |
+| HU-05.3 (confirmación con partida en curso) | 2, 3, 4 | `menu.spec.ts`: confirmación con sus dos opciones; `app.spec.ts`: sin descartar, la partida sigue |
+| HU-05.4 (confirmar lleva a inicio con los equipos descartados) | 4, 5 | `app.spec.ts`: amarillo y verde activados; `e2e/menu.spec.ts` |
+| HU-05.5 (cancelar devuelve la partida igual, selección incluida) | 2, 3, 4, 5 | `menu.spec.ts`: no emite y no se propagan los clics; `app.spec.ts` con el almacén real; `e2e/menu.spec.ts`: cartel y fichas iguales |
+| RF-010 | 1, 2, 3, 4 | Ver HU-05.1; `app.spec.ts`: engranaje solo en la pantalla de partida |
+| RF-011 | 2, 3, 4 | Ver HU-05.2; `app.spec.ts`: `<main>` `inert` con el menú abierto |
+| RF-012 | 2, 3, 4 | Ver HU-05.3 y HU-05.5; `app.spec.ts`: con ganador, menú `inert` |
+| RNF-005 | 2 | `menu.spec.ts`: engranaje `size-12`, cerrar `size-11`, filas y botones de la confirmación con alto mínimo de al menos 44 px |
+| RNF-001 (transversal) | 2, 6 | Botones nativos con nombre, `aria-expanded`, diálogo con nombre y foco gestionado |
+| RNF-002 (transversal) | 2, 6 | `menu.spec.ts`: transición solo con `motion-safe:`; revisión manual |
+| RNF-003 (transversal) | 1, 6 | Colores del diseño ya comprobados en la pantalla de inicio; revisión manual |
+| RNF-004 (transversal) | 4, 5, 6 | `e2e/screen.spec.ts`: engranaje sin cruzarse con cartel, pestaña, tablero ni dado y sin scroll |
+| RNF-006 (transversal) | 1-6 | `git diff master -- src/engine` vacío |
+| RNF-007 (transversal) | 1 | Sin colores en hexadecimal en `src/app/`; ningún archivo de `docs/design` importado; sin dependencias nuevas |
+| CE-03 (vuelta desde el menú) | 4 | `app.spec.ts`: inicio con los equipos de la partida descartada |
+| CE-04 | 2, 3, 4 | `menu.spec.ts` y `app.spec.ts` |
+| CE-05 | 5 | `e2e/menu.spec.ts`; la partida de amarillo y verde con casas atenuadas ya está en `e2e/game.spec.ts` |
+| CE-06 | 5 | `e2e/screen.spec.ts`: pantalla de partida con el engranaje y pantalla de inicio en las cuatro ventanas |
+
+Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerrar la parte.
+
+### Skills y agentes
+
+- MCP `angular-cli` (`get_best_practices`): convenciones de Angular 22 antes de escribir `Menu`.
+- Script de Playwright en el directorio temporal de la sesión para la revisión manual del paso 6, como en las partes anteriores.
+
+### Decisiones técnicas
+
+- **Sí (usuario):** el engranaje va siempre arriba a la derecha y se le hace hueco. En vertical, con un margen derecho en la cabecera; en horizontal bajo, con un margen derecho en el hueco del tablero. Sin hueco, a 320 × 568 tapaba el cartel (de 8 a 312 px de ancho) y a 568 × 320 el medallón azul. **No:** ponerlo arriba a la izquierda en horizontal, que se aparta de RF-010, ni invertir la fila de la partida, que cambia la disposición de SPEC 007.
+- **Sí:** la confirmación sustituye el contenido del panel en lugar de abrir otro diálogo. Tiene el estilo del menú, como pide el spec, y no apila dos diálogos.
+- **Sí:** siempre se pide confirmación. El engranaje solo es alcanzable con una partida en curso, así que no hace falta preguntar al motor.
+- **Sí:** el foco de la confirmación va a «Seguir jugando», la opción que no pierde nada.
+- **Sí:** «Descartar partida» con el estilo de «¡A jugar!» (`--color-start-button`, 5,72:1) y «Seguir jugando» con el de las filas del menú.
+- **Sí:** panel como diálogo modal propio, con `inert` en `<main>`, como las pantallas de inicio y campeón. **No:** `<dialog>` nativo, por lo mismo que en PARTE-01.
+- **Sí:** el host de `Menu` corta la propagación de los clics, para que abrir, usar o cerrar el menú no cancele la selección de ficha.
+- **Sí:** «Configuración» y la sección «Pronto» del diseño no se pintan (RF-010). El pie «Parchís de la Jungla» sí, porque es parte del panel.
