@@ -17,8 +17,9 @@ let nextId = 0;
  * option. «Nueva partida» swaps the panel for its confirmation: «Descartar partida» gives up the game
  * and «Seguir jugando» closes. Escape, a touch outside and «Cerrar» close it too; the focus goes to
  * «Cerrar» on opening, to «Seguir jugando» on confirming and back to the gear on closing. Clicks
- * inside stay inside, so the game behind keeps its selection. The panel only slides without reduced
- * motion (SPEC 008 HU-05, RF-010, RF-011, RF-012, RNF-001, RNF-002, RNF-005).
+ * inside stay inside, so the game behind keeps its selection. While open, the gear under the overlay
+ * is inert, so the focus stays in the panel. The panel only slides without reduced motion (SPEC 008
+ * HU-05, RF-010, RF-011, RF-012, RNF-001, RNF-002, RNF-005).
  */
 @Component({
   selector: 'jp-menu',
@@ -64,10 +65,10 @@ export class Menu {
     this.newGame.emit();
   }
 
-  /** Closes the menu and takes the focus back to the gear. */
+  /** Closes the menu and takes the focus back to the gear, once it is no longer inert. */
   protected close(): void {
     this.open.set(false);
-    this.gear().nativeElement.focus();
+    this.focusAfterRender(() => this.gear());
   }
 
   protected escape(): void {

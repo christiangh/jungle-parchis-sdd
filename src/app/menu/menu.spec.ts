@@ -95,6 +95,15 @@ describe('Menu', () => {
     expect(get(host, '[data-close]').getAttribute('aria-label')).toBe('Cerrar');
   });
 
+  it('RF-011, RNF-001: con el menú abierto el engranaje, tapado por la capa, queda fuera del alcance del teclado', async () => {
+    const rendered = await render();
+    expect(gear(rendered.host).hasAttribute('inert')).toBe(false);
+    await openMenu(rendered);
+    expect(gear(rendered.host).hasAttribute('inert')).toBe(true);
+    await rendered.escape();
+    expect(gear(rendered.host).hasAttribute('inert')).toBe(false);
+  });
+
   it('HU-05.1, RF-010: la única opción del menú es «Nueva partida»', async () => {
     const rendered = await render();
     await openMenu(rendered);
