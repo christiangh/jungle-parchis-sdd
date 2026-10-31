@@ -1,7 +1,132 @@
 <button
+  #gear
   type="button"
-  data-gear
+  class="bg-menu-gear bg-plank text-menu-gear-ink hover:bg-menu-gear-hover focus-visible:outline-champion-focus fixed top-[max(12px,env(safe-area-inset-top))] right-3 z-40 grid size-12 cursor-pointer place-items-center rounded-full border-3 border-menu-gear-edge shadow-md shadow-black/35 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px"
   aria-label="Menú"
   aria-haspopup="dialog"
-  aria-expanded="false"
-></button>
+  [attr.aria-expanded]="open()"
+  (click)="toggle()"
+  data-gear
+>
+  <svg
+    class="size-6"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2.75"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path
+      d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+    />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+</button>
+
+<div
+  class="bg-menu-overlay fixed inset-0 z-50 motion-safe:transition-[opacity,visibility] motion-safe:duration-[280ms]"
+  [class]="open() ? 'visible opacity-100' : 'invisible opacity-0'"
+  (click)="close()"
+  aria-hidden="true"
+  data-scrim
+></div>
+
+<div
+  class="bg-menu-panel text-menu-text fixed top-0 right-0 bottom-0 z-51 flex w-[min(296px,86vw)] flex-col overflow-y-auto rounded-l-[28px] px-3.5 pt-[max(56px,env(safe-area-inset-top))] pb-6 shadow-2xl shadow-black/50 motion-safe:transition-[translate,visibility] motion-safe:duration-[280ms] motion-safe:ease-[cubic-bezier(.3,.7,.2,1)]"
+  [class]="open() ? 'visible translate-x-0' : 'invisible translate-x-[105%]'"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-labelledby]="titleId"
+  data-panel
+>
+  <div class="mb-4 flex items-center justify-between pl-1.5">
+    <h2 class="font-display text-[26px]/none" [id]="titleId">Menú</h2>
+    <button
+      #closeButton
+      type="button"
+      class="bg-menu-row hover:bg-menu-row-hover focus-visible:outline-champion-focus grid size-11 cursor-pointer place-items-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2"
+      aria-label="Cerrar"
+      (click)="close()"
+      data-close
+    >
+      <svg
+        class="size-5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M18 6 6 18M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+
+  @if (confirming()) {
+    <div class="flex flex-col gap-3 px-1.5">
+      <h3 class="font-display text-xl/tight" data-confirm-title>¿Empezar otra partida?</h3>
+      <p class="mb-2" data-confirm-text>Se perderá la partida en curso.</p>
+      <button
+        type="button"
+        class="bg-start-button text-start-box hover:bg-start-button-hover focus-visible:outline-champion-focus min-h-12 w-full cursor-pointer rounded-full text-lg font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
+        (click)="discard()"
+        data-discard
+      >
+        Descartar partida
+      </button>
+      <button
+        #keepButton
+        type="button"
+        class="bg-menu-row hover:bg-menu-row-hover focus-visible:outline-champion-focus min-h-12 w-full cursor-pointer rounded-full text-lg font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
+        (click)="close()"
+        data-keep
+      >
+        Seguir jugando
+      </button>
+    </div>
+  } @else {
+    <button
+      type="button"
+      class="bg-menu-row hover:bg-menu-row-hover focus-visible:outline-champion-focus flex min-h-16 w-full cursor-pointer items-center gap-3.5 rounded-2xl px-3.5 py-3 text-left text-[17px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
+      (click)="confirm()"
+      data-option="new-game"
+    >
+      <span
+        class="bg-menu-icon grid size-10 shrink-0 place-items-center rounded-full text-white"
+        aria-hidden="true"
+      >
+        <svg
+          class="size-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+          <path d="M3 3v5h5" />
+        </svg>
+      </span>
+      <span class="flex-1">Nueva partida</span>
+      <svg
+        class="text-menu-chevron size-4.5 shrink-0"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="m9 18 6-6-6-6" />
+      </svg>
+    </button>
+  }
+
+  <p class="text-menu-footer mt-auto pt-6 text-center text-xs">Parchís de la Jungla</p>
+</div>

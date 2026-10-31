@@ -224,7 +224,7 @@ Hueco del engranaje (decisión del usuario): siempre arriba a la derecha. En ver
   - los controles miden al menos 24 × 24 px.
 
   Cubre HU-05.1, HU-05.2, HU-05.3, RF-010, RF-011, RF-012, RNF-001, RNF-002 y RNF-005.
-- [ ] 3. `Menu`, hasta que pasen los tests del paso 2.
+- [x] 3. `Menu`, hasta que pasen los tests del paso 2.
 - [ ] 4. Menú en `App` y hueco del engranaje, con sus tests en `app.spec.ts`:
   - en la pantalla de partida hay engranaje, fuera de `<main>`; en la de inicio, no;
   - con ganador, el menú es `inert`;
