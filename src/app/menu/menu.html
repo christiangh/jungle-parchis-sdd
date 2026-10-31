@@ -33,9 +33,15 @@
   data-scrim
 ></div>
 
+<!-- Opening shows the panel at once, so «Cerrar» can take the focus while it slides in; closing
+     keeps it visible until it has slid out. -->
 <div
-  class="bg-menu-panel text-menu-text fixed top-0 right-0 bottom-0 z-51 flex w-[min(296px,86vw)] flex-col overflow-y-auto rounded-l-[28px] px-3.5 pt-[max(56px,env(safe-area-inset-top))] pb-6 shadow-2xl shadow-black/50 motion-safe:transition-[translate,visibility] motion-safe:duration-[280ms] motion-safe:ease-[cubic-bezier(.3,.7,.2,1)]"
-  [class]="open() ? 'visible translate-x-0' : 'invisible translate-x-[105%]'"
+  class="bg-menu-panel text-menu-text fixed top-0 right-0 bottom-0 z-51 flex w-[min(296px,86vw)] flex-col overflow-y-auto rounded-l-[28px] px-3.5 pt-[max(56px,env(safe-area-inset-top))] pb-6 shadow-2xl shadow-black/50 motion-safe:duration-[280ms] motion-safe:ease-[cubic-bezier(.3,.7,.2,1)]"
+  [class]="
+    open()
+      ? 'visible translate-x-0 motion-safe:transition-[translate]'
+      : 'invisible translate-x-[105%] motion-safe:transition-[translate,visibility]'
+  "
   role="dialog"
   aria-modal="true"
   [attr.aria-labelledby]="titleId"
