@@ -621,6 +621,111 @@ describe('App', () => {
     });
   });
 
+  describe('menú', () => {
+    /** The element of `selector`, failing the test when it is missing. */
+    function present(fixture: ComponentFixture<App>, selector: string): HTMLElement {
+      const found = element(fixture, selector);
+      expect(found, selector).not.toBeNull();
+      return found;
+    }
+
+    /** Clicks `selector` as a pointer would, letting the click bubble up to the application. */
+    function click(fixture: ComponentFixture<App>, selector: string): void {
+      present(fixture, selector).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      fixture.detectChanges();
+    }
+
+    /** Opens the menu and asks for «Nueva partida». */
+    function askNewGame(fixture: ComponentFixture<App>): void {
+      click(fixture, 'jp-menu [data-gear]');
+      click(fixture, 'jp-menu [data-option="new-game"]');
+    }
+
+    it('RF-010: en la pantalla de partida hay engranaje, fuera de main', async () => {
+      const fixture = await render();
+      expect(present(fixture, 'jp-menu [data-gear]').getAttribute('aria-label')).toBe('Menú');
+      expect(element(fixture, 'main jp-menu')).toBeNull();
+    });
+
+    it('RF-010: en la pantalla de inicio no hay engranaje', async () => {
+      const fixture = await renderTeams(null);
+      expect(element(fixture, 'jp-start')).not.toBeNull();
+      expect(element(fixture, 'jp-menu')).toBeNull();
+    });
+
+    it('RF-012: con ganador, la pantalla de campeón deja el menú inerte', async () => {
+      const fixture = await renderShowing(storeShowing(GREEN_WON));
+      expect(element(fixture, 'jp-champion')).not.toBeNull();
+      expect(present(fixture, 'jp-menu').hasAttribute('inert')).toBe(true);
+    });
+
+    it('RF-012: sin ganador el menú no está inerte', async () => {
+      const fixture = await render();
+      expect(present(fixture, 'jp-menu').hasAttribute('inert')).toBe(false);
+    });
+
+    it('RF-011: con el menú abierto la partida queda inerte, y al cerrarlo deja de estarlo', async () => {
+      const fixture = await render();
+      click(fixture, 'jp-menu [data-gear]');
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(true);
+
+      click(fixture, 'jp-menu [data-scrim]');
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(false);
+    });
+
+    it('HU-05.4, RF-008: en una partida de amarillo y verde, descartarla lleva a la pantalla de inicio con solo esos dos activados', async () => {
+      const store = storeShowing(newGame(['yellow', 'green']));
+      const fixture = await renderShowing(store);
+
+      askNewGame(fixture);
+      click(fixture, 'jp-menu [data-discard]');
+      await fixture.whenStable();
+
+      expect(store.chooseTeams).toHaveBeenCalledOnce();
+      expect(store.start).not.toHaveBeenCalled();
+      expect(element(fixture, 'jp-start')).not.toBeNull();
+      expect(element(fixture, 'jp-menu')).toBeNull();
+      expect(switchedOn(fixture)).toEqual(['green', 'yellow']);
+    });
+
+    it('HU-05.5: con una ficha seleccionada, «Seguir jugando» o tocar la capa dejan la partida, la selección y la réplica igual', async () => {
+      const fixture = await render(...EXIT);
+      play(fixture, EXIT);
+      const store = TestBed.inject(GameStore);
+      const [move] = store.legalMoves();
+      touch(fixture, move.pieceId);
+      const state = store.state();
+
+      askNewGame(fixture);
+      click(fixture, 'jp-menu [data-keep]');
+      expect(store.state()).toBe(state);
+      expect(store.selected()).toBe(move.pieceId);
+      expect(ghost(fixture)).not.toBeNull();
+      expect(halos(fixture)).toEqual([move.pieceId]);
+
+      click(fixture, 'jp-menu [data-gear]');
+      click(fixture, 'jp-menu [data-scrim]');
+      expect(store.state()).toBe(state);
+      expect(store.selected()).toBe(move.pieceId);
+      expect(ghost(fixture)).not.toBeNull();
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(false);
+    });
+
+    it('HU-05.5: abrir el menú con el dado girando aplica la tirada igual', async () => {
+      const fixture = await render(3);
+      dice(fixture).click();
+      fixture.detectChanges();
+      click(fixture, 'jp-menu [data-gear]');
+
+      vi.advanceTimersByTime(DICE_SPIN_MS);
+      fixture.detectChanges();
+
+      expect(TestBed.inject(GameStore).state().initialRoll?.rolls).toEqual([3]);
+      expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.blue);
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(true);
+    });
+  });
+
   describe('pantalla de campeón', () => {
     it('HU-01.1: con un ganador aparece sobre la partida, fuera de main, y la partida queda inerte', async () => {
       const fixture = await renderShowing(storeShowing(GREEN_WON));

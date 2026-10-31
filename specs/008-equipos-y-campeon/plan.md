@@ -225,7 +225,7 @@ Hueco del engranaje (decisión del usuario): siempre arriba a la derecha. En ver
 
   Cubre HU-05.1, HU-05.2, HU-05.3, RF-010, RF-011, RF-012, RNF-001, RNF-002 y RNF-005.
 - [x] 3. `Menu`, hasta que pasen los tests del paso 2.
-- [ ] 4. Menú en `App` y hueco del engranaje, con sus tests en `app.spec.ts`:
+- [x] 4. Menú en `App` y hueco del engranaje, con sus tests en `app.spec.ts`:
   - en la pantalla de partida hay engranaje, fuera de `<main>`; en la de inicio, no;
   - con ganador, el menú es `inert`;
   - con el menú abierto, `<main>` es `inert`;
@@ -285,3 +285,4 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** panel como diálogo modal propio, con `inert` en `<main>`, como las pantallas de inicio y campeón. **No:** `<dialog>` nativo, por lo mismo que en PARTE-01.
 - **Sí:** el host de `Menu` corta la propagación de los clics, para que abrir, usar o cerrar el menú no cancele la selección de ficha.
 - **Sí:** «Configuración» y la sección «Pronto» del diseño no se pintan (RF-010). El pie «Parchís de la Jungla» sí, porque es parte del panel.
+- **Sí:** en vertical, la cabecera es una rejilla `1fr auto minmax(60px, 1fr)`: centrada mientras cabe y, si no, con el hueco del engranaje a la derecha. Medido a 320 × 568, el cartel ocupa de 8 a 252 px y el engranaje de 260 a 308, con la misma altura. La pestaña, más estrecha, ocupa una línea más, y el tablero baja 9 px (de 197 a 206) sin perder tamaño ni hacer scroll. A 568 × 320 el tablero mide 263 px y acaba a 8 px del engranaje. A 768 × 1024 el cartel se desplaza 16 px a la izquierda; a 1920 × 1080 no cambia.

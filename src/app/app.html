@@ -1,35 +1,42 @@
-<!-- Behind the start screen or the champion screen, the game stays out of reach of keyboard and
-     screen readers (SPEC 008 RF-003, RF-004). -->
+<!-- Behind the start screen, the champion screen or the side menu, the game stays out of reach of
+     keyboard and screen readers (SPEC 008 RF-003, RF-004, RF-011). -->
 <main
   class="bg-jungle bg-jungle-tile flex h-dvh flex-col items-center gap-2 overflow-hidden p-2 sm:gap-4 sm:p-4 [@media(orientation:landscape)_and_(max-height:480px)]:flex-row"
   [attr.inert]="covered() ? '' : null"
 >
-  <header class="shrink-0 [@media(orientation:landscape)_and_(max-height:480px)]:max-w-[40%]">
-    <jp-turn-banner [headline]="headline()" />
-    <!-- The invisible copy of the longest sentence keeps the tab's space, so the board never moves
-         (RNF-010); the live region is the fixed slot, so each new sentence is announced. -->
-    <div
-      class="mx-auto -mt-1 grid w-fit max-w-[calc(100%-2rem)]"
-      aria-live="polite"
-      data-last-play-slot
-    >
-      <jp-last-play-tab
-        class="invisible col-start-1 row-start-1"
-        [play]="longestPlay"
-        aria-hidden="true"
-        data-longest-play
-      />
-      @if (lastPlay(); as play) {
+  <!-- Upright, the header stays centred while it fits and otherwise leaves the gear its gutter on
+       the right (SPEC 008 RF-010). -->
+  <header
+    class="grid w-full shrink-0 grid-cols-[1fr_auto_minmax(60px,1fr)] [@media(orientation:landscape)_and_(max-height:480px)]:block [@media(orientation:landscape)_and_(max-height:480px)]:w-auto [@media(orientation:landscape)_and_(max-height:480px)]:max-w-[40%]"
+  >
+    <div class="col-start-2 min-w-0">
+      <jp-turn-banner [headline]="headline()" />
+      <!-- The invisible copy of the longest sentence keeps the tab's space, so the board never moves
+           (RNF-010); the live region is the fixed slot, so each new sentence is announced. -->
+      <div
+        class="mx-auto -mt-1 grid w-fit max-w-[calc(100%-2rem)]"
+        aria-live="polite"
+        data-last-play-slot
+      >
         <jp-last-play-tab
-          class="col-start-1 row-start-1 justify-self-center"
-          [play]="play"
-          data-last-play
+          class="invisible col-start-1 row-start-1"
+          [play]="longestPlay"
+          aria-hidden="true"
+          data-longest-play
         />
-      }
+        @if (lastPlay(); as play) {
+          <jp-last-play-tab
+            class="col-start-1 row-start-1 justify-self-center"
+            [play]="play"
+            data-last-play
+          />
+        }
+      </div>
     </div>
   </header>
+  <!-- Low and wide, the board leaves the gear its gutter on the right (SPEC 008 RF-010). -->
   <div
-    class="flex min-h-0 w-full min-w-0 flex-1 items-center justify-center self-stretch [container-type:size]"
+    class="flex min-h-0 w-full min-w-0 flex-1 items-center justify-center self-stretch [container-type:size] [@media(orientation:landscape)_and_(max-height:480px)]:pr-[60px]"
   >
     <div class="relative aspect-square w-[min(100cqw,100cqh,900px)]" data-board-slot>
       <jp-board
@@ -50,6 +57,14 @@
     </div>
   </div>
 </main>
+@if (store.screen() === 'game') {
+  <!-- Only during the game; the champion screen covers it and leaves it out of reach (RF-012). -->
+  <jp-menu
+    [(open)]="menuOpen"
+    [attr.inert]="winner() !== null ? '' : null"
+    (newGame)="store.chooseTeams()"
+  />
+}
 @if (store.screen() === 'start') {
   <jp-start [teams]="store.state().players" (startGame)="store.start($event)" />
 } @else if (winner(); as winner) {
