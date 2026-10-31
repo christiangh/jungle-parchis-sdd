@@ -186,7 +186,7 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 
 ## PARTE-03: Menú y nueva partida durante el juego
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
