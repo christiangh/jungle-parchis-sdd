@@ -301,3 +301,156 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
     - **Sí:** con el menú abierto, el tabulador salía del panel y llegaba al engranaje, tapado por la capa (WCAG 2.4.11). El engranaje queda `inert` mientras el menú está abierto, y al cerrar el foco vuelve a él después de pintar, cuando ya no es inerte. Test nuevo en `menu.spec.ts`, visto fallar antes.
     - **Sí:** el pie «Parchís de la Jungla» estaba centrado; en el diseño va alineado a la izquierda con el título.
     - **Sí:** a 568 × 320 la confirmación desbordaba el panel en 49 px y el pie quedaba fuera. En horizontal bajo, el margen superior del panel pasa de 56 a 20 px, el inferior de 24 a 16 y el del pie de 24 a 12; ahora cabe sin scroll (320 de 320).
+
+## PARTE-04: Tirada inicial en el cartel y la pestaña
+
+**Estado:** Pendiente
+
+### Enfoque
+
+El cartel sale de `headline()`, que es una función pura. En la tirada inicial y en sus desempates, la acción pasa a ser «Tirada inicial: Toca el dado» (RF-013). El texto del turno para el lector pasa de «Tirada inicial, turno de X.» a «Turno de X.», porque la acción ya dice que es la tirada inicial y si no el lector lo repetiría. Medido en la versión actual, a 320 × 568 la acción ocupa dos líneas: el tablón crece 10 px y el tablero baja 5 px. A 568 × 320 ocupa tres líneas, pero el tablero no se mueve. Para que el tablero no se mueva, el título del cartel reserva el espacio de la acción más larga, `LONGEST_ACTION`, con una copia invisible. Es la misma técnica del hueco de la pestaña (RNF-010 de SPEC 007).
+
+Las tiradas de la ronda salen de un archivo nuevo de funciones puras, `src/app/game/initial-round.ts`:
+- `nextInitialRound(round, events)` acumula las tiradas a partir de los eventos del motor (RF-015). Por cada `initial-roll` añade el equipo y su valor, en el orden en que llegan. `initial-roll-tie` y `first-player` cierran la ronda, y el primero guarda los equipos empatados. Una tirada sobre una ronda cerrada empieza una ronda nueva, vacía. Una acción sin `initial-roll` devuelve `null`, y la pestaña vuelve a la última jugada normal.
+- `initialRoundText(round)` da el texto accesible: «Amarillo saca 5, Azul saca 3.», y con empate «…, empate entre Amarillo y Rojo.».
+- `LONGEST_ROUND`, con cuatro tiradas y el empate de los cuatro, reserva el hueco.
+
+El motor sigue decidiendo los empates y quién empieza; la aplicación solo lo pinta.
+
+El almacén guarda dos datos nuevos:
+- `initialRound`: se actualiza en cada acción aceptada con `nextInitialRound`.
+- `starter`: el color del evento `first-player`, mientras no se pulse «¡Vamos!».
+
+`canRoll` es falso mientras hay `starter`, así que el dado no responde, aunque se le haga clic por programa. `go()` borra `starter`, y `start()` borra los dos datos.
+
+Dos componentes nuevos, sin dependencias nuevas:
+- **`InitialRoundTab`**: la pestaña de `LastPlayTab`, en el tono oscuro del último equipo que ha tirado. Muestra una mascota pequeña, quieta, con su valor en blanco por cada tirada, y debajo el empate si lo hay («Empate entre Amarillo y Rojo.»). Para el lector, lo visible es decorativo y el texto es `initialRoundText`. Mientras hay ronda, `App` la pinta en el mismo hueco en lugar de la última jugada. Ese hueco reserva el tamaño mayor entre `LONGEST_PLAY` y `LONGEST_ROUND`, con dos copias invisibles.
+- **`FirstPlayer`**: la pantalla «Empieza el equipo X», en `src/app/game/first-player.ts`. Usa la capa de la pantalla de campeón (`bg-champion-overlay`), su tablón (`bg-plank`, `TEAM_BG`, `TEAM_DARK_BORDER`) con la mascota animada en su placa y su botón de madera, con el texto «¡Vamos!». No lleva trofeo, confeti ni rayos. Es un diálogo modal propio, como la pantalla de campeón: nombre «Empieza el equipo Azul», foco en «¡Vamos!» y sin manejadores de Escape ni de toque fuera. Con movimiento reducido, la mascota no se anima. En ventanas bajas usa la misma variante compacta que la pantalla de campeón.
+
+En `App`:
+- `FirstPlayer` se pinta fuera de `<main>` mientras hay `starter`.
+- `covered()` incluye `starter`, así que `<main>` queda `inert`.
+- El menú queda `inert`, como con ganador.
+- «¡Vamos!» llama a `go()` y, después de pintar, lleva el foco al dado, que es la acción siguiente.
+
+### Archivos
+
+- `src/app/game/headline.ts`, `headline.spec.ts`: acción y turno de la tirada inicial y `LONGEST_ACTION`.
+- `src/app/game/turn-banner.html`, `turn-banner.ts`, `turn-banner.spec.ts`: copia invisible de `LONGEST_ACTION` en el título.
+- `src/app/game/last-play.ts`: exporta `names()` para reutilizarla.
+- `src/app/game/initial-round.ts`, `initial-round.spec.ts` (nuevos): `InitialRound`, `nextInitialRound`, `initialRoundText` y `LONGEST_ROUND`.
+- `src/app/game/game-store.ts`, `game-store.spec.ts`: `initialRound`, `starter`, `go()` y `canRoll`.
+- `src/app/game/initial-round-tab.ts`, `initial-round-tab.html`, `initial-round-tab.spec.ts` (nuevos).
+- `src/app/game/first-player.ts`, `first-player.html`, `first-player.spec.ts` (nuevos).
+- `src/app/app.ts`, `app.html`, `app.spec.ts`: pestaña de la ronda, copia invisible de `LONGEST_ROUND`, `FirstPlayer`, `inert` y foco al dado.
+- `e2e/dice.ts`: `spin(page)` tira sin cerrar el aviso; `roll(page)` además pulsa «¡Vamos!» si aparece «Empieza el equipo X».
+- `e2e/game.spec.ts`, `e2e/notices.spec.ts`, `e2e/menu.spec.ts` y las demás pruebas que pasan por la tirada inicial: textos nuevos. `e2e/game.spec.ts` añade además el escenario de HU-06.
+- `e2e/screen.spec.ts`: el tablero no se mueve entre la tirada inicial y la partida, y «Empieza el equipo X» cabe sin scroll en las cuatro ventanas.
+
+### Pasos
+
+- [ ] 1. Tests de `headline`, con un esqueleto que compila y los hace fallar. Comprueban:
+  - en la tirada inicial y en un desempate, la acción es «Tirada inicial: Toca el dado», en el color de quien tira;
+  - el turno es «Turno de Rojo.»;
+  - `LONGEST_ACTION` es la acción más larga.
+
+  Cubre HU-06.1 y RF-013.
+- [ ] 2. `headline` hasta que pasen los tests del paso 1, más la copia invisible en el cartel, con sus tests en `turn-banner.spec.ts`: la copia es `aria-hidden` y comparte celda con el título. Se actualizan los tests de SPEC 007 que esperaban «Toca el dado» en la tirada inicial (RF-013, CE-07).
+- [ ] 3. Tests de `initial-round.ts`, con un esqueleto que compila y los hace fallar. Comprueban:
+  - las tiradas de una ronda, en orden;
+  - el empate cierra la ronda con los equipos implicados;
+  - la primera tirada del desempate empieza una ronda vacía con solo esa tirada;
+  - `first-player` cierra la ronda y conserva sus tiradas;
+  - una acción normal da `null`;
+  - el texto «Amarillo saca 5, Azul saca 3.», con y sin empate;
+  - `LONGEST_ROUND` tiene cuatro tiradas y el empate de los cuatro.
+
+  Cubre HU-06.2, HU-06.3, HU-06.6, RF-014 y RF-015.
+- [ ] 4. `initial-round.ts`, hasta que pasen los tests del paso 3.
+- [ ] 5. Tests del almacén, con un esqueleto que compila y los hace fallar. Con tiradas fijas sobre el motor real, comprueban:
+  - `initialRound` sigue la ronda y el desempate, y vuelve a `null` tras la primera jugada normal;
+  - `starter` es el equipo de `first-player`;
+  - con `starter`, `roll()` no hace nada;
+  - `go()` lo borra y el dado responde;
+  - `start()` borra los dos.
+
+  Cubre HU-06.4, HU-06.5, RF-015 y RF-016.
+- [ ] 6. Almacén, hasta que pasen los tests del paso 5.
+- [ ] 7. `InitialRoundTab` y `FirstPlayer`, con sus tests en el mismo paso, porque son plantilla.
+  - Pestaña:
+    - una mascota quieta y su valor por tirada, en orden;
+    - el empate visible;
+    - el tono oscuro del último que ha tirado;
+    - lo visible es `aria-hidden` y el texto accesible es el de `initialRoundText`.
+  - Pantalla, para los cuatro colores:
+    - tablón del color y mascota animada del equipo;
+    - título «Empieza el equipo Azul», sin trofeo, confeti ni rayos;
+    - `role="dialog"`, `aria-modal` y nombre accesible;
+    - foco en «¡Vamos!»;
+    - Escape no emite nada y pulsar el botón emite `go`;
+    - con movimiento reducido, la mascota no se anima;
+    - el botón mide al menos 44 px.
+
+  Cubre HU-06.2, HU-06.3, HU-06.4, HU-06.6, RF-014, RF-016, RNF-001, RNF-002 y CE-07.
+- [ ] 8. Integración en `App`, con sus tests en `app.spec.ts`.
+  - Durante la tirada inicial, la pestaña de la ronda sustituye a la de la última jugada.
+  - El hueco tiene las dos copias invisibles.
+  - Con `starter`:
+    - aparece la pantalla fuera de `<main>`;
+    - `<main>` y el menú son `inert`;
+    - el dado no tira.
+  - «¡Vamos!» llama a `go()`, el foco pasa al dado y el cartel dice «Toca el dado» en el color del que empieza.
+  - Con el almacén real, una tirada inicial con desempate completa.
+
+  Cubre HU-06.1 a HU-06.6, RF-013 a RF-016 y CE-07.
+- [ ] 9. Pruebas en navegador:
+  - `spin` y `roll` en `e2e/dice.ts`.
+  - Textos nuevos en las pruebas de SPEC 006, SPEC 007 y SPEC 008 que pasan por la tirada inicial.
+  - Escenario de HU-06 en `game.spec.ts`:
+    - un empate y su desempate, con las mascotas y los valores en la pestaña;
+    - «Empieza el equipo X», con «¡Vamos!» y el foco en el dado.
+  - En `screen.spec.ts`:
+    - el tablero ocupa la misma caja en la tirada inicial y después;
+    - la pantalla «Empieza el equipo X» cabe sin scroll, con el botón dentro, en las cuatro ventanas.
+
+  Cubre CE-07 y RNF-004.
+- [ ] 10. Revisión manual en navegador a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080, con y sin movimiento reducido. Se revisan el cartel de la tirada inicial, la pestaña con cuatro tiradas y empate, y «Empieza el equipo X» frente a la pantalla de campeón, manejándolo con el teclado. Se miden el contraste del valor y del empate sobre las cuatro pestañas y el del título sobre los cuatro tablones. El resultado se registra en «Decisiones técnicas» (RNF-001, RNF-002, RNF-003, RNF-004).
+
+### Pruebas y trazabilidad
+
+| Elemento | Paso | Prueba |
+| --- | --- | --- |
+| HU-06.1 (cartel «Tirada inicial: Toca el dado» en rojo con el loro) | 1, 2, 8, 9 | `headline.spec.ts`; `app.spec.ts`; `e2e/game.spec.ts` |
+| HU-06.2 (jaguar con 5 e hipopótamo con 3, en orden) | 3, 4, 7, 8, 9 | `initial-round.spec.ts`; `initial-round-tab.spec.ts`; `e2e/game.spec.ts` |
+| HU-06.3 (empate y ronda siguiente vacía) | 3, 4, 5, 6, 7, 9 | `initial-round.spec.ts`; `game-store.spec.ts`; `e2e/game.spec.ts` |
+| HU-06.4 (solo la notificación azul con el hipopótamo; detrás, las tiradas) | 5, 6, 7, 8, 9 | `first-player.spec.ts`; `app.spec.ts`; `e2e/game.spec.ts` |
+| HU-06.5 («¡Vamos!» cierra; «Toca el dado» en azul y el dado responde) | 5, 6, 8, 9 | `game-store.spec.ts`; `app.spec.ts`; `e2e/game.spec.ts` |
+| HU-06.6 (texto accesible «Amarillo saca 5, Azul saca 3») | 3, 4, 7 | `initial-round.spec.ts`; `initial-round-tab.spec.ts` |
+| RF-013 | 1, 2 | Ver HU-06.1 |
+| RF-014 | 3, 4, 7, 8 | Ver HU-06.2 y HU-06.3 |
+| RF-015 | 3-6, 8, 9 | Ver HU-06.3; `app.spec.ts`: hueco con `LONGEST_ROUND`; `e2e/screen.spec.ts`: tablero quieto |
+| RF-016 | 5-9 | Ver HU-06.4 y HU-06.5; `e2e/screen.spec.ts`: cabe sin scroll |
+| RNF-001 (transversal) | 7, 8, 10 | Diálogo con nombre y foco, botón nativo, foco al dado al cerrar; texto accesible de la pestaña |
+| RNF-002 (transversal) | 7, 10 | `first-player.spec.ts` con movimiento reducido; revisión manual |
+| RNF-003 (transversal) | 10 | Revisión manual del contraste |
+| RNF-004 (transversal) | 2, 9, 10 | `e2e/screen.spec.ts`; revisión manual |
+| RNF-006 (transversal) | 1-10 | `git diff master -- src/engine` vacío |
+| RNF-007 (transversal) | 7 | Sin hexadecimales en `src/app/`; sin tokens ni dependencias nuevas |
+| CE-07 | 1-9 | Todas las anteriores |
+
+Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerrar la parte.
+
+### Skills y agentes
+
+- MCP `angular-cli` (`get_best_practices`), si se conecta. En esta sesión no ha conectado; se siguen las convenciones de `src/app/CLAUDE.md`.
+- Script de Playwright en el directorio temporal de la sesión para la revisión manual del paso 10.
+
+### Decisiones técnicas
+
+- **Sí:** el turno para el lector pasa a «Turno de X.» en la tirada inicial. La acción ya dice «Tirada inicial». **No:** dejar «Tirada inicial, turno de X.», que el lector leería seguido de «Tirada inicial: Toca el dado».
+- **Sí:** el título del cartel reserva el espacio de `LONGEST_ACTION` con una copia invisible, para que el tablero no baje 5 px a 320 × 568 al terminar la tirada inicial. **No:** aceptar el salto, aunque pase detrás de «Empieza el equipo X», ni reducir el texto, que se apartaría del cartel de SPEC 007.
+- **Sí:** las tiradas se acumulan con una función pura sobre los eventos (`initial-roll`, `initial-roll-tie`, `first-player`), como permite RF-015. El estado del motor pierde las tiradas de una ronda en cuanto termina, y la pestaña tiene que seguir mostrándolas.
+- **Sí:** `starter` vive en el almacén y bloquea `canRoll`. Así «el dado no responde» se prueba sin depender de `inert`, que jsdom no aplica a los clics.
+- **Sí:** `FirstPlayer` es un componente propio con las clases y los tokens de la capa, el tablón y el botón de la pantalla de campeón. **No:** sacar un componente común de las dos pantallas, que obligaría a reescribir `Champion`, que ya está cerrada y revisada, para compartir unas pocas clases.
+- **Sí:** al pulsar «¡Vamos!», el foco va al dado, que es lo siguiente que hay que hacer. Si no, se quedaría en `body` al desaparecer el botón.
+- **Sí:** `roll()` de `e2e/dice.ts` pulsa «¡Vamos!» cuando aparece, como propone el riesgo del spec. `spin()` tira sin cerrarlo, para las pruebas que comprueban la pantalla.
