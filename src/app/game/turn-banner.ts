@@ -1,7 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 import { Color } from '@engine';
 import { Mascot } from '../shared/mascot';
-import { Headline } from './headline';
+import { Headline, LONGEST_ACTION } from './headline';
 
 // Full class names, so Tailwind finds them in the source.
 
@@ -31,7 +31,8 @@ const BADGE_MASCOT_RADIUS = 22;
 
 /**
  * Painted wooden sign in the colour of the team in turn, with its animated mascot and only the
- * action; the turn is a text for screen readers before it (RF-008, RF-010).
+ * action; the turn is a text for screen readers before it. The title keeps the space of the longest
+ * action (RF-008, RF-010; SPEC 008 RF-013).
  */
 @Component({
   selector: 'jp-turn-banner',
@@ -46,4 +47,5 @@ export class TurnBanner {
   protected readonly edge = computed(() => TEAM_DARK_BORDER[this.headline().color]);
   protected readonly badge = computed(() => TEAM_DARK_BG[this.headline().color]);
   protected readonly mascotRadius = BADGE_MASCOT_RADIUS;
+  protected readonly longestAction = LONGEST_ACTION;
 }

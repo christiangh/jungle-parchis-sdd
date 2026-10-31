@@ -271,7 +271,7 @@ describe('App', () => {
   it('HU-01.3: una partida nueva muestra el cartel amarillo que pide tirar a Amarillo', async () => {
     const fixture = await render();
     expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.yellow);
-    expect(text(fixture, '[data-title]')).toBe('Toca el dado');
+    expect(text(fixture, '[data-title]')).toBe('Tirada inicial: Toca el dado');
     expect(dice(fixture).disabled).toBe(false);
     expect(dice(fixture).classList).toContain(DICE_GLOW.yellow);
     expect(dice(fixture).getAttribute('aria-label')).toBe('Dado, cara 6');
@@ -283,7 +283,7 @@ describe('App', () => {
     expect(dice(fixture).classList).toContain(DICE_GLOW.blue);
     expect(dice(fixture).getAttribute('aria-label')).toBe('Dado, cara 3');
     expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.blue);
-    expect(text(fixture, '[data-title]')).toBe('Toca el dado');
+    expect(text(fixture, '[data-title]')).toBe('Tirada inicial: Toca el dado');
   });
 
   it('HU-03.1: el dado gira medio segundo con la cara ya visible y no responde mientras', async () => {
@@ -418,7 +418,7 @@ describe('App', () => {
     const fixture = await render();
     expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.yellow);
     expect(mascot(fixture, 'jp-turn-banner')).toEqual({ animal: 'jaguar', animated: true });
-    expect(text(fixture, '[data-title]')).toBe('Toca el dado');
+    expect(text(fixture, '[data-title]')).toBe('Tirada inicial: Toca el dado');
   });
 
   it('HU-04.2: tras una tirada de Rojo con movimientos, el cartel es rojo, con el loro, y pide elegir ficha', async () => {
@@ -604,19 +604,20 @@ describe('App', () => {
     it('HU-03.3, HU-04.2: la tirada inicial y los turnos son solo entre amarillo y verde', async () => {
       // Yellow wins the initial roll with a 4; then nobody can take a piece out with a 3.
       const fixture = await renderTeams(['yellow', 'green'], 4, 2, 3, 3, 3);
-      const turns = [text(fixture, '[data-turn]')];
+      const banner = () => `${text(fixture, '[data-turn]')} ${text(fixture, '[data-title]')}`;
+      const turns = [banner()];
       for (let i = 0; i < 5; i++) {
         roll(fixture);
-        turns.push(text(fixture, '[data-turn]'));
+        turns.push(banner());
       }
 
       expect(turns).toEqual([
-        'Tirada inicial, turno de Amarillo.',
-        'Tirada inicial, turno de Verde.',
-        'Turno de Amarillo.',
-        'Turno de Verde.',
-        'Turno de Amarillo.',
-        'Turno de Verde.',
+        'Turno de Amarillo. Tirada inicial: Toca el dado',
+        'Turno de Verde. Tirada inicial: Toca el dado',
+        'Turno de Amarillo. Toca el dado',
+        'Turno de Verde. Toca el dado',
+        'Turno de Amarillo. Toca el dado',
+        'Turno de Verde. Toca el dado',
       ]);
     });
   });
@@ -783,8 +784,8 @@ describe('App', () => {
 
       expect(element(fixture, 'jp-champion')).toBeNull();
       expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.yellow);
-      expect(text(fixture, '[data-title]')).toBe('Toca el dado');
-      expect(text(fixture, '[data-turn]')).toBe('Tirada inicial, turno de Amarillo.');
+      expect(text(fixture, '[data-title]')).toBe('Tirada inicial: Toca el dado');
+      expect(text(fixture, '[data-turn]')).toBe('Turno de Amarillo.');
       expect(element(fixture, '[data-last-play]')).toBeNull();
       const pieces = TestBed.inject(GameStore).state().pieces;
       expect(pieces).toHaveLength(16);
