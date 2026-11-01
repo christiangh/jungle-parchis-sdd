@@ -392,7 +392,7 @@ En `App`:
     - el botón mide al menos 44 px.
 
   Cubre HU-06.2, HU-06.3, HU-06.4, HU-06.6, RF-014, RF-016, RNF-001, RNF-002 y CE-07.
-- [ ] 8. Integración en `App`, con sus tests en `app.spec.ts`.
+- [x] 8. Integración en `App`, con sus tests en `app.spec.ts`.
   - Durante la tirada inicial, la pestaña de la ronda sustituye a la de la última jugada.
   - El hueco tiene las dos copias invisibles.
   - Con `starter`:

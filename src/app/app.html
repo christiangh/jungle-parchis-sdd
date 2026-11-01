@@ -1,5 +1,5 @@
-<!-- Behind the start screen, the champion screen or the side menu, the game stays out of reach of
-     keyboard and screen readers (SPEC 008 RF-003, RF-004, RF-011). -->
+<!-- Behind the start screen, the champion screen, «Empieza el equipo X» or the side menu, the game
+     stays out of reach of keyboard and screen readers (SPEC 008 RF-003, RF-004, RF-011, RF-016). -->
 <main
   class="bg-jungle bg-jungle-tile flex h-dvh flex-col items-center gap-2 overflow-hidden p-2 sm:gap-4 sm:p-4 [@media(orientation:landscape)_and_(max-height:480px)]:flex-row"
   [attr.inert]="covered() ? '' : null"
@@ -11,8 +11,10 @@
   >
     <div class="col-start-2 min-w-0">
       <jp-turn-banner [headline]="headline()" />
-      <!-- The invisible copy of the longest sentence keeps the tab's space, so the board never moves
-           (RNF-010); the live region is the fixed slot, so each new sentence is announced. -->
+      <!-- The invisible copies of the longest sentence and of the longest initial roll round keep
+           the tab's space, so the board never moves (RNF-010; SPEC 008 RF-015); the live region is
+           the fixed slot, so each new sentence is announced. During the initial roll, the tab shows
+           the rolls of the round (SPEC 008 RF-014). -->
       <div
         class="mx-auto -mt-1 grid w-fit max-w-[calc(100%-2rem)]"
         aria-live="polite"
@@ -24,7 +26,19 @@
           aria-hidden="true"
           data-longest-play
         />
-        @if (lastPlay(); as play) {
+        <jp-initial-round-tab
+          class="invisible col-start-1 row-start-1"
+          [round]="longestRound"
+          aria-hidden="true"
+          data-longest-round
+        />
+        @if (store.initialRound(); as round) {
+          <jp-initial-round-tab
+            class="col-start-1 row-start-1 justify-self-center"
+            [round]="round"
+            data-initial-round
+          />
+        } @else if (lastPlay(); as play) {
           <jp-last-play-tab
             class="col-start-1 row-start-1 justify-self-center"
             [play]="play"
@@ -58,10 +72,11 @@
   </div>
 </main>
 @if (store.screen() === 'game') {
-  <!-- Only during the game; the champion screen covers it and leaves it out of reach (RF-012). -->
+  <!-- Only during the game; the champion screen and «Empieza el equipo X» cover it and leave it out
+       of reach (RF-012; SPEC 008 RF-016). -->
   <jp-menu
     [(open)]="menuOpen"
-    [attr.inert]="winner() !== null ? '' : null"
+    [attr.inert]="winner() !== null || store.starter() !== null ? '' : null"
     (newGame)="store.chooseTeams()"
   />
 }
@@ -69,4 +84,6 @@
   <jp-start [teams]="store.state().players" (startGame)="store.start($event)" />
 } @else if (winner(); as winner) {
   <jp-champion [winner]="winner" (newGame)="store.chooseTeams()" />
+} @else if (store.starter(); as starter) {
+  <jp-first-player [player]="starter" (go)="go()" />
 }
