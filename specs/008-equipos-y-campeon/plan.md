@@ -375,7 +375,7 @@ En `App`:
   - `start()` borra los dos.
 
   Cubre HU-06.4, HU-06.5, RF-015 y RF-016.
-- [ ] 6. Almacén, hasta que pasen los tests del paso 5.
+- [x] 6. Almacén, hasta que pasen los tests del paso 5.
 - [ ] 7. `InitialRoundTab` y `FirstPlayer`, con sus tests en el mismo paso, porque son plantilla.
   - Pestaña:
     - una mascota quieta y su valor por tirada, en orden;
@@ -455,3 +455,4 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** al pulsar «¡Vamos!», el foco va al dado, que es lo siguiente que hay que hacer. Si no, se quedaría en `body` al desaparecer el botón.
 - **Sí:** `roll()` de `e2e/dice.ts` pulsa «¡Vamos!» cuando aparece, como propone el riesgo del spec. `spin()` tira sin cerrarlo, para las pruebas que comprueban la pantalla.
 - **Sí:** en `game-store.spec.ts`, `rollTimes` pulsa «¡Vamos!» (`go()`) cuando aparece `starter`, igual que `roll()` en las pruebas en navegador. Los tests nuevos usan `spinTimes`, que no lo cierra. Así los tests de SPEC 007 que juegan después de la tirada inicial siguen probando lo mismo.
+- **Sí:** desde el paso 6, `roll()` de `app.spec.ts` cierra el anuncio con `store.go()` cuando aparece `starter`. En el paso 8 pasa a pulsar «¡Vamos!». **No:** dejar fallar los 13 tests de SPEC 007 que juegan después de la tirada inicial hasta que exista el botón.

@@ -68,11 +68,18 @@ function dice(fixture: ComponentFixture<App>): HTMLButtonElement {
   return element(fixture, 'jp-dice button') as HTMLButtonElement;
 }
 
-/** Touches the dice `count` times, letting each spin finish. */
+/**
+ * Touches the dice `count` times, letting each spin finish and closing «Empieza el equipo X» when it
+ * shows up. Until the notice has its «¡Vamos!» button, it is closed through the store.
+ */
 function roll(fixture: ComponentFixture<App>, count = 1): void {
+  const store = TestBed.inject(GameStore);
   for (let i = 0; i < count; i++) {
     dice(fixture).click();
     vi.advanceTimersByTime(DICE_SPIN_MS);
+    if (store.starter() !== null) {
+      store.go();
+    }
     fixture.detectChanges();
   }
 }
