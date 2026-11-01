@@ -1,6 +1,6 @@
 # SPEC 008 — Equipos y campeón
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 006, SPEC 007
 > **Fecha:** 2026-10-30
 > **Autor:** Christian Garcia
