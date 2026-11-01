@@ -376,7 +376,7 @@ En `App`:
 
   Cubre HU-06.4, HU-06.5, RF-015 y RF-016.
 - [x] 6. Almacén, hasta que pasen los tests del paso 5.
-- [ ] 7. `InitialRoundTab` y `FirstPlayer`, con sus tests en el mismo paso, porque son plantilla.
+- [x] 7. `InitialRoundTab` y `FirstPlayer`, con sus tests en el mismo paso, porque son plantilla.
   - Pestaña:
     - una mascota quieta y su valor por tirada, en orden;
     - el empate visible;

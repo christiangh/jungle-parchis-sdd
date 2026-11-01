@@ -1,0 +1,31 @@
+<div
+  class="flex flex-col gap-1 rounded-b-xl border-2 border-t-0 border-black/40 py-1.5 pr-4 pl-2 shadow-md shadow-black/35"
+  [class]="fill()"
+  [attr.data-color]="color()"
+  data-tab
+>
+  <p class="sr-only" data-text>{{ text() }}</p>
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-1" aria-hidden="true" data-rolls>
+    @for (roll of round().rolls; track $index) {
+      <div class="flex items-center gap-1" [attr.data-color]="roll.color" data-roll>
+        <div class="size-6 shrink-0 rounded-full shadow-sm shadow-black/35 sm:size-7" data-badge>
+          <svg class="size-full" viewBox="-24 -24 48 48">
+            <g jp-mascot [color]="roll.color" [radius]="mascotRadius" />
+          </svg>
+        </div>
+        <span class="text-sm/tight font-semibold text-white sm:text-base/tight" data-value>
+          {{ roll.value }}
+        </span>
+      </div>
+    }
+  </div>
+  @if (tie(); as tie) {
+    <p
+      class="text-sm/tight font-semibold text-white sm:text-base/tight"
+      aria-hidden="true"
+      data-tie
+    >
+      {{ tie }}
+    </p>
+  }
+</div>
