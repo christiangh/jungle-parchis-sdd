@@ -304,7 +304,7 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 
 ## PARTE-04: Tirada inicial en el cartel y la pestaña
 
-**Estado:** Pendiente
+**Estado:** Hecha
 
 ### Enfoque
 
