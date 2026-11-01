@@ -12,6 +12,7 @@ import {
 } from '@engine';
 import { prefersReducedMotion } from '../shared/reduced-motion';
 import { DiceRoller } from './dice-roller';
+import { InitialRound } from './initial-round';
 
 /** How long the dice spins before the roll is applied (RF-009, RNF-003). */
 export const DICE_SPIN_MS = 500;
@@ -63,6 +64,15 @@ export class GameStore {
   readonly canRoll = computed(() => !this.rolling$() && waitsForRoll(this.state$()));
   /** Highlighted piece the player touched; it does not exist in the engine. */
   readonly selected = this.selected$.asReadonly();
+  /** Rolls of the current or last initial roll round, or `null` outside it (SPEC 008 RF-014). */
+  readonly initialRound = signal<InitialRound | null>(null).asReadonly();
+  /** Team that starts, shown until «¡Vamos!» is pressed (SPEC 008 RF-016). */
+  readonly starter = signal<Color | null>(null).asReadonly();
+
+  /** Closes the «Empieza el equipo X» notice, so the dice responds (SPEC 008 RF-016). */
+  go(): void {
+    return;
+  }
 
   /**
    * Touch on a piece: selects it if it has a legal move, cancels the selection if it was

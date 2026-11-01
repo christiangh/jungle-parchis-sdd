@@ -367,7 +367,7 @@ En `App`:
 
   Cubre HU-06.2, HU-06.3, HU-06.6, RF-014 y RF-015.
 - [x] 4. `initial-round.ts`, hasta que pasen los tests del paso 3.
-- [ ] 5. Tests del almacén, con un esqueleto que compila y los hace fallar. Con tiradas fijas sobre el motor real, comprueban:
+- [x] 5. Tests del almacén, con un esqueleto que compila y los hace fallar. Con tiradas fijas sobre el motor real, comprueban:
   - `initialRound` sigue la ronda y el desempate, y vuelve a `null` tras la primera jugada normal;
   - `starter` es el equipo de `first-player`;
   - con `starter`, `roll()` no hace nada;
@@ -454,3 +454,4 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** `FirstPlayer` es un componente propio con las clases y los tokens de la capa, el tablón y el botón de la pantalla de campeón. **No:** sacar un componente común de las dos pantallas, que obligaría a reescribir `Champion`, que ya está cerrada y revisada, para compartir unas pocas clases.
 - **Sí:** al pulsar «¡Vamos!», el foco va al dado, que es lo siguiente que hay que hacer. Si no, se quedaría en `body` al desaparecer el botón.
 - **Sí:** `roll()` de `e2e/dice.ts` pulsa «¡Vamos!» cuando aparece, como propone el riesgo del spec. `spin()` tira sin cerrarlo, para las pruebas que comprueban la pantalla.
+- **Sí:** en `game-store.spec.ts`, `rollTimes` pulsa «¡Vamos!» (`go()`) cuando aparece `starter`, igual que `roll()` en las pruebas en navegador. Los tests nuevos usan `spinTimes`, que no lo cierra. Así los tests de SPEC 007 que juegan después de la tirada inicial siguen probando lo mismo.

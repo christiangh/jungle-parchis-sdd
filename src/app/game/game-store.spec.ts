@@ -16,11 +16,21 @@ function storeWith(...rolls: number[]): GameStore {
   return TestBed.inject(GameStore);
 }
 
-/** Rolls `count` times, letting each spin finish. */
-function rollTimes(store: GameStore, count: number): void {
+/** Rolls `count` times, letting each spin finish, without closing «Empieza el equipo X». */
+function spinTimes(store: GameStore, count: number): void {
   for (let i = 0; i < count; i++) {
     store.roll();
     vi.advanceTimersByTime(DICE_SPIN_MS);
+  }
+}
+
+/** Rolls `count` times, letting each spin finish and pressing «¡Vamos!» when it shows up. */
+function rollTimes(store: GameStore, count: number): void {
+  for (let i = 0; i < count; i++) {
+    spinTimes(store, 1);
+    if (store.starter() !== null) {
+      store.go();
+    }
   }
 }
 
@@ -413,6 +423,112 @@ describe('GameStore', () => {
       store.chooseTeams();
 
       expect(store.state()).toBe(before);
+    });
+  });
+
+  describe('tirada inicial', () => {
+    it('HU-06.2, RF-015: la ronda en curso lleva las tiradas en orden', () => {
+      const store = storeWith(5, 3);
+      expect(store.initialRound()).toBeNull();
+
+      spinTimes(store, 2);
+
+      expect(store.initialRound()).toEqual({
+        rolls: [
+          { color: 'yellow', value: 5 },
+          { color: 'blue', value: 3 },
+        ],
+        tie: null,
+        closed: false,
+      });
+    });
+
+    it('HU-06.3, RF-015: el empate cierra la ronda y la primera tirada del desempate empieza otra', () => {
+      const store = storeWith(6, 2, 6, 1, 4);
+      spinTimes(store, 4);
+
+      expect(store.initialRound()).toEqual({
+        rolls: [
+          { color: 'yellow', value: 6 },
+          { color: 'blue', value: 2 },
+          { color: 'red', value: 6 },
+          { color: 'green', value: 1 },
+        ],
+        tie: ['yellow', 'red'],
+        closed: true,
+      });
+      expect(store.starter()).toBeNull();
+
+      spinTimes(store, 1);
+      expect(store.initialRound()).toEqual({
+        rolls: [{ color: 'yellow', value: 4 }],
+        tie: null,
+        closed: false,
+      });
+    });
+
+    it('HU-06.4, RF-016: tras la última tirada, empieza el equipo del motor y la ronda sigue a la vista', () => {
+      const store = storeWith(3, 5, 2, 1);
+      spinTimes(store, 3);
+      expect(store.starter()).toBeNull();
+
+      spinTimes(store, 1);
+
+      expect(store.starter()).toBe('blue');
+      expect(store.initialRound()?.rolls).toHaveLength(4);
+      expect(store.initialRound()?.closed).toBe(true);
+    });
+
+    it('RF-016: mientras se anuncia quién empieza, el dado no responde', () => {
+      const store = storeWith(3, 5, 2, 1, 4);
+      spinTimes(store, 4);
+      const state = store.state();
+
+      expect(store.canRoll()).toBe(false);
+      store.roll();
+
+      expect(store.rolling()).toBe(false);
+      expect(store.face()).toBe(1);
+      expect(store.state()).toBe(state);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('HU-06.5, RF-016: «¡Vamos!» cierra el anuncio y el dado responde al equipo que empieza', () => {
+      const store = storeWith(3, 5, 2, 1, 4);
+      spinTimes(store, 4);
+      expect(store.canRoll()).toBe(false);
+
+      store.go();
+
+      expect(store.starter()).toBeNull();
+      expect(store.canRoll()).toBe(true);
+      spinTimes(store, 1);
+      expect(store.lastPlayer()).toBe('blue');
+      expect(store.face()).toBe(4);
+    });
+
+    it('RF-015: la primera jugada normal devuelve la pestaña a la última jugada', () => {
+      const store = storeWith(3, 5, 2, 1, 4);
+      spinTimes(store, 4);
+      store.go();
+      expect(store.initialRound()?.closed).toBe(true);
+
+      spinTimes(store, 1);
+
+      expect(store.initialRound()).toBeNull();
+    });
+
+    it('RF-016: empezar otra partida borra la ronda y el anuncio', () => {
+      const store = storeWith(3, 5, 2, 1);
+      spinTimes(store, 4);
+      expect(store.starter()).toBe('blue');
+      expect(store.initialRound()).not.toBeNull();
+
+      store.start(COLORS);
+
+      expect(store.initialRound()).toBeNull();
+      expect(store.starter()).toBeNull();
+      expect(store.canRoll()).toBe(true);
     });
   });
 
