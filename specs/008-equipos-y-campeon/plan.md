@@ -356,7 +356,7 @@ En `App`:
 
   Cubre HU-06.1 y RF-013.
 - [x] 2. `headline` hasta que pasen los tests del paso 1, más la copia invisible en el cartel, con sus tests en `turn-banner.spec.ts`: la copia es `aria-hidden` y comparte celda con el título. Se actualizan los tests de SPEC 007 que esperaban «Toca el dado» en la tirada inicial (RF-013, CE-07).
-- [ ] 3. Tests de `initial-round.ts`, con un esqueleto que compila y los hace fallar. Comprueban:
+- [x] 3. Tests de `initial-round.ts`, con un esqueleto que compila y los hace fallar. Comprueban:
   - las tiradas de una ronda, en orden;
   - el empate cierra la ronda con los equipos implicados;
   - la primera tirada del desempate empieza una ronda vacía con solo esa tirada;
