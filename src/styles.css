@@ -6,7 +6,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/caprasimo-latin-400-normal.woff2') format('woff2');
+  src: url('fonts/caprasimo-latin-400-normal.woff2') format('woff2');
 }
 
 @font-face {
@@ -14,7 +14,7 @@
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('/fonts/figtree-latin-600-normal.woff2') format('woff2');
+  src: url('fonts/figtree-latin-600-normal.woff2') format('woff2');
 }
 
 /*
@@ -357,20 +357,20 @@
 
 /* Seamless jungle tile shown at 600 px, or 400 px on narrow screens (RF-001). */
 @utility bg-jungle-tile {
-  background-image: url('/background/fondo-jungla-1200.jpg');
+  background-image: url('background/fondo-jungla-1200.jpg');
   background-image: image-set(
-    url('/background/fondo-jungla-1200.webp') type('image/webp'),
-    url('/background/fondo-jungla-1200.jpg') type('image/jpeg')
+    url('background/fondo-jungla-1200.webp') type('image/webp'),
+    url('background/fondo-jungla-1200.jpg') type('image/jpeg')
   );
   background-size: 600px 600px;
   background-repeat: repeat;
   background-position: center;
 
   @media (width < 600px) {
-    background-image: url('/background/fondo-jungla-800.jpg');
+    background-image: url('background/fondo-jungla-800.jpg');
     background-image: image-set(
-      url('/background/fondo-jungla-800.webp') type('image/webp'),
-      url('/background/fondo-jungla-800.jpg') type('image/jpeg')
+      url('background/fondo-jungla-800.webp') type('image/webp'),
+      url('background/fondo-jungla-800.jpg') type('image/jpeg')
     );
     background-size: 400px 400px;
   }

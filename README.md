@@ -4,6 +4,8 @@
 
 Parchís inspirado en la jungla, para el navegador, hecho con Angular 22 mediante desarrollo guiado por specs (SDD). Funciona en local, sin backend ni cuentas.
 
+**Demo:** [christiangh.github.io/jungle-parchis-sdd](https://christiangh.github.io/jungle-parchis-sdd/)
+
 ## Cómo se desarrolla
 
 Cada funcionalidad sigue el mismo ciclo, con el plugin [cgh-sdd](https://github.com/christiangh/cgh-spec-driven-design) para Claude Code:
