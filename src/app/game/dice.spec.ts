@@ -42,7 +42,7 @@ describe('Dice', () => {
   it('RF-007: muestra solo la imagen de la cara indicada', async () => {
     for (const face of [1, 2, 3, 4, 5, 6]) {
       const fixture = await render({ face });
-      expect(visibleFaces(fixture), String(face)).toEqual([`/dice/dado-cara-${face}.svg`]);
+      expect(visibleFaces(fixture), String(face)).toEqual([`dice/dado-cara-${face}.svg`]);
     }
   });
 
