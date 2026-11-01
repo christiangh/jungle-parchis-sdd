@@ -414,7 +414,7 @@ En `App`:
     - la pantalla «Empieza el equipo X» cabe sin scroll, con el botón dentro, en las cuatro ventanas.
 
   Cubre CE-07 y RNF-004.
-- [ ] 10. Revisión manual en navegador a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080, con y sin movimiento reducido. Se revisan el cartel de la tirada inicial, la pestaña con cuatro tiradas y empate, y «Empieza el equipo X» frente a la pantalla de campeón, manejándolo con el teclado. Se miden el contraste del valor y del empate sobre las cuatro pestañas y el del título sobre los cuatro tablones. El resultado se registra en «Decisiones técnicas» (RNF-001, RNF-002, RNF-003, RNF-004).
+- [x] 10. Revisión manual en navegador a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080, con y sin movimiento reducido. Se revisan el cartel de la tirada inicial, la pestaña con cuatro tiradas y empate, y «Empieza el equipo X» frente a la pantalla de campeón, manejándolo con el teclado. Se miden el contraste del valor y del empate sobre las cuatro pestañas y el del título sobre los cuatro tablones. El resultado se registra en «Decisiones técnicas» (RNF-001, RNF-002, RNF-003, RNF-004).
 
 ### Pruebas y trazabilidad
 
@@ -456,3 +456,21 @@ Comandos: `pnpm test:once` en cada paso; `pnpm check` y `pnpm test:e2e` al cerra
 - **Sí:** `roll()` de `e2e/dice.ts` pulsa «¡Vamos!» cuando aparece, como propone el riesgo del spec. `spin()` tira sin cerrarlo, para las pruebas que comprueban la pantalla.
 - **Sí:** en `game-store.spec.ts`, `rollTimes` pulsa «¡Vamos!» (`go()`) cuando aparece `starter`, igual que `roll()` en las pruebas en navegador. Los tests nuevos usan `spinTimes`, que no lo cierra. Así los tests de SPEC 007 que juegan después de la tirada inicial siguen probando lo mismo.
 - **Sí:** desde el paso 6, `roll()` de `app.spec.ts` cierra el anuncio con `store.go()` cuando aparece `starter`. En el paso 8 pasa a pulsar «¡Vamos!». **No:** dejar fallar los 13 tests de SPEC 007 que juegan después de la tirada inicial hasta que exista el botón.
+- **Revisión manual (paso 10):** script de Playwright contra `ng serve` de producción, a 320 × 568, 568 × 320, 768 × 1024 y 1920 × 1080, con y sin movimiento reducido. Recorre un empate de los cuatro, el desempate, «Empieza el equipo Amarillo», «¡Vamos!» y la primera tirada, manejado con el teclado. La pantalla de campeón se saca para compararla en `ng serve` de desarrollo, poniendo el ganador desde la consola del navegador, sin código en el proyecto.
+  - En las 8 combinaciones no hay scroll, y el tablero ocupa la misma caja antes de tirar y después de «¡Vamos!».
+  - La pestaña con cuatro tiradas y empate cabe en su hueco. A 568 × 320 la cuarta mascota pasa a una segunda fila y el cartel ocupa tres líneas, sin mover el tablero.
+  - «Empieza el equipo X» se ve entera, con el tablón y el botón dentro. Usa la misma disposición que la pantalla de campeón, con el botón debajo y, a 568 × 320, en fila a la derecha. Lleva la capa, el tablón y el botón de esa pantalla, sin trofeo, confeti ni rayos.
+  - Teclado:
+    - el foco empieza en «¡Vamos!»;
+    - Escape no la cierra;
+    - el tabulador sale al navegador, porque el resto de la página es `inert`, y mayúsculas y tabulador vuelve a «¡Vamos!»;
+    - Enter la cierra y deja el foco en el dado;
+    - otro Enter tira.
+  - Sin movimiento reducido, la mascota de la pantalla tiene 6 animaciones en marcha. Con movimiento reducido no hay ninguna.
+  - Contraste del valor y del empate sobre las pestañas:
+    - amarilla 4,79:1;
+    - azul 8,91:1;
+    - roja 9,46:1;
+    - verde 8,62:1.
+  - Contraste del título: blanco con contorno de tinta, como el cartel y la pantalla de campeón, a 14,51:1 contra el contorno con los cuatro colores. Sobre el tablón amarillo sin contorno daría 1,96:1, como ya pasa en el cartel.
+  - Contraste de «¡Vamos!»: 5,72:1, el mismo que «Nueva partida».
