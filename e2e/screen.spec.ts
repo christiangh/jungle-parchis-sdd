@@ -1,5 +1,5 @@
 import { expect, Locator, Page, test } from '@playwright/test';
-import { fixDice, roll } from './dice';
+import { dice, firstPlayer, fixDice, roll, spin } from './dice';
 import { startGame, startScreen } from './start';
 
 const SIZES = [
@@ -9,8 +9,11 @@ const SIZES = [
   { width: 1920, height: 1080 },
 ];
 
-// Initial roll tie, so the last play tab shows one of its longer sentences.
+// Initial roll tie, so the initial roll tab shows four rolls and the tie.
 const TIE = [6, 2, 6, 1];
+
+// Yellow wins the initial roll with a 6 and loses its first roll, a 4.
+const YELLOW_STARTS = [6, 1, 1, 1, 4];
 
 async function expectInside(page: Page, locator: Locator, name: string): Promise<void> {
   const box = (await locator.boundingBox())!;
@@ -42,7 +45,7 @@ for (const size of SIZES) {
     await page.goto('/');
     await startGame(page);
     await roll(page, TIE.length);
-    await expect(page.locator('[data-last-play]')).toBeVisible();
+    await expect(page.locator('[data-initial-round] [data-tie]')).toBeVisible();
 
     const overflow = await page.evaluate(() => ({
       x: document.documentElement.scrollWidth - window.innerWidth,
@@ -51,7 +54,7 @@ for (const size of SIZES) {
     expect(overflow).toEqual({ x: 0, y: 0 });
     await expectInside(page, page.locator('[data-plank]'), 'cartel');
     await expectInside(page, page.locator('[data-last-play-slot]'), 'hueco de la pestaña');
-    await expectInside(page, page.locator('[data-last-play]'), 'pestaña de última jugada');
+    await expectInside(page, page.locator('[data-initial-round]'), 'pestaña de la tirada inicial');
     await expectInside(
       page,
       page.getByRole('img', { name: 'Tablero de parchís de la jungla' }),
@@ -74,6 +77,61 @@ for (const size of SIZES) {
       'engranaje y tablero',
     );
     await expectApart(gear, page.locator('jp-dice button'), 'engranaje y dado');
+  });
+}
+
+for (const size of SIZES) {
+  test(`RF-015: a ${size.width} × ${size.height}, el tablero ocupa la misma caja en la tirada inicial y después`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(size);
+    await fixDice(page, YELLOW_STARTS);
+    await page.goto('/');
+    await startGame(page);
+    await page.evaluate(() => document.fonts.ready);
+    const board = page.locator('[data-board-slot]');
+    const before = (await board.boundingBox())!;
+
+    await spin(page);
+    await expect(page.locator('[data-initial-round]')).toBeVisible();
+    expect(await board.boundingBox(), 'tirada inicial').toEqual(before);
+
+    await spin(page, 3);
+    await expect(firstPlayer(page)).toBeVisible();
+    expect(await board.boundingBox(), 'Empieza el equipo Amarillo').toEqual(before);
+
+    await firstPlayer(page).getByRole('button', { name: '¡Vamos!' }).click();
+    await expect(firstPlayer(page)).toHaveCount(0);
+    expect(await board.boundingBox(), 'tras «¡Vamos!»').toEqual(before);
+
+    await roll(page);
+    await expect(page.locator('[data-last-play]')).toHaveText('Saca 4 y pierde la tirada.');
+    expect(await board.boundingBox(), 'primera jugada').toEqual(before);
+  });
+}
+
+for (const size of SIZES) {
+  test(`RNF-004, RF-016: a ${size.width} × ${size.height} «Empieza el equipo Amarillo» se ve entera sin scroll`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(size);
+    await fixDice(page, YELLOW_STARTS);
+    await page.goto('/');
+    await startGame(page);
+    await spin(page, 4);
+    const screen = firstPlayer(page);
+    await expect(screen).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+
+    const overflow = await page.evaluate(() => ({
+      x: document.documentElement.scrollWidth - window.innerWidth,
+      y: document.documentElement.scrollHeight - window.innerHeight,
+    }));
+    expect(overflow).toEqual({ x: 0, y: 0 });
+    await expectInside(page, screen.locator('[data-plank]'), 'tablón');
+    await expectInside(page, screen.locator('[data-title]'), 'título');
+    await expectInside(page, screen.getByRole('button', { name: '¡Vamos!' }), '¡Vamos!');
+    await expect(dice(page)).toBeDisabled();
   });
 }
 

@@ -403,7 +403,7 @@ En `App`:
   - Con el almacén real, una tirada inicial con desempate completa.
 
   Cubre HU-06.1 a HU-06.6, RF-013 a RF-016 y CE-07.
-- [ ] 9. Pruebas en navegador:
+- [x] 9. Pruebas en navegador:
   - `spin` y `roll` en `e2e/dice.ts`.
   - Textos nuevos en las pruebas de SPEC 006, SPEC 007 y SPEC 008 que pasan por la tirada inicial.
   - Escenario de HU-06 en `game.spec.ts`:

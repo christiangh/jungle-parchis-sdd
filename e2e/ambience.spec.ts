@@ -17,12 +17,13 @@ test('RF-001: con las imágenes del fondo bloqueadas, la página se ve con el co
 test('RF-002: el cartel se pinta con Caprasimo y la pestaña de última jugada con Figtree', async ({
   page,
 }) => {
-  await fixDice(page, [6]);
+  // Yellow starts with a 6 and loses its first roll, a 4, which shows the last play tab.
+  await fixDice(page, [6, 1, 1, 1, 4]);
   await page.goto('/');
   await startGame(page);
-  await roll(page);
+  await roll(page, 5);
 
-  await expect(page.locator('[data-title]')).toHaveCSS('font-family', /^Caprasimo,/);
+  await expect(page.locator('jp-turn-banner [data-title]')).toHaveCSS('font-family', /^Caprasimo,/);
   await expect(page.locator('[data-last-play] [data-text]')).toHaveCSS('font-family', /^Figtree,/);
   const loaded = await page.evaluate(async () => {
     await document.fonts.ready;
@@ -47,7 +48,7 @@ test('RNF-008: al cargar y en una tirada, todas las peticiones son al mismo orig
   await startGame(page);
   await page.evaluate(() => document.fonts.ready);
   await roll(page);
-  await expect(page.locator('[data-last-play]')).toBeVisible();
+  await expect(page.locator('[data-initial-round]')).toBeVisible();
 
   expect(foreign).toEqual([]);
 });

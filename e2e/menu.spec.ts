@@ -11,7 +11,7 @@ function turn(page: Page) {
 }
 
 function action(page: Page) {
-  return page.locator('[data-title]');
+  return page.locator('jp-turn-banner [data-title]');
 }
 
 function ghost(page: Page) {
@@ -81,7 +81,8 @@ test('CE-05: el menú se cierra sin tocar la partida y «Nueva partida» vuelve 
   // CE-06: the new game starts again with yellow's initial roll.
   await screen.getByRole('button', { name: '¡A jugar!' }).click();
   await expect(screen).toHaveCount(0);
-  await expect(turn(page)).toHaveText('Tirada inicial, turno de Amarillo.');
+  await expect(turn(page)).toHaveText('Turno de Amarillo.');
+  await expect(action(page)).toHaveText('Tirada inicial: Toca el dado');
   await expect(page.locator('[data-piece]')).toHaveCount(8);
   await expect(gear(page)).toBeVisible();
 });

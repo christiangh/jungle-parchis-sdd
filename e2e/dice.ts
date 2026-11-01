@@ -21,14 +21,34 @@ export function dice(page: Page) {
   return page.locator('jp-dice button');
 }
 
+/** «Empieza el equipo X» screen, a modal dialog over the game (SPEC 008 RF-016). */
+export function firstPlayer(page: Page) {
+  return page.getByRole('dialog', { name: /^Empieza el equipo / });
+}
+
 /**
  * Touches the dice, moves the fake clock past the spin so the roll is applied without waiting,
- * and waits for the screen to show it.
+ * and waits for the screen to show it. It leaves «Empieza el equipo X» open, if it shows up.
  */
-export async function roll(page: Page, count = 1): Promise<void> {
+export async function spin(page: Page, count = 1): Promise<void> {
   for (let i = 0; i < count; i++) {
     await dice(page).click();
     await page.clock.runFor(SPIN_MS);
     await expect(dice(page)).not.toHaveClass(/animate-dice-spin/);
+  }
+}
+
+/**
+ * Like `spin`, but touches «¡Vamos!» when «Empieza el equipo X» shows up, so the game goes on
+ * (SPEC 008 HU-06.5).
+ */
+export async function roll(page: Page, count = 1): Promise<void> {
+  for (let i = 0; i < count; i++) {
+    await spin(page);
+    const go = firstPlayer(page).getByRole('button', { name: '¡Vamos!' });
+    if ((await go.count()) > 0) {
+      await go.click();
+      await expect(firstPlayer(page)).toHaveCount(0);
+    }
   }
 }

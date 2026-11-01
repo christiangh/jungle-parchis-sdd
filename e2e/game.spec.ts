@@ -1,18 +1,20 @@
 import { expect, Page, test } from '@playwright/test';
-import { dice, fixDice, roll } from './dice';
+import { dice, firstPlayer, fixDice, roll, spin } from './dice';
 import { startGame } from './start';
 
 // Roll sequences checked with the engine: each roll before the last one has at most one legal move.
 
-// Yellow and red tie, red starts and takes two pieces out with a 5; a 3 lets both move.
-const MOVE = [6, 2, 6, 1, 3, 4, 5, 1, 1, 1, 5, 1, 1, 1, 3];
+// Yellow and red tie with a 6 and red wins the tie-break with a 4 against a 3.
+const TIE = [6, 2, 6, 1, 3, 4];
+// After TIE, red takes two pieces out with a 5; a 3 lets both move.
+const MOVE = [...TIE, 5, 1, 1, 1, 5, 1, 1, 1, 3];
 // Blue starts; red captures green-0 with red-0 on the last 6 and earns 20.
 const CAPTURE = [3, 5, 2, 1, 2, 5, 5, 4, 4, 6, 2, 3, 2, 5, 6, 6];
 // Blue starts and loses a 4, takes blue-0 out with a 5 and rolls three sixes.
 const SIXES = [3, 5, 2, 1, 4, 1, 1, 1, 5, 1, 1, 1, 6, 6, 6];
 
 function action(page: Page) {
-  return page.locator('[data-title]');
+  return page.locator('jp-turn-banner [data-title]');
 }
 
 /** Turn text for screen readers, before the action. */
@@ -21,11 +23,28 @@ function turn(page: Page) {
 }
 
 function banner(page: Page) {
-  return page.locator('[data-plank]');
+  return page.locator('jp-turn-banner [data-plank]');
 }
 
 function lastPlay(page: Page) {
   return page.locator('[data-last-play]');
+}
+
+/** Tab of the initial roll round, with a still mascot and a value for each roll. */
+function initialRound(page: Page) {
+  return page.locator('[data-initial-round]');
+}
+
+/** Text of the initial roll round for screen readers. */
+function initialRoundText(page: Page) {
+  return page.locator('[data-initial-round] [data-text]');
+}
+
+/** Teams that rolled in the round, in order, by the colour of their mascot. */
+function rollColors(page: Page): Promise<string[]> {
+  return page
+    .locator('[data-initial-round] [data-roll]')
+    .evaluateAll((rolls) => rolls.map((roll) => roll.getAttribute('data-color')!));
 }
 
 /** Tab of the last play, painted in the colour of the team that made it. */
@@ -73,23 +92,27 @@ test('RF-013: tirada inicial con empate, salir con un 5, cambiar, cancelar y con
   await page.goto('/');
   await startGame(page);
   await expect(banner(page)).toHaveAttribute('data-color', 'yellow');
-  await expect(turn(page)).toHaveText('Tirada inicial, turno de Amarillo.');
-  await expect(action(page)).toHaveText('Toca el dado');
+  await expect(turn(page)).toHaveText('Turno de Amarillo.');
+  await expect(action(page)).toHaveText('Tirada inicial: Toca el dado');
   await expect(lastPlay(page)).toHaveCount(0);
+  await expect(initialRound(page)).toHaveCount(0);
 
   await roll(page, 4);
-  await expect(lastPlay(page)).toHaveText('Saca 1, empate entre Amarillo y Rojo.');
-  await expect(lastPlayTab(page)).toHaveAttribute('data-color', 'green');
-  await expect(turn(page)).toHaveText('Tirada inicial, turno de Amarillo.');
+  await expect(initialRoundText(page)).toHaveText(
+    'Amarillo saca 6, Azul saca 2, Rojo saca 6, Verde saca 1, empate entre Amarillo y Rojo.',
+  );
+  await expect(initialRound(page).locator('[data-tab]')).toHaveAttribute('data-color', 'green');
+  await expect(turn(page)).toHaveText('Turno de Amarillo.');
   await expect(banner(page)).toHaveAttribute('data-color', 'yellow');
 
   await roll(page, 2);
-  await expect(lastPlay(page)).toHaveText('Saca 4.');
-  await expect(lastPlayTab(page)).toHaveAttribute('data-color', 'red');
+  await expect(initialRoundText(page)).toHaveText('Amarillo saca 3, Rojo saca 4.');
+  await expect(initialRound(page).locator('[data-tab]')).toHaveAttribute('data-color', 'red');
   await expect(turn(page)).toHaveText('Turno de Rojo.');
   await expect(action(page)).toHaveText('Toca el dado');
 
   await roll(page);
+  await expect(initialRound(page)).toHaveCount(0);
   await expect(dice(page)).toHaveAttribute('aria-label', 'Dado, cara 5');
   await expect(action(page)).toHaveText('Elige una ficha');
   await expect(highlighted(page)).toHaveCount(1);
@@ -203,11 +226,63 @@ test('HU-03.3, HU-04.1: partida de amarillo y verde, con las casas azul y roja a
     await expect(page.locator(`[data-home="${color}"]`)).not.toHaveAttribute('data-inactive');
   }
 
-  await expect(turn(page)).toHaveText('Tirada inicial, turno de Amarillo.');
+  await expect(turn(page)).toHaveText('Turno de Amarillo.');
   await roll(page);
-  await expect(turn(page)).toHaveText('Tirada inicial, turno de Verde.');
+  await expect(turn(page)).toHaveText('Turno de Verde.');
   await roll(page);
   await expect(banner(page)).toHaveAttribute('data-color', 'yellow');
   await expect(turn(page)).toHaveText('Turno de Amarillo.');
-  await expect(lastPlay(page)).toHaveText('Saca 2.');
+  await expect(initialRoundText(page)).toHaveText('Amarillo saca 4, Verde saca 2.');
+});
+
+test('HU-06, CE-07: empate en la tirada inicial, desempate y «Empieza el equipo Rojo»', async ({
+  page,
+}) => {
+  await fixDice(page, TIE);
+  await page.goto('/');
+  await startGame(page);
+
+  // HU-06.1: the banner asks yellow for the initial roll.
+  await expect(banner(page)).toHaveAttribute('data-color', 'yellow');
+  await expect(action(page)).toHaveText('Tirada inicial: Toca el dado');
+
+  // HU-06.2: each roll adds its mascot and its value, in order.
+  await spin(page);
+  expect(await rollColors(page)).toEqual(['yellow']);
+  await expect(initialRound(page).locator('[data-value]')).toHaveText(['6']);
+  await expect(banner(page)).toHaveAttribute('data-color', 'blue');
+
+  // HU-06.3: the tie shows with the rolls, and the tie-break round starts empty.
+  await spin(page, 3);
+  expect(await rollColors(page)).toEqual(['yellow', 'blue', 'red', 'green']);
+  await expect(initialRound(page).locator('[data-value]')).toHaveText(['6', '2', '6', '1']);
+  await expect(initialRound(page).locator('[data-tie]')).toHaveText(
+    'Empate entre Amarillo y Rojo.',
+  );
+  await expect(banner(page)).toHaveAttribute('data-color', 'yellow');
+  await expect(action(page)).toHaveText('Tirada inicial: Toca el dado');
+
+  await spin(page);
+  expect(await rollColors(page)).toEqual(['yellow']);
+  await expect(initialRound(page).locator('[data-value]')).toHaveText(['3']);
+  await expect(initialRound(page).locator('[data-tie]')).toHaveCount(0);
+
+  // HU-06.4: only «Empieza el equipo Rojo», with the rolls behind and the dice out of reach.
+  await spin(page);
+  const screen = firstPlayer(page);
+  await expect(screen).toHaveAccessibleName('Empieza el equipo Rojo');
+  await expect(screen).toHaveAttribute('data-color', 'red');
+  const go = screen.getByRole('button', { name: '¡Vamos!' });
+  await expect(go).toBeFocused();
+  await expect(initialRound(page).locator('[data-value]')).toHaveText(['3', '4']);
+  await expect(page.locator('main')).toHaveAttribute('inert', '');
+  await expect(dice(page)).toBeDisabled();
+
+  // HU-06.5: «¡Vamos!» closes it, red is asked to roll and the dice responds.
+  await go.click();
+  await expect(screen).toHaveCount(0);
+  await expect(dice(page)).toBeFocused();
+  await expect(banner(page)).toHaveAttribute('data-color', 'red');
+  await expect(action(page)).toHaveText('Toca el dado');
+  await expect(dice(page)).toBeEnabled();
 });
