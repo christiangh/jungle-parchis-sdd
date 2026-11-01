@@ -2,7 +2,8 @@ import { Color, GameEvent } from '@engine';
 import { COLOR_NAMES } from '../shared/color-names';
 import { pieceColor } from '../shared/piece-id';
 
-function names(colors: readonly Color[]): string {
+/** Team names joined as a sentence: «Amarillo, Azul y Rojo». */
+export function names(colors: readonly Color[]): string {
   const all = colors.map((color) => COLOR_NAMES[color]);
   return all.length > 1 ? `${all.slice(0, -1).join(', ')} y ${all.at(-1)}` : all.join('');
 }

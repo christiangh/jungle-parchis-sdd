@@ -1,4 +1,6 @@
-import { Color, GameEvent } from '@engine';
+import { Color, COLORS, GameEvent } from '@engine';
+import { COLOR_NAMES } from '../shared/color-names';
+import { names } from './last-play';
 
 /** One roll of the initial roll: the team that rolled and its value. */
 export interface InitialRoundRoll {
@@ -17,20 +19,50 @@ export interface InitialRound {
   readonly closed: boolean;
 }
 
-/** Longest round the tab can show, used to reserve its space (SPEC 008 RF-015). */
-export const LONGEST_ROUND: InitialRound = { rolls: [], tie: null, closed: false };
+const EMPTY_ROUND: InitialRound = { rolls: [], tie: null, closed: false };
 
-/** Round after the events of one accepted action, or `null` outside the initial roll (RF-015). */
+/**
+ * Longest round the tab can show, used to reserve its space (SPEC 008 RF-015): the four teams roll
+ * the same value and tie.
+ */
+export const LONGEST_ROUND: InitialRound = {
+  rolls: COLORS.map((color) => ({ color, value: 6 })),
+  tie: COLORS,
+  closed: true,
+};
+
+/**
+ * Round after the events of one accepted action, or `null` outside the initial roll (RF-015). The
+ * engine forgets the rolls of a round once it ends, so they are folded from its events: a roll on a
+ * closed round starts a new one, and a tie or the first player closes it.
+ */
 export function nextInitialRound(
   round: InitialRound | null,
   events: readonly GameEvent[],
 ): InitialRound | null {
-  void events;
-  return round;
+  if (!events.some(({ type }) => type === 'initial-roll')) {
+    return null;
+  }
+  let next = round === null || round.closed ? EMPTY_ROUND : round;
+  for (const event of events) {
+    switch (event.type) {
+      case 'initial-roll':
+        next = { ...next, rolls: [...next.rolls, { color: event.player, value: event.value }] };
+        break;
+      case 'initial-roll-tie':
+        next = { ...next, tie: event.players, closed: true };
+        break;
+      case 'first-player':
+        next = { ...next, closed: true };
+        break;
+    }
+  }
+  return next;
 }
 
 /** Accessible text of the round, naming each team with its value (SPEC 008 RF-015, HU-06.6). */
 export function initialRoundText(round: InitialRound): string {
-  void round;
-  return '';
+  const rolls = round.rolls.map(({ color, value }) => `${COLOR_NAMES[color]} saca ${value}`);
+  const tie = round.tie === null ? [] : [`empate entre ${names(round.tie)}`];
+  return `${[...rolls, ...tie].join(', ')}.`;
 }

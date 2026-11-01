@@ -366,7 +366,7 @@ En `App`:
   - `LONGEST_ROUND` tiene cuatro tiradas y el empate de los cuatro.
 
   Cubre HU-06.2, HU-06.3, HU-06.6, RF-014 y RF-015.
-- [ ] 4. `initial-round.ts`, hasta que pasen los tests del paso 3.
+- [x] 4. `initial-round.ts`, hasta que pasen los tests del paso 3.
 - [ ] 5. Tests del almacén, con un esqueleto que compila y los hace fallar. Con tiradas fijas sobre el motor real, comprueban:
   - `initialRound` sigue la ronda y el desempate, y vuelve a `null` tras la primera jugada normal;
   - `starter` es el equipo de `first-player`;
