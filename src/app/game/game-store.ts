@@ -10,7 +10,9 @@ import {
   legalMoves,
   PieceId,
 } from '@engine';
+import { prefersReducedMotion } from '../shared/reduced-motion';
 import { DiceRoller } from './dice-roller';
+import { InitialRound, nextInitialRound } from './initial-round';
 
 /** How long the dice spins before the roll is applied (RF-009, RNF-003). */
 export const DICE_SPIN_MS = 500;
@@ -18,15 +20,16 @@ export const DICE_SPIN_MS = 500;
 /** Face shown before the first roll (RF-007). */
 export const INITIAL_FACE = 6;
 
-const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
-
 /** Whether the player in turn has to roll: no roll or bonus to use and no winner (RF-008). */
 export function waitsForRoll(state: GameState): boolean {
   return state.winner === null && state.pendingRoll === null && state.pendingBonus === null;
 }
 
-function newGame(): GameState {
-  const game = createGame({ players: COLORS });
+/** Screen in front: choosing the teams or playing the game (SPEC 008 RF-004). */
+export type Screen = 'start' | 'game';
+
+function newGame(players: readonly Color[] = COLORS): GameState {
+  const game = createGame({ players });
   if (!game.ok) {
     throw new Error(game.error);
   }
@@ -45,7 +48,12 @@ export class GameStore {
   private readonly face$ = signal(INITIAL_FACE);
   private readonly rolling$ = signal(false);
   private readonly selected$ = signal<PieceId | null>(null);
+  private readonly screen$ = signal<Screen>('start');
+  private readonly initialRound$ = signal<InitialRound | null>(null);
+  private readonly starter$ = signal<Color | null>(null);
 
+  /** Screen in front; the start screen shows the teams of `state` as the initial choice. */
+  readonly screen = this.screen$.asReadonly();
   readonly state = this.state$.asReadonly();
   /** Events of the last accepted action, in the order the engine produced them. */
   readonly lastEvents = this.lastEvents$.asReadonly();
@@ -55,9 +63,21 @@ export class GameStore {
   /** Face of the last roll, shown from the moment the dice is touched (RF-007). */
   readonly face = this.face$.asReadonly();
   readonly rolling = this.rolling$.asReadonly();
-  readonly canRoll = computed(() => !this.rolling$() && waitsForRoll(this.state$()));
+  /** Whether the dice responds: not spinning, a roll is due and nobody is being announced. */
+  readonly canRoll = computed(
+    () => !this.rolling$() && this.starter$() === null && waitsForRoll(this.state$()),
+  );
   /** Highlighted piece the player touched; it does not exist in the engine. */
   readonly selected = this.selected$.asReadonly();
+  /** Rolls of the current or last initial roll round, or `null` outside it (SPEC 008 RF-014). */
+  readonly initialRound = this.initialRound$.asReadonly();
+  /** Team that starts, shown until «¡Vamos!» is pressed (SPEC 008 RF-016). */
+  readonly starter = this.starter$.asReadonly();
+
+  /** Closes the «Empieza el equipo X» notice, so the dice responds (SPEC 008 RF-016). */
+  go(): void {
+    this.starter$.set(null);
+  }
 
   /**
    * Touch on a piece: selects it if it has a legal move, cancels the selection if it was
@@ -97,12 +117,30 @@ export class GameStore {
       }
     };
     this.face$.set(value);
-    if (this.reducedMotion()) {
+    if (prefersReducedMotion(this.window)) {
       apply();
       return;
     }
     this.rolling$.set(true);
     setTimeout(apply, DICE_SPIN_MS);
+  }
+
+  /** Starts a game of `players`, from the initial roll, and shows it (SPEC 008 RF-007). */
+  start(players: readonly Color[]): void {
+    this.state$.set(newGame(players));
+    this.lastEvents$.set([]);
+    this.lastPlayer$.set(null);
+    this.face$.set(INITIAL_FACE);
+    this.rolling$.set(false);
+    this.selected$.set(null);
+    this.initialRound$.set(null);
+    this.starter$.set(null);
+    this.screen$.set('game');
+  }
+
+  /** Goes back to the start screen, keeping the teams of the last game (SPEC 008 RF-008). */
+  chooseTeams(): void {
+    this.screen$.set('start');
   }
 
   /** Applies an action; a rejected one changes nothing (RF-022). */
@@ -115,10 +153,11 @@ export class GameStore {
     this.lastEvents$.set(result.value.events);
     this.lastPlayer$.set(action.player);
     this.selected$.set(null);
+    this.initialRound$.update((round) => nextInitialRound(round, result.value.events));
+    const first = result.value.events.find((event) => event.type === 'first-player');
+    if (first !== undefined) {
+      this.starter$.set(first.player);
+    }
     return true;
-  }
-
-  private reducedMotion(): boolean {
-    return this.window?.matchMedia?.(REDUCED_MOTION).matches ?? false;
   }
 }

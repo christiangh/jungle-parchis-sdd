@@ -113,7 +113,13 @@
 
   <g data-layer="game">
     @for (home of homes; track home.color) {
-      <g [attr.data-home]="home.color" [attr.data-turn]="home.color === homeTurn() ? '' : null">
+      @let homeInactive = inactive().has(home.color);
+      <g
+        [attr.data-home]="home.color"
+        [attr.data-turn]="home.color === homeTurn() ? '' : null"
+        [attr.data-inactive]="homeInactive ? '' : null"
+        [class]="homeInactive ? inactiveClass : ''"
+      >
         <clipPath [attr.id]="'jp-board-home-' + home.color">
           <rect
             [attr.x]="home.x + homeInset"
@@ -248,7 +254,13 @@
     <g data-medallions aria-hidden="true">
       @for (medallion of medallions; track medallion.color) {
         @let inTurn = medallion.color === homeTurn();
-        <g [attr.data-medallion]="medallion.color" [attr.data-turn]="inTurn ? '' : null">
+        @let medallionInactive = inactive().has(medallion.color);
+        <g
+          [attr.data-medallion]="medallion.color"
+          [attr.data-turn]="inTurn ? '' : null"
+          [attr.data-inactive]="medallionInactive ? '' : null"
+          [class]="medallionInactive ? inactiveClass : ''"
+        >
           @if (inTurn) {
             <circle
               data-part="medallion-glow"

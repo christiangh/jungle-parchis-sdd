@@ -28,6 +28,19 @@
     @if (headline().turn; as turn) {
       <p class="sr-only" data-turn>{{ turn }}</p>
     }
-    <p class="text-xl/tight sm:text-3xl/tight" data-title>{{ headline().action }}</p>
+    <!-- The invisible copy of the longest action keeps the banner's height, so the board does not
+         move when the initial roll ends (SPEC 008 RF-013). -->
+    <div class="grid">
+      <p
+        class="invisible col-start-1 row-start-1 text-xl/tight sm:text-3xl/tight"
+        aria-hidden="true"
+        data-longest-action
+      >
+        {{ longestAction }}
+      </p>
+      <p class="col-start-1 row-start-1 self-center text-xl/tight sm:text-3xl/tight" data-title>
+        {{ headline().action }}
+      </p>
+    </div>
   </div>
 </div>

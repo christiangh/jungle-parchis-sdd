@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Color, COLORS } from '@engine';
 import { MASCOTS } from '../shared/mascot';
-import { Headline } from './headline';
+import { Headline, LONGEST_ACTION } from './headline';
 import { TEAM_BG, TEAM_DARK_BG, TEAM_DARK_BORDER, TurnBanner } from './turn-banner';
 
 async function render(headline: Headline): Promise<HTMLElement> {
@@ -15,10 +15,10 @@ function playing(color: Color): Headline {
   return { color, action: 'Toca el dado', turn: 'Turno de X.' };
 }
 
-/** Text a sighted player sees: everything but the screen reader only texts. */
+/** Text a sighted player sees: everything but the screen reader only and invisible texts. */
 function visibleText(banner: HTMLElement): string {
   const copy = banner.cloneNode(true) as HTMLElement;
-  copy.querySelectorAll('.sr-only').forEach((hidden) => hidden.remove());
+  copy.querySelectorAll('.sr-only, .invisible').forEach((hidden) => hidden.remove());
   return copy.textContent ?? '';
 }
 
@@ -107,6 +107,26 @@ describe('TurnBanner', () => {
       expect(text.classList, color).toContain('text-white');
       expect(text.classList, color).toContain('text-outline-ink');
       expect(text.classList, color).toContain('font-display');
+    }
+  });
+
+  it('RF-013: el título reserva el sitio de la acción más larga con una copia invisible', async () => {
+    const banner = await render(playing('red'));
+    const copy = banner.querySelector<HTMLElement>('[data-longest-action]')!;
+    const title = banner.querySelector<HTMLElement>('[data-title]')!;
+    expect(copy.textContent?.trim()).toBe(LONGEST_ACTION);
+    expect(copy.classList).toContain('invisible');
+    expect(copy.getAttribute('aria-hidden')).toBe('true');
+    expect(copy.parentElement).toBe(title.parentElement);
+    expect(copy.parentElement!.classList).toContain('grid');
+    for (const cell of [copy, title]) {
+      expect(cell.classList).toContain('col-start-1');
+      expect(cell.classList).toContain('row-start-1');
+    }
+    // Same text size, so the copy measures what the longest action would.
+    for (const size of ['text-xl/tight', 'sm:text-3xl/tight']) {
+      expect(copy.classList).toContain(size);
+      expect(title.classList).toContain(size);
     }
   });
 

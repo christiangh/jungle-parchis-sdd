@@ -3,21 +3,58 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Color, COLORS, GameEvent, GameState, legalMoves, PieceId } from '@engine';
 import { App } from './app';
 import { homes } from './board/board-geometry';
-import { stateWith } from './board/board-test-utils';
+import { newGame, stateWith } from './board/board-test-utils';
 import { DICE_GLOW } from './game/dice';
-import { DICE_SPIN_MS, GameStore } from './game/game-store';
+import { DICE_SPIN_MS, GameStore, Screen } from './game/game-store';
 import { provideRolls } from './game/game-test-utils';
+import { InitialRound, LONGEST_ROUND } from './game/initial-round';
 import { LONGEST_PLAY } from './game/last-play';
 import { TEAM_BG, TEAM_DARK_BG } from './game/turn-banner';
 import { MASCOTS } from './shared/mascot';
 
+/** Opens the application and, unless `teams` is null, starts a game of those teams. */
 async function render(...rolls: number[]): Promise<ComponentFixture<App>> {
+  return renderTeams(COLORS, ...rolls);
+}
+
+async function renderTeams(
+  teams: readonly Color[] | null,
+  ...rolls: number[]
+): Promise<ComponentFixture<App>> {
   TestBed.configureTestingModule({ providers: [provideRolls(...rolls)] });
   const fixture = TestBed.createComponent(App);
   await fixture.whenStable();
+  if (teams !== null) {
+    await startGame(fixture, teams);
+  }
   // Fake timers only from here: `whenStable` waits on real ones.
   vi.useFakeTimers();
   return fixture;
+}
+
+function teamCard(fixture: ComponentFixture<App>, color: Color): HTMLButtonElement {
+  return element(fixture, `jp-start [data-team="${color}"]`) as HTMLButtonElement;
+}
+
+/** Leaves only `teams` switched on in the start screen and touches «¡A jugar!». */
+async function startGame(fixture: ComponentFixture<App>, teams: readonly Color[]): Promise<void> {
+  expect(element(fixture, 'jp-start'), 'start screen').not.toBeNull();
+  for (const color of COLORS) {
+    const on = teamCard(fixture, color).getAttribute('aria-pressed') === 'true';
+    if (on !== teams.includes(color)) {
+      teamCard(fixture, color).click();
+      await fixture.whenStable();
+    }
+  }
+  (element(fixture, 'jp-start [data-play]') as HTMLButtonElement).click();
+  await fixture.whenStable();
+}
+
+/** Teams switched on in the start screen. */
+function switchedOn(fixture: ComponentFixture<App>): string[] {
+  return Array.from(
+    (fixture.nativeElement as HTMLElement).querySelectorAll('jp-start [aria-pressed="true"]'),
+  ).map((card) => card.getAttribute('data-team')!);
 }
 
 function element(fixture: ComponentFixture<App>, selector: string): HTMLElement {
@@ -32,12 +69,24 @@ function dice(fixture: ComponentFixture<App>): HTMLButtonElement {
   return element(fixture, 'jp-dice button') as HTMLButtonElement;
 }
 
-/** Touches the dice `count` times, letting each spin finish. */
-function roll(fixture: ComponentFixture<App>, count = 1): void {
+/** Touches the dice `count` times, letting each spin finish, without closing «Empieza el equipo X». */
+function spin(fixture: ComponentFixture<App>, count = 1): void {
   for (let i = 0; i < count; i++) {
     dice(fixture).click();
     vi.advanceTimersByTime(DICE_SPIN_MS);
     fixture.detectChanges();
+  }
+}
+
+/** Touches the dice `count` times, letting each spin finish and pressing «¡Vamos!» when it shows up. */
+function roll(fixture: ComponentFixture<App>, count = 1): void {
+  for (let i = 0; i < count; i++) {
+    spin(fixture);
+    const go = element(fixture, 'jp-first-player [data-go]');
+    if (go !== null) {
+      go.click();
+      fixture.detectChanges();
+    }
   }
 }
 
@@ -127,7 +176,9 @@ function storeShowing(
   lastPlayer: Color | null = null,
   lastEvents: readonly GameEvent[] = [],
 ): Partial<GameStore> {
+  const screen = signal<Screen>('game');
   return {
+    screen: screen.asReadonly(),
     state: signal(state).asReadonly(),
     lastEvents: signal(lastEvents).asReadonly(),
     lastPlayer: signal(lastPlayer).asReadonly(),
@@ -136,12 +187,44 @@ function storeShowing(
     rolling: signal(false).asReadonly(),
     canRoll: computed(() => false),
     selected: signal<PieceId | null>(null).asReadonly(),
+    initialRound: signal<InitialRound | null>(null).asReadonly(),
+    starter: signal<Color | null>(null).asReadonly(),
     roll: vi.fn(),
+    go: vi.fn(),
     select: vi.fn(),
     confirm: vi.fn(),
     cancel: vi.fn(),
+    start: vi.fn(),
+    chooseTeams: vi.fn(() => screen.set('start')),
   };
 }
+
+/** Game won by Green, with its four pieces in its goal. */
+const GREEN_WON: GameState = {
+  ...stateWith([
+    ['green-0', { kind: 'goal' }],
+    ['green-1', { kind: 'goal' }],
+    ['green-2', { kind: 'goal' }],
+    ['green-3', { kind: 'goal' }],
+  ]),
+  initialRoll: null,
+  turn: 'green',
+  winner: 'green',
+};
+
+/** Game of Yellow and Green won by Green, with its four pieces in its goal. */
+const YELLOW_GREEN_WON: GameState = (() => {
+  const game = newGame(['yellow', 'green']);
+  return {
+    ...game,
+    pieces: game.pieces.map((piece) =>
+      piece.color === 'green' ? { ...piece, position: { kind: 'goal' } } : piece,
+    ),
+    initialRoll: null,
+    turn: 'green',
+    winner: 'green',
+  };
+})();
 
 // Blue starts and takes a piece out of home with a 5: a single legal move.
 const EXIT = [3, 5, 2, 1, 5];
@@ -204,7 +287,7 @@ describe('App', () => {
   it('HU-01.3: una partida nueva muestra el cartel amarillo que pide tirar a Amarillo', async () => {
     const fixture = await render();
     expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.yellow);
-    expect(text(fixture, '[data-title]')).toBe('Toca el dado');
+    expect(text(fixture, '[data-title]')).toBe('Tirada inicial: Toca el dado');
     expect(dice(fixture).disabled).toBe(false);
     expect(dice(fixture).classList).toContain(DICE_GLOW.yellow);
     expect(dice(fixture).getAttribute('aria-label')).toBe('Dado, cara 6');
@@ -216,7 +299,7 @@ describe('App', () => {
     expect(dice(fixture).classList).toContain(DICE_GLOW.blue);
     expect(dice(fixture).getAttribute('aria-label')).toBe('Dado, cara 3');
     expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.blue);
-    expect(text(fixture, '[data-title]')).toBe('Toca el dado');
+    expect(text(fixture, '[data-title]')).toBe('Tirada inicial: Toca el dado');
   });
 
   it('HU-03.1: el dado gira medio segundo con la cara ya visible y no responde mientras', async () => {
@@ -351,7 +434,7 @@ describe('App', () => {
     const fixture = await render();
     expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.yellow);
     expect(mascot(fixture, 'jp-turn-banner')).toEqual({ animal: 'jaguar', animated: true });
-    expect(text(fixture, '[data-title]')).toBe('Toca el dado');
+    expect(text(fixture, '[data-title]')).toBe('Tirada inicial: Toca el dado');
   });
 
   it('HU-04.2: tras una tirada de Rojo con movimientos, el cartel es rojo, con el loro, y pide elegir ficha', async () => {
@@ -408,8 +491,9 @@ describe('App', () => {
   });
 
   it('RF-011: la pestaña y su copia invisible ocupan la misma celda del hueco', async () => {
-    const fixture = await render(3);
-    roll(fixture);
+    // Blue starts and loses its 4: the first normal play.
+    const fixture = await render(3, 5, 2, 1, 4);
+    roll(fixture, 5);
     for (const selector of ['[data-longest-play]', '[data-last-play]']) {
       const cell = element(fixture, `[data-last-play-slot] > ${selector}`);
       expect(cell.classList, selector).toContain('col-start-1');
@@ -419,11 +503,15 @@ describe('App', () => {
   });
 
   it('RF-011: la región que se anuncia es el hueco fijo, antes y después de cada acción', async () => {
-    const fixture = await render(3);
+    const fixture = await render(3, 5, 2, 1, 4);
     const slot = element(fixture, '[data-last-play-slot]');
     expect(slot.getAttribute('aria-live')).toBe('polite');
 
     roll(fixture);
+    expect(element(fixture, '[data-last-play-slot]')).toBe(slot);
+    expect(element(fixture, '[data-last-play-slot] [data-initial-round]')).not.toBeNull();
+
+    roll(fixture, 4);
     expect(element(fixture, '[data-last-play-slot]')).toBe(slot);
     expect(slot.getAttribute('aria-live')).toBe('polite');
     expect(element(fixture, '[data-last-play-slot] [data-last-play]')).not.toBeNull();
@@ -474,12 +562,13 @@ describe('App', () => {
   });
 
   it('HU-07.5: cada acción sustituye la frase de la anterior', async () => {
-    const fixture = await render(3, 5);
-    roll(fixture);
-    expect(text(fixture, '[data-last-play]')).toBe('Saca 3.');
+    // Blue starts and loses its 4, and then Red loses its 3.
+    const fixture = await render(3, 5, 2, 1, 4, 3);
+    roll(fixture, 5);
+    expect(text(fixture, '[data-last-play]')).toBe('Saca 4 y pierde la tirada.');
 
     roll(fixture);
-    expect(text(fixture, '[data-last-play]')).toBe('Saca 5.');
+    expect(text(fixture, '[data-last-play]')).toBe('Saca 3 y pierde la tirada.');
   });
 
   it('CE-05: con un ganador, el cartel dice «¡Gana Rojo!» en rojo y nada responde', async () => {
@@ -509,5 +598,344 @@ describe('App', () => {
     );
     expect(store.select).not.toHaveBeenCalled();
     expect(store.confirm).not.toHaveBeenCalled();
+  });
+
+  describe('pantalla de inicio', () => {
+    it('HU-02.2, HU-03.1, RF-004: al cargar aparece con los cuatro equipos activados, fuera de main, y la partida queda inerte', async () => {
+      const fixture = await renderTeams(null);
+
+      expect(element(fixture, 'jp-start')).not.toBeNull();
+      expect(element(fixture, 'main jp-start')).toBeNull();
+      expect(switchedOn(fixture)).toEqual(['red', 'blue', 'green', 'yellow']);
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(true);
+      expect(element(fixture, 'jp-champion')).toBeNull();
+    });
+
+    it('HU-03.3, RF-007: «¡A jugar!» con amarillo y verde empieza esa partida, sin pantalla de inicio ni partida inerte', async () => {
+      const fixture = await renderTeams(['yellow', 'green']);
+
+      expect(element(fixture, 'jp-start')).toBeNull();
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(false);
+      expect(TestBed.inject(GameStore).state().players).toEqual(['yellow', 'green']);
+      expect(touchAreas(fixture)).toEqual([]);
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('jp-board [data-piece]'),
+      ).toHaveLength(8);
+    });
+
+    it('HU-03.3, HU-04.2: la tirada inicial y los turnos son solo entre amarillo y verde', async () => {
+      // Yellow wins the initial roll with a 4; then nobody can take a piece out with a 3.
+      const fixture = await renderTeams(['yellow', 'green'], 4, 2, 3, 3, 3);
+      const banner = () => `${text(fixture, '[data-turn]')} ${text(fixture, '[data-title]')}`;
+      const turns = [banner()];
+      for (let i = 0; i < 5; i++) {
+        roll(fixture);
+        turns.push(banner());
+      }
+
+      expect(turns).toEqual([
+        'Turno de Amarillo. Tirada inicial: Toca el dado',
+        'Turno de Verde. Tirada inicial: Toca el dado',
+        'Turno de Amarillo. Toca el dado',
+        'Turno de Verde. Toca el dado',
+        'Turno de Amarillo. Toca el dado',
+        'Turno de Verde. Toca el dado',
+      ]);
+    });
+  });
+
+  describe('menú', () => {
+    /** The element of `selector`, failing the test when it is missing. */
+    function present(fixture: ComponentFixture<App>, selector: string): HTMLElement {
+      const found = element(fixture, selector);
+      expect(found, selector).not.toBeNull();
+      return found;
+    }
+
+    /** Clicks `selector` as a pointer would, letting the click bubble up to the application. */
+    function click(fixture: ComponentFixture<App>, selector: string): void {
+      present(fixture, selector).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      fixture.detectChanges();
+    }
+
+    /** Opens the menu and asks for «Nueva partida». */
+    function askNewGame(fixture: ComponentFixture<App>): void {
+      click(fixture, 'jp-menu [data-gear]');
+      click(fixture, 'jp-menu [data-option="new-game"]');
+    }
+
+    it('RF-010: en la pantalla de partida hay engranaje, fuera de main', async () => {
+      const fixture = await render();
+      expect(present(fixture, 'jp-menu [data-gear]').getAttribute('aria-label')).toBe('Menú');
+      expect(element(fixture, 'main jp-menu')).toBeNull();
+    });
+
+    it('RF-010: en la pantalla de inicio no hay engranaje', async () => {
+      const fixture = await renderTeams(null);
+      expect(element(fixture, 'jp-start')).not.toBeNull();
+      expect(element(fixture, 'jp-menu')).toBeNull();
+    });
+
+    it('RF-012: con ganador, la pantalla de campeón deja el menú inerte', async () => {
+      const fixture = await renderShowing(storeShowing(GREEN_WON));
+      expect(element(fixture, 'jp-champion')).not.toBeNull();
+      expect(present(fixture, 'jp-menu').hasAttribute('inert')).toBe(true);
+    });
+
+    it('RF-012: sin ganador el menú no está inerte', async () => {
+      const fixture = await render();
+      expect(present(fixture, 'jp-menu').hasAttribute('inert')).toBe(false);
+    });
+
+    it('RF-011: con el menú abierto la partida queda inerte, y al cerrarlo deja de estarlo', async () => {
+      const fixture = await render();
+      click(fixture, 'jp-menu [data-gear]');
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(true);
+
+      click(fixture, 'jp-menu [data-scrim]');
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(false);
+    });
+
+    it('HU-05.4, RF-008: en una partida de amarillo y verde, descartarla lleva a la pantalla de inicio con solo esos dos activados', async () => {
+      const store = storeShowing(newGame(['yellow', 'green']));
+      const fixture = await renderShowing(store);
+
+      askNewGame(fixture);
+      click(fixture, 'jp-menu [data-discard]');
+      await fixture.whenStable();
+
+      expect(store.chooseTeams).toHaveBeenCalledOnce();
+      expect(store.start).not.toHaveBeenCalled();
+      expect(element(fixture, 'jp-start')).not.toBeNull();
+      expect(element(fixture, 'jp-menu')).toBeNull();
+      expect(switchedOn(fixture)).toEqual(['green', 'yellow']);
+    });
+
+    it('HU-05.5: con una ficha seleccionada, «Seguir jugando» o tocar la capa dejan la partida, la selección y la réplica igual', async () => {
+      const fixture = await render(...EXIT);
+      play(fixture, EXIT);
+      const store = TestBed.inject(GameStore);
+      const [move] = store.legalMoves();
+      touch(fixture, move.pieceId);
+      const state = store.state();
+
+      askNewGame(fixture);
+      click(fixture, 'jp-menu [data-keep]');
+      expect(store.state()).toBe(state);
+      expect(store.selected()).toBe(move.pieceId);
+      expect(ghost(fixture)).not.toBeNull();
+      expect(halos(fixture)).toEqual([move.pieceId]);
+
+      click(fixture, 'jp-menu [data-gear]');
+      click(fixture, 'jp-menu [data-scrim]');
+      expect(store.state()).toBe(state);
+      expect(store.selected()).toBe(move.pieceId);
+      expect(ghost(fixture)).not.toBeNull();
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(false);
+    });
+
+    it('HU-05.5: abrir el menú con el dado girando aplica la tirada igual', async () => {
+      const fixture = await render(3);
+      dice(fixture).click();
+      fixture.detectChanges();
+      click(fixture, 'jp-menu [data-gear]');
+
+      vi.advanceTimersByTime(DICE_SPIN_MS);
+      fixture.detectChanges();
+
+      expect(TestBed.inject(GameStore).state().initialRoll?.rolls).toEqual([3]);
+      expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.blue);
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(true);
+    });
+  });
+
+  describe('pantalla de campeón', () => {
+    it('HU-01.1: con un ganador aparece sobre la partida, fuera de main, y la partida queda inerte', async () => {
+      const fixture = await renderShowing(storeShowing(GREEN_WON));
+      const champion = element(fixture, 'jp-champion');
+
+      expect(champion.getAttribute('data-color')).toBe('green');
+      expect(element(fixture, 'main jp-champion')).toBeNull();
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(true);
+      expect(element(fixture, 'main jp-board')).not.toBeNull();
+    });
+
+    it('RF-003: sin ganador no hay pantalla de campeón y la partida no está inerte', async () => {
+      const fixture = await render();
+
+      expect(element(fixture, 'jp-champion')).toBeNull();
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(false);
+    });
+
+    it('HU-01.3: Escape y un toque en la capa no la quitan', async () => {
+      const store = storeShowing(GREEN_WON);
+      const fixture = await renderShowing(store);
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      element(fixture, 'jp-champion').click();
+      await fixture.whenStable();
+
+      expect(element(fixture, 'jp-champion')).not.toBeNull();
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(true);
+      expect(store.start).not.toHaveBeenCalled();
+    });
+
+    it('HU-02.1, RF-007: «Nueva partida» lleva a la pantalla de inicio con solo los equipos de la partida activados', async () => {
+      const store = storeShowing(YELLOW_GREEN_WON);
+      const fixture = await renderShowing(store);
+
+      (element(fixture, 'jp-champion [data-new-game]') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      expect(store.chooseTeams).toHaveBeenCalledOnce();
+      expect(store.start).not.toHaveBeenCalled();
+      expect(element(fixture, 'jp-champion')).toBeNull();
+      expect(element(fixture, 'jp-start')).not.toBeNull();
+      expect(switchedOn(fixture)).toEqual(['green', 'yellow']);
+    });
+
+    it('RF-002: tras empezar otra, el cartel vuelve a la tirada inicial de Amarillo con las 16 fichas en casa y sin pestaña', async () => {
+      // The initial roll ends and Blue starts, with a tab that tells the rolls of the round.
+      const fixture = await render(3, 5, 2, 1);
+      roll(fixture, 4);
+      expect(text(fixture, '[data-turn]')).toBe('Turno de Azul.');
+      expect(element(fixture, '[data-initial-round]')).not.toBeNull();
+
+      TestBed.inject(GameStore).start(COLORS);
+      fixture.detectChanges();
+
+      expect(element(fixture, 'jp-champion')).toBeNull();
+      expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.yellow);
+      expect(text(fixture, '[data-title]')).toBe('Tirada inicial: Toca el dado');
+      expect(text(fixture, '[data-turn]')).toBe('Turno de Amarillo.');
+      expect(element(fixture, '[data-last-play]')).toBeNull();
+      expect(element(fixture, '[data-initial-round]')).toBeNull();
+      const pieces = TestBed.inject(GameStore).state().pieces;
+      expect(pieces).toHaveLength(16);
+      expect(pieces.every((piece) => piece.position.kind === 'home')).toBe(true);
+      expect(dice(fixture).disabled).toBe(false);
+    });
+  });
+
+  describe('tirada inicial', () => {
+    /** Mascots and values drawn in the initial round tab, in order. */
+    function rolls(fixture: ComponentFixture<App>): string[] {
+      return Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('[data-initial-round] [data-roll]'),
+      ).map(
+        (roll) =>
+          `${roll.querySelector('[data-mascot]')?.getAttribute('data-mascot')} ${roll
+            .querySelector('[data-value]')
+            ?.textContent?.trim()}`,
+      );
+    }
+
+    it('HU-06.1, HU-06.2, RF-014: con 5 y 3, el cartel rojo pide la tirada inicial y la pestaña muestra jaguar 5 e hipopótamo 3', async () => {
+      const fixture = await render(5, 3);
+      roll(fixture, 2);
+
+      expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.red);
+      expect(mascot(fixture, 'jp-turn-banner').animal).toBe(MASCOTS.red);
+      expect(text(fixture, '[data-title]')).toBe('Tirada inicial: Toca el dado');
+      expect(rolls(fixture)).toEqual([`${MASCOTS.yellow} 5`, `${MASCOTS.blue} 3`]);
+      expect(text(fixture, '[data-initial-round] [data-text]')).toBe(
+        'Amarillo saca 5, Azul saca 3.',
+      );
+      expect(element(fixture, '[data-last-play]')).toBeNull();
+    });
+
+    it('HU-06.3, RF-014: un empate muestra toda la ronda y el empate, y el desempate empieza sin tiradas', async () => {
+      const fixture = await render(6, 2, 6, 1, 4);
+      roll(fixture, 4);
+
+      expect(rolls(fixture)).toEqual([
+        `${MASCOTS.yellow} 6`,
+        `${MASCOTS.blue} 2`,
+        `${MASCOTS.red} 6`,
+        `${MASCOTS.green} 1`,
+      ]);
+      expect(text(fixture, '[data-initial-round] [data-tie]')).toBe(
+        'Empate entre Amarillo y Rojo.',
+      );
+
+      roll(fixture);
+      expect(rolls(fixture)).toEqual([`${MASCOTS.yellow} 4`]);
+      expect(element(fixture, '[data-initial-round] [data-tie]')).toBeNull();
+    });
+
+    it('RF-015: el hueco reserva también la ronda más larga, con una copia invisible en la misma celda', async () => {
+      const fixture = await render(3);
+      roll(fixture);
+      const copy = element(fixture, '[data-last-play-slot] > [data-longest-round]');
+
+      expect(copy.classList).toContain('invisible');
+      expect(copy.getAttribute('aria-hidden')).toBe('true');
+      expect(copy.querySelectorAll('[data-roll]')).toHaveLength(LONGEST_ROUND.rolls.length);
+      expect(copy.querySelector('[data-tie]')).not.toBeNull();
+      for (const selector of ['[data-longest-round]', '[data-initial-round]']) {
+        const cell = element(fixture, `[data-last-play-slot] > ${selector}`);
+        expect(cell.classList, selector).toContain('col-start-1');
+        expect(cell.classList, selector).toContain('row-start-1');
+      }
+    });
+
+    it('HU-06.4, RF-016: al decidir que empieza azul, aparece su aviso fuera de main, con la ronda detrás, y nada más responde', async () => {
+      const fixture = await render(3, 5, 2, 1, 4);
+      spin(fixture, 4);
+      const notice = element(fixture, 'jp-first-player');
+
+      expect(notice.getAttribute('data-color')).toBe('blue');
+      expect(text(fixture, 'jp-first-player [data-title]')).toBe('Empieza el equipo Azul');
+      expect(element(fixture, 'main jp-first-player')).toBeNull();
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(true);
+      expect(element(fixture, 'jp-menu').hasAttribute('inert')).toBe(true);
+      expect(element(fixture, 'jp-champion')).toBeNull();
+      expect(rolls(fixture)).toHaveLength(4);
+      expect(dice(fixture).disabled).toBe(true);
+
+      dice(fixture).click();
+      vi.advanceTimersByTime(DICE_SPIN_MS);
+      fixture.detectChanges();
+      expect(TestBed.inject(GameStore).lastPlayer()).toBe('green');
+      expect(element(fixture, 'jp-first-player')).not.toBeNull();
+    });
+
+    it('HU-06.5, RF-016: «¡Vamos!» cierra el aviso, el cartel pide tirar en azul y el foco pasa al dado, que responde', async () => {
+      const fixture = await render(3, 5, 2, 1, 4);
+      spin(fixture, 4);
+
+      element(fixture, 'jp-first-player [data-go]').click();
+      await fixture.whenStable();
+
+      expect(element(fixture, 'jp-first-player')).toBeNull();
+      expect(element(fixture, 'main').hasAttribute('inert')).toBe(false);
+      expect(element(fixture, 'jp-menu').hasAttribute('inert')).toBe(false);
+      expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.blue);
+      expect(text(fixture, '[data-title]')).toBe('Toca el dado');
+      expect(dice(fixture).disabled).toBe(false);
+      expect(document.activeElement).toBe(dice(fixture));
+
+      spin(fixture);
+      expect(TestBed.inject(GameStore).lastPlayer()).toBe('blue');
+      expect(text(fixture, '[data-last-play]')).toBe('Saca 4 y pierde la tirada.');
+      expect(element(fixture, '[data-initial-round]')).toBeNull();
+    });
+
+    it('HU-06.3, HU-06.4, HU-06.5: una tirada inicial con desempate entre amarillo y rojo la gana rojo', async () => {
+      const fixture = await render(6, 2, 6, 1, 3, 4);
+      spin(fixture, 6);
+
+      expect(text(fixture, 'jp-first-player [data-title]')).toBe('Empieza el equipo Rojo');
+      expect(rolls(fixture)).toEqual([`${MASCOTS.yellow} 3`, `${MASCOTS.red} 4`]);
+      expect(element(fixture, '[data-initial-round] [data-tie]')).toBeNull();
+
+      element(fixture, 'jp-first-player [data-go]').click();
+      await fixture.whenStable();
+
+      expect(element(fixture, 'jp-first-player')).toBeNull();
+      expect(element(fixture, '[data-plank]').classList).toContain(TEAM_BG.red);
+      expect(text(fixture, '[data-title]')).toBe('Toca el dado');
+      expect(rolls(fixture)).toEqual([`${MASCOTS.yellow} 3`, `${MASCOTS.red} 4`]);
+    });
   });
 });

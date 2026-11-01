@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { startGame } from './start';
 
 const COLORS = ['yellow', 'blue', 'red', 'green'] as const;
 const PIECES_PER_PLAYER = 4;
@@ -7,6 +8,7 @@ test('RF-016: la aplicación carga y pinta el tablero con 16 fichas en sus casas
   page,
 }) => {
   await page.goto('/');
+  await startGame(page);
 
   const board = page.getByRole('img', { name: 'Tablero de parchís de la jungla' });
   await expect(board).toBeVisible();

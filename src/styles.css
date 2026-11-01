@@ -136,6 +136,138 @@
   --color-home-turn-glow: #fff6c8;
   --color-home-turn-ring: var(--color-mascot-gem);
 
+  /* Champion screen (docs/design/avisos-y-campeon, SPEC 008 RF-001): overlay, natural wood button and its focus. */
+  --color-champion-overlay: rgb(18 14 8 / 0.64);
+  --color-champion-button: var(--color-wood);
+  --color-champion-button-hover: #d6a96f;
+  --color-champion-button-edge: var(--color-wood-edge);
+  --color-champion-focus: #c67139;
+
+  /*
+   * Start screen (docs/design/inicio-y-menu, SPEC 008 RF-004): cream box, switched-off cards with
+   * dashed borders and the «¡A jugar!» button; it shares the overlay and focus of the champion screen.
+   */
+  --color-start-box: #f5ead8;
+  --color-start-text: #201e1d;
+  --color-start-subtitle: #474238;
+  --color-start-muted: #645c50;
+  --color-start-card-off: #ebddc5;
+  --color-start-card-off-edge: #c0b6a5;
+  --color-start-mark-off-edge: #a19786;
+  --color-start-plus: #82796a;
+  --color-start-button: #8c491a;
+  --color-start-button-hover: var(--color-wood-edge);
+
+  /*
+   * Gear and side menu (docs/design/inicio-y-menu, SPEC 008 RF-010): natural wood gear like the
+   * champion button, and a cream panel with the start screen's colours and its own lighter overlay.
+   */
+  --color-menu-overlay: rgb(18 14 8 / 0.55);
+  --color-menu-gear: var(--color-champion-button);
+  --color-menu-gear-hover: var(--color-champion-button-hover);
+  --color-menu-gear-edge: var(--color-champion-button-edge);
+  --color-menu-gear-ink: var(--color-ink);
+  --color-menu-panel: var(--color-start-box);
+  --color-menu-text: var(--color-start-text);
+  --color-menu-row: var(--color-start-card-off);
+  --color-menu-row-hover: #fff2eb;
+  --color-menu-icon: var(--color-champion-focus);
+  --color-menu-chevron: var(--color-start-plus);
+  --color-menu-footer: var(--color-start-muted);
+
+  /* Trophy of the champion screen. */
+  --color-trophy-ink: var(--color-mascot-ink);
+  --color-trophy-handle: var(--color-team-yellow);
+  --color-trophy-cup: var(--color-mascot-gold);
+  --color-trophy-shade: #d39a2a;
+  --color-trophy-rim: #f7da8a;
+  --color-trophy-rim-inner: var(--color-mascot-gold-dark);
+  --color-trophy-star: #fff3c4;
+  --color-trophy-star-edge: var(--color-mascot-jaguar-ochre);
+  --color-trophy-base: var(--color-home-red-twig-2);
+  --color-trophy-grain: #5e3a17;
+
+  /* Sun rays behind the plank: gold rays alternating with pale ones, and a halo from pale to gold. */
+  --color-sun-ray: var(--color-mascot-gold);
+  --color-sun-ray-light: var(--color-home-turn-glow);
+
+  /* Confetti colours not already in the palette (the rest reuse team and mascot tokens). */
+  --color-confetti-cream: var(--color-trophy-star);
+  --color-confetti-red-dark: #9a2614;
+
+  /* Champion effects, only with motion allowed (RNF-002). */
+  --animate-mascot-bob: mascot-bob 1.6s ease-in-out infinite;
+  --animate-sun-rays-spin: sun-rays-spin 14s linear infinite;
+  --animate-sun-rays-glow: sun-rays-glow 2s ease-in-out infinite;
+  --animate-trophy-shine: trophy-shine 2.4s ease-in-out infinite;
+  --animate-trophy-twinkle: trophy-twinkle 2.4s ease-in-out infinite;
+  --animate-confetti-fall: confetti-fall linear infinite;
+
+  @keyframes mascot-bob {
+    0%,
+    100% {
+      transform: translateY(0) rotate(-2deg);
+    }
+    50% {
+      transform: translateY(-6%) rotate(2deg);
+    }
+  }
+
+  @keyframes sun-rays-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes sun-rays-glow {
+    0%,
+    100% {
+      opacity: 0.75;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes trophy-shine {
+    0%,
+    20% {
+      transform: translateX(-90px);
+    }
+    60%,
+    100% {
+      transform: translateX(90px);
+    }
+  }
+
+  @keyframes trophy-twinkle {
+    0%,
+    100% {
+      transform: scale(0) rotate(0);
+    }
+    15% {
+      transform: scale(1) rotate(45deg);
+    }
+    30% {
+      transform: scale(0) rotate(90deg);
+    }
+  }
+
+  /* Duration and delay come from each piece (confettiPieces). */
+  @keyframes confetti-fall {
+    0% {
+      top: -6%;
+      transform: translateX(0) rotate(0);
+    }
+    50% {
+      transform: translateX(18px) rotate(360deg);
+    }
+    100% {
+      top: 106%;
+      transform: translateX(-12px) rotate(720deg);
+    }
+  }
+
   /* Caprasimo for the turn banner, Figtree for every other text (RF-002). */
   --font-display: 'Caprasimo', ui-serif, Georgia, serif;
   --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif;

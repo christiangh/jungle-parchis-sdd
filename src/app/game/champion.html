@@ -1,0 +1,68 @@
+@if (animated) {
+  <jp-confetti [color]="winner()" />
+}
+<div
+  class="relative flex flex-col items-center [@media(orientation:landscape)_and_(max-height:480px)]:flex-row [@media(orientation:landscape)_and_(max-height:480px)]:gap-6"
+>
+  <svg
+    class="pointer-events-none absolute top-1/2 left-1/2 size-[560px] -translate-1/2 overflow-visible max-[520px]:size-[400px] [@media(orientation:landscape)_and_(max-height:480px)]:size-[360px]"
+    viewBox="-100 -100 200 200"
+    aria-hidden="true"
+  >
+    <g jp-sun-rays [animated]="animated" />
+  </svg>
+  <div
+    class="bg-plank relative flex flex-col items-center gap-1.5 rounded-[28px] border-4 px-12 pt-6.5 pb-7.5 shadow-xl shadow-black/50 max-[520px]:px-6.5 max-[520px]:pt-4.5 max-[520px]:pb-5.5 [@media(orientation:landscape)_and_(max-height:480px)]:px-6 [@media(orientation:landscape)_and_(max-height:480px)]:pt-4 [@media(orientation:landscape)_and_(max-height:480px)]:pb-5"
+    [class]="[fill(), edge()]"
+    data-plank
+  >
+    <div class="flex items-end gap-2.5">
+      <div
+        class="size-[190px] shrink-0 rounded-full shadow-md shadow-black/35 max-[520px]:size-[130px] [@media(orientation:landscape)_and_(max-height:480px)]:size-[110px]"
+        [class]="animated ? [badge(), 'motion-safe:animate-mascot-bob'] : badge()"
+        aria-hidden="true"
+        data-badge
+      >
+        <svg class="size-full" viewBox="-24 -24 48 48">
+          <g jp-mascot [color]="winner()" [radius]="mascotRadius" [animated]="animated" />
+        </svg>
+      </div>
+      <svg
+        class="h-[152px] w-[130px] shrink-0 overflow-visible max-[520px]:h-[105px] max-[520px]:w-[90px] [@media(orientation:landscape)_and_(max-height:480px)]:h-[88px] [@media(orientation:landscape)_and_(max-height:480px)]:w-[75px]"
+        viewBox="0 0 120 140"
+        aria-hidden="true"
+      >
+        <g jp-trophy [animated]="animated" />
+      </svg>
+    </div>
+    <h2
+      class="text-outline-ink font-display text-[72px]/none whitespace-nowrap text-white max-[520px]:text-5xl/none [@media(orientation:landscape)_and_(max-height:480px)]:text-[40px]/none"
+      [id]="titleId"
+      data-title
+    >
+      ¡Campeón!<span class="sr-only"> Gana {{ name() }}</span>
+    </h2>
+  </div>
+  <button
+    #newGameButton
+    type="button"
+    class="bg-champion-button bg-plank font-display text-ink hover:bg-champion-button-hover focus-visible:outline-champion-focus relative mt-5.5 inline-flex min-h-14 cursor-pointer items-center gap-2.5 rounded-2xl border-3 border-champion-button-edge px-7.5 text-2xl shadow-lg shadow-black/45 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-0.5 [@media(orientation:landscape)_and_(max-height:480px)]:mt-0"
+    (click)="newGame.emit()"
+    data-new-game
+  >
+    <svg
+      class="size-6"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+    </svg>
+    Nueva partida
+  </button>
+</div>

@@ -8,6 +8,7 @@ const SVG = 'http://www.w3.org/2000/svg';
 interface Drawn {
   readonly color: Color;
   readonly animated?: boolean;
+  readonly once?: boolean;
 }
 
 @Component({
@@ -15,7 +16,13 @@ interface Drawn {
   template: `
     <svg viewBox="-50 -50 100 100">
       @for (mascot of mascots(); track $index) {
-        <g jp-mascot [color]="mascot.color" [radius]="22" [animated]="mascot.animated ?? false" />
+        <g
+          jp-mascot
+          [color]="mascot.color"
+          [radius]="22"
+          [animated]="mascot.animated ?? false"
+          [once]="mascot.once ?? false"
+        />
       }
     </svg>
   `,
@@ -76,6 +83,30 @@ describe('Mascot', () => {
       expect(used.length).toBeGreaterThan(0);
       expect(used.every((clip) => own.includes(clip!))).toBe(true);
     }
+  });
+
+  it('RF-006: solo se marca para animarse una vez si se le pide', async () => {
+    const drawn = await render([
+      { color: 'red', animated: true, once: true },
+      { color: 'red', animated: true },
+      { color: 'green', once: false },
+    ]);
+    expect(drawn.map((mascot) => mascot.hasAttribute('data-once'))).toEqual([true, false, false]);
+    expect(drawn[0].hasAttribute('data-animated')).toBe(true);
+  });
+
+  it('RF-006, RNF-002: animarse una vez deja cada bucle en una vuelta, solo si el sistema permite movimiento', async () => {
+    await render([{ color: 'yellow', animated: true, once: true }]);
+    const css = [...document.querySelectorAll('style')]
+      .map((style) => style.textContent ?? '')
+      .find((text) => text.includes('jaguar-tilt'));
+    expect(css).toBeDefined();
+    const motion = css!.slice(css!.indexOf('prefers-reduced-motion: no-preference'));
+    expect(motion).toMatch(/\[data-once\][^{]*\{\s*animation-iteration-count:\s*1;?\s*\}/);
+    // The single-loop rule comes after the loops, so it overrides their `infinite`.
+    expect(motion.indexOf('animation-iteration-count')).toBeGreaterThan(
+      motion.lastIndexOf('infinite'),
+    );
   });
 
   it('RNF-002: solo se marca como animada si se le pide', async () => {

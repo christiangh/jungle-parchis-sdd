@@ -13,17 +13,22 @@ export interface Headline {
 const ROLL = 'Toca el dado';
 const CHOOSE_PIECE = 'Elige una ficha';
 
-/** Banner text, derived only from the engine state (RF-009, RF-010, RNF-007). */
+/** Roll of the initial roll phase and its tie-breaks, told apart from a normal roll (SPEC 008 RF-013). */
+const INITIAL_ROLL = `Tirada inicial: ${ROLL}`;
+
+/** Longest action the banner can show, used to reserve its space (SPEC 008 RF-013). */
+export const LONGEST_ACTION = INITIAL_ROLL;
+
+/** Banner text, derived only from the engine state (RF-009, RF-010, RNF-007; SPEC 008 RF-013). */
 export function headline(state: GameState): Headline {
   if (state.winner !== null) {
     return { color: state.winner, action: `¡Gana ${COLOR_NAMES[state.winner]}!`, turn: null };
   }
   const color = state.turn;
-  const name = COLOR_NAMES[color];
+  const turn = `Turno de ${COLOR_NAMES[color]}.`;
   if (state.initialRoll !== null) {
-    return { color, action: ROLL, turn: `Tirada inicial, turno de ${name}.` };
+    return { color, action: INITIAL_ROLL, turn };
   }
-  const turn = `Turno de ${name}.`;
   if (state.pendingBonus !== null) {
     return { color, action: `Usa tu +${state.pendingBonus}`, turn };
   }

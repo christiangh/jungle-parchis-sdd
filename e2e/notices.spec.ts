@@ -1,5 +1,6 @@
 import { expect, Locator, Page, test } from '@playwright/test';
 import { fixDice, roll } from './dice';
+import { startGame } from './start';
 
 // Turn banner and last play tab (HU-04, HU-05): RNF-001 and RNF-010, CE-05 and CE-11.
 
@@ -39,20 +40,24 @@ function contrast(page: Page, foreground: string, background: string): Promise<n
 
 /** Banner text against its ink outline, the first colour of its `text-shadow`. */
 async function bannerContrast(page: Page): Promise<number> {
-  const { color, outline } = await page.locator('[data-title]').evaluate((title) => {
+  const { color, outline } = await page.locator('jp-turn-banner [data-title]').evaluate((title) => {
     const style = getComputedStyle(title);
     return { color: style.color, outline: /^\w+\([^)]*\)/.exec(style.textShadow)![0] };
   });
   return contrast(page, color, outline);
 }
 
-/** Tab text against the tab's dark tone. */
+/**
+ * Text of the initial roll tab, the value of its last roll, against the tab's dark tone. It is the
+ * same dark tone and the same white as the last play tab's (SPEC 008 RF-014).
+ */
 async function tabContrast(page: Page): Promise<number> {
   const color = await page
-    .locator('[data-last-play] [data-text]')
+    .locator('[data-initial-round] [data-value]')
+    .last()
     .evaluate((text) => getComputedStyle(text).color);
   const background = await page
-    .locator('[data-last-play] [data-tab]')
+    .locator('[data-initial-round] [data-tab]')
     .evaluate((tab) => getComputedStyle(tab).backgroundColor);
   return contrast(page, color, background);
 }
@@ -67,8 +72,9 @@ test('RNF-001, CE-05: el texto del cartel y de la pestaña llega a 4,5:1 con los
   // Initial roll without a tie: yellow, blue, red and green roll in turn, and green starts.
   await fixDice(page, [1, 2, 3, 6]);
   await page.goto('/');
-  const banner = page.locator('[data-plank]');
-  const tab = page.locator('[data-last-play] [data-tab]');
+  await startGame(page);
+  const banner = page.locator('jp-turn-banner [data-plank]');
+  const tab = page.locator('[data-initial-round] [data-tab]');
 
   await expect(banner).toHaveAttribute('data-color', 'yellow');
   expect(await bannerContrast(page), 'cartel amarillo').toBeGreaterThanOrEqual(4.5);
@@ -92,22 +98,26 @@ for (const size of SIZES) {
     page,
   }) => {
     await page.setViewportSize(size);
-    // Yellow rolls a short sentence; the other three tie with it.
+    // Yellow's roll is the shortest round; the other three tie with it, the longest round
+    // (SPEC 008 RF-015).
     await fixDice(page, [6, 6, 6, 6]);
     await page.goto('/');
+    await startGame(page);
     await page.evaluate(() => document.fonts.ready);
     const board = page.locator('[data-board-slot]');
-    const lastPlay = page.locator('[data-last-play]');
+    const round = page.locator('[data-initial-round] [data-text]');
 
-    await expect(lastPlay).toHaveCount(0);
+    await expect(round).toHaveCount(0);
     const before = await box(board);
 
     await roll(page);
-    await expect(lastPlay).toHaveText('Saca 6.');
+    await expect(round).toHaveText('Amarillo saca 6.');
     expect(await box(board), 'pestaña corta').toEqual(before);
 
     await roll(page, 3);
-    await expect(lastPlay).toHaveText('Saca 6, empate entre Amarillo, Azul, Rojo y Verde.');
+    await expect(round).toHaveText(
+      'Amarillo saca 6, Azul saca 6, Rojo saca 6, Verde saca 6, empate entre Amarillo, Azul, Rojo y Verde.',
+    );
     expect(await box(board), 'empate de cuatro').toEqual(before);
   });
 }

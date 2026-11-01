@@ -1,0 +1,82 @@
+<svg:defs>
+  <clipPath [attr.id]="cupId">
+    <path d="M28 14 H92 C92 52 80 70 60 74 C40 70 28 52 28 14Z" />
+  </clipPath>
+</svg:defs>
+<svg:g stroke-linejoin="round" stroke-linecap="round">
+  <ellipse cx="60" cy="134" rx="40" ry="5" class="fill-black opacity-25" />
+  @for (handle of handles; track handle) {
+    <path [attr.d]="handle" fill="none" stroke-width="10" class="stroke-trophy-ink" />
+    <path [attr.d]="handle" fill="none" stroke-width="6" class="stroke-trophy-handle" />
+  }
+  <path
+    d="M28 14 H92 C92 52 80 70 60 74 C40 70 28 52 28 14Z"
+    stroke-width="3"
+    class="fill-trophy-cup stroke-trophy-ink"
+  />
+  <g [attr.clip-path]="cupClip">
+    <path d="M70 14 C70 50 66 66 60 74 L92 74 V14Z" class="fill-trophy-shade opacity-70" />
+    @if (animated()) {
+      <g class="-translate-x-[90px] motion-safe:animate-trophy-shine" data-shine>
+        <path d="M40 6 L52 6 L30 80 L18 80Z" class="fill-white opacity-55" />
+      </g>
+    }
+  </g>
+  <ellipse
+    cx="60"
+    cy="14"
+    rx="32"
+    ry="5"
+    stroke-width="3"
+    class="fill-trophy-rim stroke-trophy-ink"
+  />
+  <ellipse cx="60" cy="15" rx="26" ry="3" class="fill-trophy-rim-inner" />
+  <path
+    d="M60 30 l4.4 9 10 1.4 -7.2 7 1.7 9.9 -8.9 -4.7 -8.9 4.7 1.7 -9.9 -7.2 -7 10 -1.4Z"
+    stroke-width="1.8"
+    class="fill-trophy-star stroke-trophy-star-edge"
+  />
+  <path d="M52 74 H68 L66 94 H54Z" stroke-width="3" class="fill-trophy-handle stroke-trophy-ink" />
+  <path d="M44 94 H76 L80 102 H40Z" stroke-width="3" class="fill-trophy-cup stroke-trophy-ink" />
+  <rect
+    x="30"
+    y="102"
+    width="60"
+    height="30"
+    rx="5"
+    stroke-width="3"
+    class="fill-trophy-base stroke-trophy-ink"
+  />
+  <path
+    d="M33 112 C50 114 70 110 87 113 M33 122 C50 124 70 120 87 123"
+    fill="none"
+    stroke-width="1.4"
+    class="stroke-trophy-grain opacity-70"
+  />
+  <rect
+    x="44"
+    y="109"
+    width="32"
+    height="15"
+    rx="3"
+    stroke-width="2"
+    class="fill-trophy-cup stroke-trophy-ink"
+  />
+  <path d="M50 116.5 H70" stroke-width="2" class="stroke-trophy-star-edge" />
+  @if (animated()) {
+    <g transform="translate(98 8)">
+      <path
+        d="M0 -7 L1.6 -1.6 L7 0 L1.6 1.6 L0 7 L-1.6 1.6 L-7 0 L-1.6 -1.6Z"
+        class="origin-center scale-0 fill-white [transform-box:fill-box] motion-safe:animate-trophy-twinkle"
+        data-sparkle
+      />
+    </g>
+    <g transform="translate(22 66)">
+      <path
+        d="M0 -6 L1.4 -1.4 L6 0 L1.4 1.4 L0 6 L-1.4 1.4 L-6 0 L-1.4 -1.4Z"
+        class="origin-center scale-0 fill-white [animation-delay:1.2s] [transform-box:fill-box] motion-safe:animate-trophy-twinkle"
+        data-sparkle
+      />
+    </g>
+  }
+</svg:g>
